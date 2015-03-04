@@ -24,7 +24,6 @@ class ColorCube {
   }
   
   void render() {
-    println("hello render" + rotationX + " " + rotationY + " " + rotationZ);
     noStroke();
     pushMatrix();
     translate(x, y, z);
