@@ -3,6 +3,14 @@
 #include <SFE_LSM9DS0.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
+
+
+// called this way, it uses the default address 0x40
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+// you can also call it with a different address you want
+//Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x41);
+
 
 
 const int baudrate = 9600;
@@ -71,31 +79,22 @@ void setup ()
    
    Serial.begin(9600);
 
-  Wire.begin();
+  // adafruit pwm driver  
+  pwm.begin();
+  pwm.setPWMFreq(1600);  // This is the maximum PWM frequency
+    
+  // save I2C bitrate
+  uint8_t twbrbackup = TWBR;
+  // must be changed after calling Wire.begin() (inside pwm.begin())
+  TWBR = 12; // upgrade to 400KHz!
+
 }
 
-
-
-int last = 0;
 int beat = 10;
+int last = 0;
 
-int val = 0;
 void loop () 
 {  
-
-  val = val +15;
-  if (val > 255) {
-    val = 0;
-  }
-  Serial.println(val);
-
-  Wire.beginTransmission(ledAddress);
-  Wire.write(val);
-  Wire.endTransmission();
-
-  Wire.beginTransmission(ledAddress2);
-  Wire.write(val);
-  Wire.endTransmission();
 
   // bluetooth test
   while (mySerial.available() > 0) {
@@ -211,9 +210,14 @@ void setRGB (int r, int g, int b)
    Serial.print(" ");
    Serial.print(b);
    */
-  analogWrite(pinLedR, r);
+/*  analogWrite(pinLedR, r);
   analogWrite(pinLedG, g);
   analogWrite(pinLedB, b);
+  */
+  
+  pwm.setPWM(0, 0, map(r, 0, 255, 4096, 0));
+  pwm.setPWM(1, 0, map(g, 0, 255, 4096, 0));
+  pwm.setPWM(2, 0, map(b, 0, 255, 4096, 0));
 }
 
 
