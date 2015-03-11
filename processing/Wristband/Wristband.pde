@@ -1,16 +1,17 @@
 /**
-* TODO:
-* recording motion changes
-* writing motion files
-* file opening and parsing
-* cube 3d colored per side
-* bluetooth connection establishing
-*/
+ * TODO:
+ * recording motion changes
+ * writing motion files
+ *
+ * file recording and playback fps
+ */
 import org.json.*;
 import processing.serial.*;
 import controlP5.*;
 
 ControlP5 cp5;
+
+boolean useBluetooth = false;
 
 float rotationX = 0;
 float rotationY = 0;
@@ -28,40 +29,71 @@ int inBufferIndex = 0;
 boolean isConnected = false;
 int baudRate = 9600;
 String initialCommand = "listening.";
+Textarea debugText;
 
 Serial connection;
 
 void setup() {
   size(winW, winH, P3D);
-  
+
   cp5 = new ControlP5(this);
-  
+
+  // manual rotation for cube visualisation
   cp5.addSlider("rotationX")
     .setPosition(50, 50)
-    .setRange(rotationMin, rotationMax);
-   
+      .setRange(rotationMin, rotationMax);
+
   cp5.addSlider("rotationY")
     .setPosition(50, 70)
-    .setRange(rotationMin, rotationMax);
-   
+      .setRange(rotationMin, rotationMax);
+
   cp5.addSlider("rotationZ")
     .setPosition(50, 90)
-    .setRange(rotationMin, rotationMax); 
-    
-  try {
-    println(Serial.list());
-    connection = new Serial(this, "/dev/tty.wristbandproto-SPP", 9600);
-    char c = ';';
-    println("limiter" + byte(c));
-    connection.bufferUntil(byte(c));
-  } catch (RuntimeException e) {
-    println("error: " + e.getMessage());
-    noLoop();
-    exit();
+      .setRange(rotationMin, rotationMax);
+
+  // file handling buttons
+  cp5.addButton("loadFile")
+    .setPosition(50, 300)
+      .setSize(100, 20);
+
+  cp5.addButton("recordFile")
+    .setPosition(50, 330)
+      .setSize(100, 20);
+
+  cp5.addButton("saveFile")
+    .setPosition(50, 360)
+      .setSize(100, 20);
+
+  // file I/O check textarea
+  debugText = cp5.addTextarea("txt")
+    .setPosition((winW - 400), 0)
+      .setSize((winW - 400), winH)
+        .setFont(createFont("arial", 10))
+          .setColor(0)
+            .setColorBackground(color(255, 100))
+              .setColorBackground(color(255, 100));
+
+  if (useBluetooth) {
+    try {
+      println(Serial.list());
+      // TODO make this selectable from list
+      connection = new Serial(this, "/dev/tty.wristbandproto-SPP", 9600);
+      char c = ';';
+      println("limiter" + byte(c));
+      connection.bufferUntil(byte(c));
+    } 
+    catch (RuntimeException e) {
+      println("error: " + e.getMessage());
+      noLoop();
+      exit();
+    }
   }
-  
 }
 
+
+JSONArray recording = new JSONArray();
+int recordingIndex = 0;
+boolean record = false;
 
 void draw() {
   background(255);
@@ -70,6 +102,16 @@ void draw() {
   c.setRotation(rotationX, rotationY, rotationZ);
   c.setPosition(winW / 2, winH / 2, 0);
   c.render();
+
+  if (record) {
+    JSONObject values = new JSONObject();
+    values.setInt("id", recordingIndex);
+    values.setFloat("rotation", random(360));
+    values.setFloat("heading", random(360));
+    recording.setJSONObject(recordingIndex, values);
+    recordingIndex++;
+    debugText.setText(debugText.getText() + recordingIndex + "\n"); 
+  }
 }
 
 
@@ -85,4 +127,51 @@ void serialEvent(Serial port) {
   }
 }
 
+
+void loadFile(int val) {
+  selectInput("File", "fileSelected");
+}
+
+
+void recordFile(int val) {
+  if (record) {
+    println("finish recording");
+    record = false;
+  } else {
+    print("start recording");
+    recordingIndex = 0;
+    recording = new JSONArray();
+    debugText.setText("");
+    record = true;
+  }
+}
+
+void saveFile(int val) {
+  println("saveFile " + val);
+  selectOutput("File to save to:", "fileToSave");
+}
+
+void fileToSave(File selection) {
+  println("save to " + selection);
+  if (selection != null) {
+    try {
+      saveJSONArray(recording, selection.toString());
+    } 
+    catch (RuntimeException e) {
+      println("fileToSave failed, " + e.getMessage());
+    }
+  }
+}
+
+void fileSelected(File selection) {
+  if (selection != null) {
+    try {
+      JSONArray values = loadJSONArray(selection);
+      println(values);
+    } 
+    catch (RuntimeException e) {
+      println("loadFile failed, " + e.getMessage());
+    }
+  }
+}
 

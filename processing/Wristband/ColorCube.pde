@@ -3,26 +3,26 @@ class ColorCube {
   float x, y, z;
   float rotationX, rotationY, rotationZ;
   color colorFront, colorSide, colorTop;
-  
+
   ColorCube(float _w, float _h, float _d, color _colorFront, color _colorSide, color _colorTop) {
     w = _w;
     h = _h;
     d = _d;
     applyColor(_colorFront, _colorSide, _colorTop);
   }
-  
+
   void setPosition(float _x, float _y, float _z) {
     x = _x;
     y = _y;
     z = _z;
   }
-  
+
   void setRotation(float _rotationX, float _rotationY, float _rotationZ) {
     rotationX = _rotationX;
     rotationY = _rotationY;
     rotationZ = _rotationZ;
   }
-  
+
   void render() {
     noStroke();
     pushMatrix();
@@ -52,7 +52,7 @@ class ColorCube {
     vertex(-w2, d2, h2);
     vertex(-w2, -d2, h2);
     endShape();
-    
+
     beginShape();
     fill(colorFront);
     vertex(-w2, d2, -h2);
@@ -67,7 +67,7 @@ class ColorCube {
     vertex(w2, -d2, h2);
     vertex(w2, -d2, -h2);
     endShape();    
-    
+
     beginShape();
     fill(colorTop);
     vertex(-w2, -d2, h2);
@@ -82,13 +82,14 @@ class ColorCube {
     vertex(w2, d2, -h2);
     vertex(w2, -d2, -h2);
     endShape();   
-    
+
     popMatrix();
   }
-  
+
   void applyColor(color _colorFront, color _colorSide, color _colorTop) {
     colorFront = _colorFront;
     colorSide = _colorSide;
     colorTop = _colorTop;
   }
 }
+
