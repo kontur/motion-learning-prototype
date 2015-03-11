@@ -29,7 +29,9 @@ int inBufferIndex = 0;
 boolean isConnected = false;
 int baudRate = 9600;
 String initialCommand = "listening.";
+
 Textarea debugText;
+DropdownList bluetoothDeviceList;
 
 Serial connection;
 
@@ -37,6 +39,19 @@ void setup() {
   size(winW, winH, P3D);
 
   cp5 = new ControlP5(this);
+
+
+  // bluetooth connect UI
+  cp5.addButton("connectBluetooth")
+    .setPosition(450, 20)
+      .setSize(100, 20);
+
+  bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
+    .setPosition(250, 20)
+      .setSize(150, 200);
+
+  getBluetoothDeviceList(bluetoothDeviceList);        
+
 
   // manual rotation for cube visualisation
   cp5.addSlider("rotationX")
@@ -51,6 +66,7 @@ void setup() {
     .setPosition(50, 90)
       .setRange(rotationMin, rotationMax);
 
+
   // file handling buttons
   cp5.addButton("loadFile")
     .setPosition(50, 300)
@@ -64,6 +80,7 @@ void setup() {
     .setPosition(50, 360)
       .setSize(100, 20);
 
+
   // file I/O check textarea
   debugText = cp5.addTextarea("txt")
     .setPosition((winW - 400), 0)
@@ -72,21 +89,18 @@ void setup() {
           .setColor(0)
             .setColorBackground(color(255, 100))
               .setColorBackground(color(255, 100));
+}
 
-  if (useBluetooth) {
-    try {
-      println(Serial.list());
-      // TODO make this selectable from list
-      connection = new Serial(this, "/dev/tty.wristbandproto-SPP", 9600);
-      char c = ';';
-      println("limiter" + byte(c));
-      connection.bufferUntil(byte(c));
-    } 
-    catch (RuntimeException e) {
-      println("error: " + e.getMessage());
-      noLoop();
-      exit();
-    }
+
+void getBluetoothDeviceList(DropdownList list) { 
+  //if (useBluetooth) {
+  println("hello");
+  String[] foo = Serial.list();
+  println(foo);
+  for (int i = 0; i < foo.length; i++) {
+    String f = foo[i];
+    println("foo ", f);
+    bluetoothDeviceList.addItem(f, i);
   }
 }
 
@@ -110,7 +124,7 @@ void draw() {
     values.setFloat("heading", random(360));
     recording.setJSONObject(recordingIndex, values);
     recordingIndex++;
-    debugText.setText(debugText.getText() + recordingIndex + "\n"); 
+    debugText.setText(debugText.getText() + recordingIndex + "\n");
   }
 }
 
@@ -173,5 +187,27 @@ void fileSelected(File selection) {
       println("loadFile failed, " + e.getMessage());
     }
   }
+}
+
+void connectBluetooth(int val) {
+  println("connectBluetooth");
+  println("selected: " + bluetoothDeviceList.getValue());
+  /*
+    
+   try {
+   println(Serial.list());
+   // TODO make this selectable from list
+   connection = new Serial(this, "/dev/tty.wristbandproto-SPP", 9600);
+   char c = ';';
+   println("limiter" + byte(c));
+   connection.bufferUntil(byte(c));
+   } 
+   catch (RuntimeException e) {
+   println("error: " + e.getMessage());
+   noLoop();
+   exit();
+   }
+   */
+  //}
 }
 
