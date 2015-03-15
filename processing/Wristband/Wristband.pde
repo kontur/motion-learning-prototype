@@ -43,11 +43,15 @@ void setup() {
 
   // bluetooth connect UI
   cp5.addButton("connectBluetooth")
-    .setPosition(450, 20)
+    .setPosition(50, 20)
       .setSize(100, 20);
 
+  cp5.addButton("closeBluetooth")
+    .setPosition(330, 20)
+      .setSize(30, 20);
+
   bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
-    .setPosition(250, 20)
+    .setPosition(170, 30)
       .setSize(150, 200);
 
   getBluetoothDeviceList(bluetoothDeviceList);        
@@ -55,15 +59,15 @@ void setup() {
 
   // manual rotation for cube visualisation
   cp5.addSlider("rotationX")
-    .setPosition(50, 50)
+    .setPosition(50, 170)
       .setRange(rotationMin, rotationMax);
 
   cp5.addSlider("rotationY")
-    .setPosition(50, 70)
+    .setPosition(50, 190)
       .setRange(rotationMin, rotationMax);
 
   cp5.addSlider("rotationZ")
-    .setPosition(50, 90)
+    .setPosition(50, 210)
       .setRange(rotationMin, rotationMax);
 
 
@@ -92,8 +96,7 @@ void setup() {
 }
 
 
-void getBluetoothDeviceList(DropdownList list) { 
-  //if (useBluetooth) {
+void getBluetoothDeviceList(DropdownList list) {
   println("hello");
   String[] foo = Serial.list();
   println(foo);
@@ -191,23 +194,35 @@ void fileSelected(File selection) {
 
 void connectBluetooth(int val) {
   println("connectBluetooth");
-  println("selected: " + bluetoothDeviceList.getValue());
-  /*
-    
-   try {
-   println(Serial.list());
-   // TODO make this selectable from list
-   connection = new Serial(this, "/dev/tty.wristbandproto-SPP", 9600);
-   char c = ';';
-   println("limiter" + byte(c));
-   connection.bufferUntil(byte(c));
-   } 
-   catch (RuntimeException e) {
-   println("error: " + e.getMessage());
-   noLoop();
-   exit();
-   }
-   */
-  //}
+  println("selected: " + int(bluetoothDeviceList.getValue()));
+  println("selected: " + bluetoothDeviceList.getName());
+  println("selected: " + bluetoothDeviceList.getStringValue());
+
+  String[] ports = Serial.list();
+
+  try {
+    println(Serial.list());
+    // TODO make this selectable from list
+    println("Attempting to open serial port: " + ports[val]);
+    connection = new Serial(this, ports[int(bluetoothDeviceList.getValue())], 9600);
+    char c = ';';
+    println("limiter" + byte(c));
+    connection.bufferUntil(byte(c));
+  } 
+  catch (RuntimeException e) {
+    println("error: " + e.getMessage());
+    // TODO UI feedback
+    //noLoop();
+    //exit();
+  }
+}
+
+void closeBluetooth(int val) {
+  try {
+    connection.stop();
+  }
+  catch (RuntimeException e) {
+    println("error: " + e.getMessage());
+  }
 }
 
