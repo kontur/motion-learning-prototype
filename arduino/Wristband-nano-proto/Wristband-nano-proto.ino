@@ -214,6 +214,10 @@ float printHeading(float hx, float hy)
 
   //Serial.print("Heading: ");
   //Serial.println(heading, 2);
+  
+  // normalized for Helsinki, Finland
+  // ?!?
+  heading = heading - 8;
 
   return heading;
 }

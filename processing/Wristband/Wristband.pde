@@ -46,7 +46,7 @@ void setup() {
       .setSize(100, 20);
 
   cp5.addButton("closeBluetooth")
-    .setPosition(330, 20)
+    .setPosition(50, 50)
       .setSize(30, 20);
 
   bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
@@ -109,12 +109,25 @@ int recordingIndex = 0;
 boolean record = false;
 
 void draw() {
-  background(255);
+  background(225);
   stroke(0);  
-  ColorCube c = new ColorCube(50.0, 10.0, 100.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
+  ColorCube c = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
   c.setRotation(rotationX, rotationY, rotationZ);
   c.setPosition(winW / 2, winH / 2, 0);
   c.render();
+
+  // show spinny animation until connected
+  if (connection == null) {
+    rotationX += 0.5;
+    rotationY += 1;
+    rotationZ += 2;
+    if (rotationX > 360) rotationX = 0;
+    if (rotationY > 360) rotationY = 0;
+    if (rotationZ > 360) rotationZ = 0;
+    cp5.getController("rotationX").setValue(rotationX);
+    cp5.getController("rotationY").setValue(rotationY);
+    cp5.getController("rotationZ").setValue(rotationZ);
+  }
 
   if (record) {
     JSONObject values = new JSONObject();
@@ -131,12 +144,12 @@ void draw() {
 void serialEvent(Serial port) {
   String s = connection.readString();
   s = s.substring(0, s.length() - 1);
-  println("str " + s);
+  println(s);
   if (s.indexOf("{") > -1) {  
     JSON obj = JSON.parse(s);    
-    cp5.getController("rotationX").setValue(map(obj.getFloat("tilt"), -180, 180, 0, 360));
+    cp5.getController("rotationX").setValue(map(obj.getFloat("tilt"), -90, 90, 0, 360));
     cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-    cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -180, 180, 0, 360));
+    cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
   }
 }
 
@@ -196,7 +209,7 @@ void connectBluetooth(int val) {
     println(Serial.list());
     println("Attempting to open serial port: " + ports[val]);
     connection = new Serial(this, ports[int(bluetoothDeviceList.getValue())], 9600);
-    
+
     // set a character that limits transactions and initiates reading the buffer
     char c = ';';
     connection.bufferUntil(byte(c));
@@ -211,6 +224,7 @@ void connectBluetooth(int val) {
 void closeBluetooth(int val) {
   try {
     connection.stop();
+    connection = null;
   }
   catch (RuntimeException e) {
     println("error: " + e.getMessage());
