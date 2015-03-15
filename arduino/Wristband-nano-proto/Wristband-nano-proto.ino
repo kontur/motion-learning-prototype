@@ -90,31 +90,8 @@ void setup ()
 
 }
 
-int beat = 10;
-int last = 0;
-
 void loop () 
-{  
-
-  // bluetooth test
-  while (mySerial.available() > 0) {
-    /*
-    data[serialIndex] = mySerial.read();
-     // '\n' is ASCII 10
-     if (data[serialIndex] == '\n') {
-     serialIndex = 0;
-     if (data[0] == '?') {
-     mySerial.println("listening.");
-     }
-     break;
-     } else {
-     mySerial.println("hello");
-     }
-     serialIndex = serialIndex + 1;*/
-    //    mySerial.println("hello");
-  }
-  mySerial.println("hello;");
-
+{ 
 
   /*
   printGyro();  // Print "G: gx, gy, gz"
@@ -153,43 +130,15 @@ void loop ()
    Serial.print(accel[2]);
    Serial.print(" ");
    */
-
-  //  Serial.print(map(accel[1] * 100, -100, 100, 40, 440));
-  //tone(A0, map(accel[1] * 100, -100, 100, 40, 440), PRINT_SPEED / 2);//PRINT_SPEED / map(accel[0], -1, 1, 0.5, 2));
-  //noTone(A0);
-
-  //tone(A0, 330, PRINT_SPEED / 2);
-  //delay(PRINT_SPEED / 2);
-  //tone(A0, 440, PRINT_SPEED / 2);
-
+   
   setRGB(
-  map(orientation[0], -90, 90, 0, 255),
-  map(orientation[1], -90, 90, 0, 255),
-  0
-    );
-
-
-  float filter = 0.25;
-
-  last = filter * last + (1 - filter) * orientation[0];
-
-  Serial.println(orientation[0]);
-  Serial.println(last);
-  Serial.println(orientation[0] - last);
-
-  // -90 - 90 [180]
-  // 310 - 490
-  int duration = map(abs(orientation[0] - last), 0, 20, 2, PRINT_SPEED);
-  //tone(A0, 440, duration);
-  //delay(duration);
-
-  //tone(A0, last, PRINT_SPEED);
-  last = last + 1;
+    map(orientation[0], -90, 90, 0, 255),
+    map(orientation[1], -90, 90, 0, 255),
+    0
+  );
 
   setRGB(random(255), random(255), random(255));
 
-  //delay(PRINT_SPEED);
-  //  delay(PRINT_SPEED);
   mySerial.println("{ heading: " + String(heading) + 
     ", pitch: " + String(orientation[0]) + 
     ", tilt: " + String(orientation[1]) + "};");
@@ -198,34 +147,16 @@ void loop ()
 }
 
 
-
-
+// helper to controll the LED colors
 void setRGB (int r, int g, int b) 
 {
-  /*
-  Serial.println("setRGB ");
-   Serial.print(r);
-   Serial.print(" ");
-   Serial.print(g);
-   Serial.print(" ");
-   Serial.print(b);
-   */
-/*  analogWrite(pinLedR, r);
-  analogWrite(pinLedG, g);
-  analogWrite(pinLedB, b);
-  */
-  
   pwm.setPWM(0, 0, map(r, 0, 255, 4096, 0));
   pwm.setPWM(1, 0, map(g, 0, 255, 4096, 0));
   pwm.setPWM(2, 0, map(b, 0, 255, 4096, 0));
 }
 
 
-
-
-
 // 9 DOF module helper functions
-
 void printGyro()
 {
   // To read from the gyroscope, you must first call the

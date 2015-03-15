@@ -40,7 +40,6 @@ void setup() {
 
   cp5 = new ControlP5(this);
 
-
   // bluetooth connect UI
   cp5.addButton("connectBluetooth")
     .setPosition(50, 20)
@@ -97,13 +96,10 @@ void setup() {
 
 
 void getBluetoothDeviceList(DropdownList list) {
-  println("hello");
-  String[] foo = Serial.list();
-  println(foo);
-  for (int i = 0; i < foo.length; i++) {
-    String f = foo[i];
-    println("foo ", f);
-    bluetoothDeviceList.addItem(f, i);
+  String[] ports = Serial.list();
+  for (int p = 0; p < ports.length; p++) {
+    String port = ports[p];
+    bluetoothDeviceList.addItem(port, p);
   }
 }
 
@@ -138,8 +134,8 @@ void serialEvent(Serial port) {
   println("str " + s);
   if (s.indexOf("{") > -1) {  
     JSON obj = JSON.parse(s);    
-    cp5.getController("rotationX").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-    cp5.getController("rotationY").setValue(map(obj.getFloat("tilt"), -180, 180, 0, 360));
+    cp5.getController("rotationX").setValue(map(obj.getFloat("tilt"), -180, 180, 0, 360));
+    cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
     cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -180, 180, 0, 360));
   }
 }
@@ -192,37 +188,33 @@ void fileSelected(File selection) {
   }
 }
 
+
+// helper function to start a bluetooth connection based on the selected dropdown list item
 void connectBluetooth(int val) {
-  println("connectBluetooth");
-  println("selected: " + int(bluetoothDeviceList.getValue()));
-  println("selected: " + bluetoothDeviceList.getName());
-  println("selected: " + bluetoothDeviceList.getStringValue());
-
   String[] ports = Serial.list();
-
   try {
     println(Serial.list());
-    // TODO make this selectable from list
     println("Attempting to open serial port: " + ports[val]);
     connection = new Serial(this, ports[int(bluetoothDeviceList.getValue())], 9600);
+    
+    // set a character that limits transactions and initiates reading the buffer
     char c = ';';
-    println("limiter" + byte(c));
     connection.bufferUntil(byte(c));
   } 
   catch (RuntimeException e) {
     println("error: " + e.getMessage());
     // TODO UI feedback
-    //noLoop();
-    //exit();
   }
 }
 
+// helper function to close the bluetooth connection
 void closeBluetooth(int val) {
   try {
     connection.stop();
   }
   catch (RuntimeException e) {
     println("error: " + e.getMessage());
+    // TODO UI feedback
   }
 }
 
