@@ -35,6 +35,10 @@ int lastRotation = 0;
 byte ledAddress = 0x40;
 byte ledAddress2 = 0x70;
 
+int lastR = 0;
+int lastG = 100;
+int lastB = 200;
+
 
 
 ///////////////////////
@@ -76,13 +80,13 @@ void setup ()
    Serial.println("Should be 0x49D4");
    Serial.println();
    */
-   
-   Serial.begin(9600);
+
+  Serial.begin(9600);
 
   // adafruit pwm driver  
   pwm.begin();
   pwm.setPWMFreq(1600);  // This is the maximum PWM frequency
-    
+
   // save I2C bitrate
   uint8_t twbrbackup = TWBR;
   // must be changed after calling Wire.begin() (inside pwm.begin())
@@ -110,9 +114,18 @@ void loop ()
   // Print the heading and orientation for fun!
   float heading = printHeading((float) dof.mx, (float) dof.my);
   float orientation[2];
+  float pitch;
+  float roll;
 
-  printOrientation(dof.calcAccel(dof.ax), dof.calcAccel(dof.ay), 
-  dof.calcAccel(dof.az), &orientation[0]);
+  printOrientation(
+  dof.calcAccel(dof.ax), 
+  dof.calcAccel(dof.ay), 
+  dof.calcAccel(dof.az), 
+  &orientation[0]
+    );
+  pitch = orientation[0];
+  roll = orientation[1];
+
   /*
   Serial.println();
    
@@ -130,18 +143,40 @@ void loop ()
    Serial.print(accel[2]);
    Serial.print(" ");
    */
-   
-  setRGB(
-    map(orientation[0], -90, 90, 0, 255),
-    map(orientation[1], -90, 90, 0, 255),
-    0
-  );
 
-  setRGB(random(255), random(255), random(255));
+  /*
+  int r = map(pitch, -90, 90, 0, 255);
+   int g = map(roll, -90, 90, 0, 255);
+   int b = map(heading, -180, 180, 0, 255);
+   */
+
+  lastR = lastR + 5;
+  if (lastR > 255) {
+    lastR = 0;
+  }
+  lastG = lastG + 5;
+  if (lastG > 255) {
+    lastG = 0;
+  }
+  lastB = lastB + 5;
+  if (lastB > 255) {
+    lastB = 0;
+  }
+
+
+  int r = lastR;
+  int g = lastG;
+  int b = lastB;
+
+
+
+  Serial.println(String(r) + "," + String(g) + "," + String(b));
+
+  setRGB(r, g, b);
 
   mySerial.println("{ heading: " + String(heading) + 
-    ", pitch: " + String(orientation[0]) + 
-    ", tilt: " + String(orientation[1]) + "};");
+    ", pitch: " + String(pitch) + 
+    ", roll: " + String(roll) + " };");
 
   delay(1000/12);
 }
@@ -214,7 +249,7 @@ float printHeading(float hx, float hy)
 
   //Serial.print("Heading: ");
   //Serial.println(heading, 2);
-  
+
   // normalized for Helsinki, Finland
   // ?!?
   heading = heading - 8;
@@ -237,5 +272,8 @@ void printOrientation(float x, float y, float z, float *pdata)
   pdata[0] = pitch;
   pdata[1] = roll;
 }
+
+
+
 
 

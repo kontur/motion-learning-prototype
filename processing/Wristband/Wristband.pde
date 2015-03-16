@@ -35,6 +35,13 @@ DropdownList bluetoothDeviceList;
 
 Serial connection;
 
+
+
+JSONArray recording = new JSONArray();
+int recordingIndex = 0;
+boolean record = false;
+
+
 void setup() {
   size(winW, winH, P3D);
 
@@ -54,6 +61,9 @@ void setup() {
       .setSize(150, 200);
 
   getBluetoothDeviceList(bluetoothDeviceList);        
+
+
+  
 
 
   // manual rotation for cube visualisation
@@ -86,27 +96,13 @@ void setup() {
 
   // file I/O check textarea
   debugText = cp5.addTextarea("txt")
-    .setPosition((winW - 400), 0)
-      .setSize((winW - 400), winH)
+    .setPosition((winW - 200), 0)
+      .setSize((winW - 200), winH)
         .setFont(createFont("arial", 10))
           .setColor(0)
             .setColorBackground(color(255, 100))
               .setColorBackground(color(255, 100));
 }
-
-
-void getBluetoothDeviceList(DropdownList list) {
-  String[] ports = Serial.list();
-  for (int p = 0; p < ports.length; p++) {
-    String port = ports[p];
-    bluetoothDeviceList.addItem(port, p);
-  }
-}
-
-
-JSONArray recording = new JSONArray();
-int recordingIndex = 0;
-boolean record = false;
 
 void draw() {
   background(225);
@@ -132,11 +128,13 @@ void draw() {
   if (record) {
     JSONObject values = new JSONObject();
     values.setInt("id", recordingIndex);
-    values.setFloat("rotation", random(360));
-    values.setFloat("heading", random(360));
+    values.setFloat("roll", rotationX);
+    values.setFloat("heading", rotationY);
+    values.setFloat("pitch", rotationZ);
     recording.setJSONObject(recordingIndex, values);
     recordingIndex++;
-    debugText.setText(debugText.getText() + recordingIndex + "\n");
+    debugText.setText(debugText.getText() + values + "\n");
+    debugText.scroll(1);
   }
 }
 
@@ -147,7 +145,7 @@ void serialEvent(Serial port) {
   println(s);
   if (s.indexOf("{") > -1) {  
     JSON obj = JSON.parse(s);    
-    cp5.getController("rotationX").setValue(map(obj.getFloat("tilt"), -90, 90, 0, 360));
+    cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
     cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
     cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
   }
@@ -201,6 +199,15 @@ void fileSelected(File selection) {
   }
 }
 
+
+// helper to dump a list of available serial ports into the passed in DropdownList
+void getBluetoothDeviceList(DropdownList list) {
+  String[] ports = Serial.list();
+  for (int p = 0; p < ports.length; p++) {
+    String port = ports[p];
+    bluetoothDeviceList.addItem(port, p);
+  }
+}
 
 // helper function to start a bluetooth connection based on the selected dropdown list item
 void connectBluetooth(int val) {
