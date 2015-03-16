@@ -1,9 +1,9 @@
 #include <SPI.h>
-
 #include <SFE_LSM9DS0.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
+#include <ArduinoJson.h>
 
 
 // called this way, it uses the default address 0x40
@@ -38,7 +38,6 @@ byte ledAddress2 = 0x70;
 int lastR = 0;
 int lastG = 100;
 int lastB = 200;
-
 
 
 ///////////////////////
@@ -94,6 +93,8 @@ void setup ()
 
 }
 
+String test = "";
+
 void loop () 
 { 
 
@@ -102,6 +103,31 @@ void loop ()
    printAccel(); // Print "A: ax, ay, az"
    printMag();   // Print "M: mx, my, mz"
    */
+  Serial.println(mySerial.available());
+  if (mySerial.available() > -1) {
+    test = "";
+    boolean rec = true;
+    while (mySerial.available() && rec) {
+      char b = mySerial.read();
+      String s = String(b);
+      if (s != ";") {
+        test = test + s;
+      } 
+      else {
+        rec = false;
+      }
+    }
+    Serial.println(test);
+
+    // expected string something like:
+    // roll:12.0,heading:180.29,pitch:123.00;
+    String roll = test.substring(0, test.indexOf(":"));
+    String heading = test.substring(test.indexOf(":") + 1, test.indexOf("pitch") - 2);
+    String pitch = test.substring(test.lastIndexOf(":" + 1)); 
+
+    Serial.println(roll + " " + heading + " " + pitch);
+
+  }
 
   float accel[3];
 
@@ -163,14 +189,10 @@ void loop ()
     lastB = 0;
   }
 
-
   int r = lastR;
   int g = lastG;
   int b = lastB;
-
-
-
-  Serial.println(String(r) + "," + String(g) + "," + String(b));
+  //Serial.println(String(r) + "," + String(g) + "," + String(b));
 
   setRGB(r, g, b);
 
@@ -272,6 +294,10 @@ void printOrientation(float x, float y, float z, float *pdata)
   pdata[0] = pitch;
   pdata[1] = roll;
 }
+
+
+
+
 
 
 

@@ -42,6 +42,7 @@ Serial connection;
 JSONArray recording = new JSONArray();
 int recordingIndex = 0;
 boolean record = false;
+boolean play = false;
 
 int playbackIndex = 0;
 JSONArray playback = new JSONArray();
@@ -154,7 +155,18 @@ void draw() {
     if (playbackIndex > playback.size() - 1) {
       playbackIndex = 0;
     }
-    
+
+    //if (play) {
+    if (connection != null) {
+      try {
+        connection.write("roll:" + rotationX + ",heading:" + rotationY + ",pitch:" + rotationZ + ";");
+      }
+      catch (RuntimeException e) {
+        println("play: exception " + e.getMessage());
+      }
+    }
+    //}
+
     // TODO send this info back to arduino
   }
 
@@ -255,7 +267,7 @@ void connectBluetooth(int val) {
   String[] ports = Serial.list();
   try {
     println(Serial.list());
-    println("Attempting to open serial port: " + ports[val]);
+    println("Attempting to open serial port: " + ports[int(bluetoothDeviceList.getValue())]);
     connection = new Serial(this, ports[int(bluetoothDeviceList.getValue())], 9600);
 
     // set a character that limits transactions and initiates reading the buffer
