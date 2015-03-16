@@ -32,6 +32,8 @@ String initialCommand = "listening.";
 
 Textarea debugText;
 DropdownList bluetoothDeviceList;
+RadioButton mode;
+int modeSelected = 0;
 
 Serial connection;
 
@@ -40,6 +42,9 @@ Serial connection;
 JSONArray recording = new JSONArray();
 int recordingIndex = 0;
 boolean record = false;
+
+int playbackIndex = 0;
+JSONArray playback = new JSONArray();
 
 
 void setup() {
@@ -63,7 +68,21 @@ void setup() {
   getBluetoothDeviceList(bluetoothDeviceList);        
 
 
-  
+
+  mode = cp5.addRadioButton("modeRadioButton")
+    .setPosition(50, 500)
+      .setSize(10, 10)
+        .setColorForeground(color(120))
+          .setColorActive(color(255))
+            .setColorLabel(color(0))
+              .setItemsPerRow(3)
+                .setSpacingColumn(30)
+                  .addItem("loop", 0)
+                    .addItem("live", 1)
+                      .addItem("file", 2)
+                        ;
+  mode.activate(0);
+  modeSelected = 0;
 
 
   // manual rotation for cube visualisation
@@ -113,7 +132,7 @@ void draw() {
   c.render();
 
   // show spinny animation until connected
-  if (connection == null) {
+  if (modeSelected == 0) {
     rotationX += 0.5;
     rotationY += 1;
     rotationZ += 2;
@@ -123,6 +142,20 @@ void draw() {
     cp5.getController("rotationX").setValue(rotationX);
     cp5.getController("rotationY").setValue(rotationY);
     cp5.getController("rotationZ").setValue(rotationZ);
+  } else if (modeSelected == 2) {
+
+    println(playback.getJSONObject(playbackIndex));  
+    JSONObject values = playback.getJSONObject(playbackIndex);
+    cp5.getController("rotationX").setValue(values.getFloat("roll"));
+    cp5.getController("rotationY").setValue(values.getFloat("heading"));
+    cp5.getController("rotationZ").setValue(values.getFloat("pitch"));
+
+    playbackIndex++;
+    if (playbackIndex > playback.size() - 1) {
+      playbackIndex = 0;
+    }
+    
+    // TODO send this info back to arduino
   }
 
   if (record) {
@@ -152,8 +185,26 @@ void serialEvent(Serial port) {
 }
 
 
+void modeRadioButton(int a) {
+  modeSelected = a;
+}
+
 void loadFile(int val) {
   selectInput("File", "fileSelected");
+}
+void fileSelected(File selection) {
+  if (selection != null) {
+    try {
+      JSONArray values = loadJSONArray(selection);
+      playback = values;
+      playbackIndex = 0;
+      mode.activate(2);
+      modeSelected = 2;
+    } 
+    catch (RuntimeException e) {
+      println("loadFile failed, " + e.getMessage());
+    }
+  }
 }
 
 
@@ -187,18 +238,6 @@ void fileToSave(File selection) {
   }
 }
 
-void fileSelected(File selection) {
-  if (selection != null) {
-    try {
-      JSONArray values = loadJSONArray(selection);
-      println(values);
-    } 
-    catch (RuntimeException e) {
-      println("loadFile failed, " + e.getMessage());
-    }
-  }
-}
-
 
 // helper to dump a list of available serial ports into the passed in DropdownList
 void getBluetoothDeviceList(DropdownList list) {
@@ -211,6 +250,8 @@ void getBluetoothDeviceList(DropdownList list) {
 
 // helper function to start a bluetooth connection based on the selected dropdown list item
 void connectBluetooth(int val) {
+  mode.activate(1);
+  modeSelected = 1;
   String[] ports = Serial.list();
   try {
     println(Serial.list());
@@ -229,6 +270,8 @@ void connectBluetooth(int val) {
 
 // helper function to close the bluetooth connection
 void closeBluetooth(int val) {
+  mode.activate(0);
+  modeSelected = 0;
   try {
     connection.stop();
     connection = null;
