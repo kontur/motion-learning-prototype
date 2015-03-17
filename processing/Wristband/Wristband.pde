@@ -47,10 +47,11 @@ boolean play = false;
 int playbackIndex = 0;
 JSONArray playback = new JSONArray();
 
+Grapher graph;
+
 
 void setup() {
   size(winW, winH, P3D);
-
   cp5 = new ControlP5(this);
 
   // bluetooth connect UI
@@ -122,6 +123,8 @@ void setup() {
           .setColor(0)
             .setColorBackground(color(255, 100))
               .setColorBackground(color(255, 100));
+
+  graph = new Grapher(250, 450, 400, 100);
 }
 
 void draw() {
@@ -181,6 +184,11 @@ void draw() {
     debugText.setText(debugText.getText() + values + "\n");
     debugText.scroll(1);
   }
+
+  JSONObject obj = new JSONObject();
+  obj.setFloat("rotationX", rotationX);
+  graph.addData(obj);
+  graph.plot();
 }
 
 

@@ -2,3 +2,4 @@
 *.b#*
 *.s#*
 processing/Wristband/data/
+processing/Wristband/build-tmp/
