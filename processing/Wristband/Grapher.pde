@@ -1,3 +1,6 @@
+import java.util.Iterator;
+import java.awt.Color;
+
 class Grapher {
 
 	JSONArray data = new JSONArray();
@@ -7,9 +10,10 @@ class Grapher {
 	float h = 100;
 	int index = 0;
 
-	float resolution = 1;
+	float resolutionX = 1;
 	float position = 0;
-	float scaleY = 400; // the max (and -min) extreme mapping on y
+	// resolutionY is more range, misleading terming to be fixed
+	float resolutionY = 400; // the max (and -min) extreme mapping on y
 
 
 	Grapher(float _x, float _y, float _w, float _h) {
@@ -76,10 +80,10 @@ class Grapher {
 		rect(x, y, w, h);
 
 		// loop all data objects in range to be drawn
-		// we get range by looking at resolution and width to determine how many fit
+		// we get range by looking at resolutionX and width to determine how many fit
 		// then take as many from the back of the data and plot them in
 
-		int points = floor(w / resolution);
+		int points = floor(w / resolutionX);
 
 		// counting from x to 0 (or as many data points as there are available in data)
 		// in steps of 1
@@ -87,17 +91,25 @@ class Grapher {
 		int drawingStart = points > data.size() ? points - data.size() : 0;
 		int indexStart = points > data.size() ? 0 : data.size() - points;
 
-		// 0 - 400 for 100 values draws 100 from 300 - 400
-		// 0 - 400 for 500 values draws 400 from 0 - 400 starting with 100
+		int c = 0;
+		ArrayList<Color> colors = new ArrayList<Color>();
+		colors.add(new Color(255, 0, 0));
+		colors.add(new Color(0, 255, 0));
+		colors.add(new Color(0, 0, 255));
+
 		for (int i = 0; i < min(points, data.size()); i++) {
-			// point x is w - i (* resolution?)
-			float point_x = i * resolution;
-			
+			c = 0;
+			float point_x = i * resolutionX;
 			JSONObject dataAtPoint = data.getJSONObject(indexStart + i);
+			Iterator it = dataAtPoint.keys().iterator();
 
-			point(x + drawingStart + point_x, y + h / 2 + dataAtPoint.getFloat("rotationX") / scaleY / 2 * 100);
+			while (it.hasNext()) {
+				stroke(colors.get(c).getRGB());
+				Object k = it.next();
+				point(x + drawingStart + point_x, y + h / 2 - dataAtPoint.getFloat(k.toString()) / resolutionY / 2 * 100);
+				c++;
+			}			
 		}
-
 	}
 
 

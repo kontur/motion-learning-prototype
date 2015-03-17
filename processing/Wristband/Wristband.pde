@@ -124,7 +124,7 @@ void setup() {
             .setColorBackground(color(255, 100))
               .setColorBackground(color(255, 100));
 
-  graph = new Grapher(250, 450, 400, 100);
+  graph = new Grapher(250, 450, 300, 100);
 }
 
 void draw() {
@@ -187,6 +187,8 @@ void draw() {
 
   JSONObject obj = new JSONObject();
   obj.setFloat("rotationX", rotationX);
+  obj.setFloat("rotationY", rotationY);
+  obj.setFloat("rotationZ", rotationZ);
   graph.addData(obj);
   graph.plot();
 }
