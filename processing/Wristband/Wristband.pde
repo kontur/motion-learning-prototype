@@ -12,6 +12,9 @@ float rotationX = 0;
 float rotationY = 0;
 float rotationZ = 0;
 
+float rotationMin = 0;
+float rotationMax = 360;
+
 
 // TODO fullscreen?
 int winW = 800;
