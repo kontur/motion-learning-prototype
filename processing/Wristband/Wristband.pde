@@ -95,15 +95,14 @@ void draw() {
             playbackIndex = 0;
         }
 
-        //if (play) {
         if (connection != null) {
-        try {
-            connection.write("roll:" + rotationX + ",heading:" + rotationY + ",pitch:" + rotationZ + ";");
+            try {
+                connection.write("roll:" + rotationX + ",heading:" + rotationY + ",pitch:" + rotationZ + ";");
+            }
+            catch (RuntimeException e) {
+                println("play: exception " + e.getMessage());
+            }
         }
-        catch (RuntimeException e) {
-            println("play: exception " + e.getMessage());
-        }
-    }
 
     // TODO send this info back to arduino
     }

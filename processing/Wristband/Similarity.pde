@@ -11,26 +11,17 @@ class Similarity {
 
 
 	float compare(double[][] d1, double[][] d2) {
-		ArrayList<Float> v1 = new ArrayList<Float>();
-		v1.add(1.00);
-		v1.add(1.00);
-		v1.add(1.00);
-		ArrayList<Float> v2 = new ArrayList<Float>();
-		v2.add(1.00);
-		v2.add(2.12);
-		v2.add(1.00);
-		ArrayList<Float> v3 = new ArrayList<Float>();
-		v3.add(1.00);
-		v3.add(2.15);
-		v3.add(1.10);
-		
+
         // get the principal components of the multidimensional array of values (i.e. 9 dof x time)
+        // for both sets of data to compare
 		double[][] pcaA = getPCA(d1);
 		println(pcaA.length, pcaA[0].length);
 
 		double[][] pcaB = getPCA(d2);
 		println(pcaB.length, pcaB[0].length);
 		
+		// create ArrayList multidimensional vectors and store as many principal components as found
+		// from the two data sets both
 		ArrayList<Float> vA = new ArrayList<Float>();
 		ArrayList<Float> vB = new ArrayList<Float>();
 
@@ -40,12 +31,18 @@ class Similarity {
 			vB.add(new Double(pcaB[i][0]).floatValue());
 		}
 		println("similarity between", vA, vB);
-		println(getCosineSimilarity(vA, vB));
-	
 
-		return 0.00;
+		float similarity = getCosineSimilarity(vA, vB);
+		return similarity;
 	}
 
+
+	/**
+	 * Cosine similarity implemented following explanations from:
+	 * http://www.gettingcirrius.com/2010/12/calculating-similarity-part-1-cosine.html
+	 *
+	 * @return float similarity of multidimensional "vectors" a and b
+	 */
 	float getCosineSimilarity(ArrayList<Float> a, ArrayList<Float> b) {
 		// Take the dot product of vectors A and B.
 		// Calculate the magnitude of Vector A.
@@ -69,21 +66,27 @@ class Similarity {
 		magnitudeA = sqrt(magnitudeA);
 		magnitudeB = sqrt(magnitudeB);
 		float cosineSimilarity = dot / (magnitudeA * magnitudeB);
+		
 		return cosineSimilarity;
 	}
 
 
+	/**
+	 * Wrapper for http://www2.thu.edu.tw/~wenwei/examples/javastat/PCA.htm
+	 *
+	 * @return double[][] multidimensional array of principal components
+	 */
 	double[][] getPCA(double values[][]) {
 		// Non-null constructor 
-		PCA testclass1 = new PCA(0.95, "covariance", values); 
-		double [] firstComponent = testclass1.principalComponents[0]; 
+		PCA pca = new PCA(0.95, "covariance", values); 
+		double [] firstComponent = pca.principalComponents[0]; 
 		for (double d : firstComponent) {
 			println("Component", d);
 		}
 		// println("TEST1", firstComponent[0], firstComponent[1]);
-		// println("TEST1", testclass1.principalComponents);
+		// println("TEST1", pca.principalComponents);
 
-		return testclass1.principalComponents;
+		return pca.principalComponents;
 	}
 
 }
