@@ -15,6 +15,8 @@ class Grapher {
 	// resolutionY is more range, misleading terming to be fixed
 	float resolutionY = 400; // the max (and -min) extreme mapping on y
 
+	JSONObject config;
+
 
 	Grapher(float _x, float _y, float _w, float _h) {
 		setPosition(_x, _y);
@@ -37,6 +39,12 @@ class Grapher {
 	void setPosition(float _x, float _y) {
 		x = _x;
 		y = _y;
+	}
+
+
+	void setConfiguration(JSONObject _config) {
+		config = _config;
+		println("CONFIG \n" + config);
 	}
 
 
@@ -91,23 +99,18 @@ class Grapher {
 		int drawingStart = points > data.size() ? points - data.size() : 0;
 		int indexStart = points > data.size() ? 0 : data.size() - points;
 
-		int c = 0;
-		ArrayList<Color> colors = new ArrayList<Color>();
-		colors.add(new Color(255, 0, 0));
-		colors.add(new Color(0, 255, 0));
-		colors.add(new Color(0, 0, 255));
-
 		for (int i = 0; i < min(points, data.size()); i++) {
-			c = 0;
 			float point_x = i * resolutionX;
 			JSONObject dataAtPoint = data.getJSONObject(indexStart + i);
-			Iterator it = dataAtPoint.keys().iterator();
-
+			Iterator it = dataAtPoint.keyIterator();
 			while (it.hasNext()) {
-				stroke(colors.get(c).getRGB());
 				Object k = it.next();
+				try {
+					stroke(config.getJSONObject(k.toString()).getInt("color"));
+				} catch (Exception e) {
+					stroke(125);
+				}
 				point(x + drawingStart + point_x, y + h / 2 - dataAtPoint.getFloat(k.toString()) / resolutionY / 2 * 100);
-				c++;
 			}			
 		}
 	}

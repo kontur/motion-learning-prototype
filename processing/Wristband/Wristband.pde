@@ -5,7 +5,6 @@
  *
  * file recording and playback fps
  */
-import org.json.*;
 import processing.serial.*;
 import controlP5.*;
 
@@ -37,8 +36,6 @@ int modeSelected = 0;
 
 Serial connection;
 
-
-
 JSONArray recording = new JSONArray();
 int recordingIndex = 0;
 boolean record = false;
@@ -52,80 +49,14 @@ Grapher graph;
 
 void setup() {
   size(winW, winH, P3D);
-  cp5 = new ControlP5(this);
-
-  // bluetooth connect UI
-  cp5.addButton("connectBluetooth")
-    .setPosition(50, 20)
-      .setSize(100, 20);
-
-  cp5.addButton("closeBluetooth")
-    .setPosition(50, 50)
-      .setSize(30, 20);
-
-  bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
-    .setPosition(170, 30)
-      .setSize(150, 200);
-
-  getBluetoothDeviceList(bluetoothDeviceList);        
-
-
-
-  mode = cp5.addRadioButton("modeRadioButton")
-    .setPosition(50, 500)
-      .setSize(10, 10)
-        .setColorForeground(color(120))
-          .setColorActive(color(255))
-            .setColorLabel(color(0))
-              .setItemsPerRow(3)
-                .setSpacingColumn(30)
-                  .addItem("loop", 0)
-                    .addItem("live", 1)
-                      .addItem("file", 2)
-                        ;
-  mode.activate(0);
-  modeSelected = 0;
-
-
-  // manual rotation for cube visualisation
-  cp5.addSlider("rotationX")
-    .setPosition(50, 170)
-      .setRange(rotationMin, rotationMax);
-
-  cp5.addSlider("rotationY")
-    .setPosition(50, 190)
-      .setRange(rotationMin, rotationMax);
-
-  cp5.addSlider("rotationZ")
-    .setPosition(50, 210)
-      .setRange(rotationMin, rotationMax);
-
-
-  // file handling buttons
-  cp5.addButton("loadFile")
-    .setPosition(50, 300)
-      .setSize(100, 20);
-
-  cp5.addButton("recordFile")
-    .setPosition(50, 330)
-      .setSize(100, 20);
-
-  cp5.addButton("saveFile")
-    .setPosition(50, 360)
-      .setSize(100, 20);
-
-
-  // file I/O check textarea
-  debugText = cp5.addTextarea("txt")
-    .setPosition((winW - 200), 0)
-      .setSize((winW - 200), winH)
-        .setFont(createFont("arial", 10))
-          .setColor(0)
-            .setColorBackground(color(255, 100))
-              .setColorBackground(color(255, 100));
-
-  graph = new Grapher(250, 450, 300, 100);
+  setupUI();
+ 
+  JSONObject config = JSONObject.parse("{ \"rotationX\": { \"color\": " + color(255, 0, 0) + 
+    "} , \"rotationY\": { \"color\": " + color(0, 255, 0) + 
+    "}, \"rotationZ\": { \"color\": " + color(0, 0, 255) + "}}");
+  graph.setConfiguration(config);
 }
+
 
 void draw() {
   background(225);
@@ -199,7 +130,7 @@ void serialEvent(Serial port) {
   s = s.substring(0, s.length() - 1);
   println(s);
   if (s.indexOf("{") > -1) {  
-    JSON obj = JSON.parse(s);    
+    JSONObject obj = JSONObject.parse(s);
     cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
     cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
     cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
@@ -211,9 +142,12 @@ void modeRadioButton(int a) {
   modeSelected = a;
 }
 
+
 void loadFile(int val) {
   selectInput("File", "fileSelected");
 }
+
+
 void fileSelected(File selection) {
   if (selection != null) {
     try {
@@ -243,10 +177,12 @@ void recordFile(int val) {
   }
 }
 
+
 void saveFile(int val) {
   println("saveFile " + val);
   selectOutput("File to save to:", "fileToSave");
 }
+
 
 void fileToSave(File selection) {
   println("save to " + selection);
@@ -270,6 +206,7 @@ void getBluetoothDeviceList(DropdownList list) {
   }
 }
 
+
 // helper function to start a bluetooth connection based on the selected dropdown list item
 void connectBluetooth(int val) {
   mode.activate(1);
@@ -289,6 +226,7 @@ void connectBluetooth(int val) {
     // TODO UI feedback
   }
 }
+
 
 // helper function to close the bluetooth connection
 void closeBluetooth(int val) {
