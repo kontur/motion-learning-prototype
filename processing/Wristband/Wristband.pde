@@ -52,6 +52,9 @@ boolean play = false;
 int playbackIndex = 0;
 JSONArray playback = new JSONArray();
 
+int recordLimit = 100;
+Grapher recordingGraph;
+
 
 // graphing the readings
 Grapher graph;
@@ -122,6 +125,11 @@ void draw() {
         recordingIndex++;
         debugText.setText(debugText.getText() + values + "\n");
         debugText.scroll(1);
+        if (recordingIndex == recordLimit) {
+            record = false;
+            recordingGraph = new Grapher(250, 400, 300, 100);
+            recordingGraph.addDataArray(recording);
+        }
     }
 
     JSONObject obj = new JSONObject();
@@ -130,6 +138,10 @@ void draw() {
     obj.setFloat("rotationZ", rotationZ);
     graph.addData(obj);
     graph.plot();
+
+    if (recordingGraph != null) {
+        recordingGraph.plot();
+    }
 
     if (connection != null) {
         tryingToConnect = false;

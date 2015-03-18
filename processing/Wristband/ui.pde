@@ -68,7 +68,7 @@ void setupUI() {
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 0, 255));
 
-	graph = new Grapher(250, 450, 300, 100);
+	graph = new Grapher(250, 500, 300, 100);
 
 
 	// file handling buttons
