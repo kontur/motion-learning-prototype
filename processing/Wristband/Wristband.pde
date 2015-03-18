@@ -8,6 +8,8 @@
 import processing.serial.*;
 import controlP5.*;
 
+String defaultSerial = "/dev/tty.wristbandproto-SPP";
+
 float rotationX = 0;
 float rotationY = 0;
 float rotationZ = 0;
@@ -25,6 +27,7 @@ int winH = 600;
 char[] inBuffer = new char[12];
 int inBufferIndex = 0;
 boolean isConnected = false;
+boolean tryingToConnect = false;
 int baudRate = 9600;
 Serial connection;
 
@@ -37,6 +40,8 @@ RadioButton mode;
 int modeSelected = 0;
 Button buttonConnectBluetooth;
 Button buttonCloseBluetooth;
+CheckBox autoConnect;
+boolean autoConnectActive = false;
 
 
 // playback and recording
@@ -121,21 +126,30 @@ void draw() {
 
     JSONObject obj = new JSONObject();
     obj.setFloat("rotationX", rotationX);
-    obj.setFloat("rotationY", rotationY);
+    //obj.setFloat("rotationY", rotationY);
     obj.setFloat("rotationZ", rotationZ);
     graph.addData(obj);
     graph.plot();
+
+    if (connection != null) {
+        tryingToConnect = false;
+    }
+
+    if (connection == null && autoConnectActive == true && tryingToConnect == false) {
+        println("AUTOCONNECT");
+        connectBluetooth(1);
+    }
 }
 
 
 void serialEvent(Serial port) {
     String s = connection.readString();
     s = s.substring(0, s.length() - 1);
-    println(s);
+    println("serialEvent: ", s);
     if (s.indexOf("{") > -1) {  
     JSONObject obj = JSONObject.parse(s);
         cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
-        cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
+        //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
         cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
     }
 }
@@ -203,9 +217,10 @@ void fileToSave(File selection) {
 // helper to dump a list of available serial ports into the passed in DropdownList
 void getBluetoothDeviceList(DropdownList list) {
     String[] ports = Serial.list();
+    bluetoothDeviceList.addItem("---", 0);
     for (int p = 0; p < ports.length; p++) {
         String port = ports[p];
-        bluetoothDeviceList.addItem(port, p);
+        bluetoothDeviceList.addItem(port, p  + 1);
     }
 }
 
@@ -217,9 +232,14 @@ void connectBluetooth(int val) {
     String[] ports = Serial.list();
     buttonConnectBluetooth.hide();
     try {
+        tryingToConnect = true;
+        String port = defaultSerial;
         println(Serial.list());
-        println("Attempting to open serial port: " + ports[int(bluetoothDeviceList.getValue())]);
-        connection = new Serial(this, ports[int(bluetoothDeviceList.getValue())], 9600);
+        if (bluetoothDeviceList.getValue() != 0) {
+            port = ports[int(bluetoothDeviceList.getValue()) - 1];
+        }
+        println("Attempting to open serial port: " + port);
+        connection = new Serial(this, port, 9600);
 
         // set a character that limits transactions and initiates reading the buffer
         char c = ';';
@@ -231,6 +251,7 @@ void connectBluetooth(int val) {
         println("error: " + e.getMessage());
         buttonConnectBluetooth.show();
         buttonCloseBluetooth.hide();
+        tryingToConnect = false;
     }
 }
 
@@ -251,3 +272,42 @@ void closeBluetooth(int val) {
     buttonCloseBluetooth.hide();
 }
 
+
+void autoConnectCheckbox(float[] vals) {
+    println("autoConnectCheckbox", vals);
+    println(autoConnect.getArrayValue());
+    if (autoConnect.getArrayValue()[0] == 1.00) {
+        autoConnectActive = true;
+    } else {
+        autoConnectActive = false;
+    }
+}
+
+
+void similarity(int val) {
+
+    Similarity s = new Similarity();
+    double [][] testscores = { 
+        {36, 62, 31, 76, 46, 12, 39, 30, 22, 9, 32, 40, 64, 
+          36, 24, 50, 42, 2, 56, 59, 28, 19, 36, 54, 14}, 
+        {58, 54, 42, 78, 56, 42, 46, 51, 32, 40, 49, 62, 75, 
+         38, 46, 50, 42, 35, 53, 72, 50, 46, 56, 57, 35}, 
+        {43, 50, 41, 69, 52, 38, 51, 54, 43, 47, 54, 51, 70, 
+         58, 44, 54, 52, 32, 42, 70, 50, 49, 56, 59, 38}, 
+        {36, 46, 40, 66, 56, 38, 54, 52, 28, 30, 37, 40, 66, 
+         62, 55, 52, 38, 22, 40, 66, 42, 40, 54, 62, 29}, 
+        {37, 52, 29, 81, 40, 28, 41, 32, 22, 24, 52, 49, 63, 
+         62, 49, 51, 50, 16, 32, 62, 63, 30, 52, 58, 20}}; 
+    double [][] testscores2 = { 
+        {36, 62, 31, 76, 46, 12, 39, 30, 22, 9, 32, 40, 64, 
+          36, 24, 50, 42, 2, 56, 59, 28, 19, 36, 54, 14}, 
+        {43, 50, 41, 69, 52, 38, 51, 54, 43, 47, 54, 51, 70, 
+         58, 44, 54, 52, 32, 42, 70, 50, 49, 56, 59, 38}, 
+        {36, 46, 40, 66, 56, 38, 54, 52, 28, 30, 37, 40, 66, 
+         62, 55, 52, 38, 22, 40, 66, 42, 40, 54, 62, 29},
+        {97, 52, 29, 81, 40, 28, 41, 92, 22, 24, 52, 49, 69, 
+         62, 49, 51, 50, 16, 32, 62, 63, 30, 52, 58, 20}, 
+        {58, 54, 42, 78, 56, 42, 46, 51, 32, 40, 49, 62, 75, 
+         38, 46, 50, 42, 35, 53, 72, 50, 46, 56, 57, 35}}; 
+    println(s.compare(testscores, testscores2));
+}

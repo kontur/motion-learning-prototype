@@ -31,8 +31,8 @@ class ColorCube {
         pushMatrix();
         translate(x, y, z);
         rotateX(radians(rotationX));
-        rotateY(radians(rotationY));
         rotateZ(radians(rotationZ));
+        rotateY(radians(rotationY));
         //box(w, d, h);
 
         float w2, d2, h2;

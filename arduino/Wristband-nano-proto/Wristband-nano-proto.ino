@@ -39,6 +39,12 @@ int lastR = 0;
 int lastG = 100;
 int lastB = 200;
 
+int lastRoll = 0;
+int lastHeading = 0;
+int lastPitch = 0;
+
+float easing = 0.5; // 0 - 1 as factor of "last frame reading" impact on new reading
+
 
 ///////////////////////
 // Example I2C Setup //
@@ -138,10 +144,8 @@ void loop ()
   printAccel(&accel[0]);
 
   // Print the heading and orientation for fun!
-  float heading = printHeading((float) dof.mx, (float) dof.my);
+  float headingReading = printHeading((float) dof.mx, (float) dof.my);
   float orientation[2];
-  float pitch;
-  float roll;
 
   printOrientation(
   dof.calcAccel(dof.ax), 
@@ -149,8 +153,10 @@ void loop ()
   dof.calcAccel(dof.az), 
   &orientation[0]
     );
-  pitch = orientation[0];
-  roll = orientation[1];
+  
+  float heading = lastHeading * easing + (1 - easing) * headingReading;
+  float pitch = lastPitch * easing + (1 - easing) * orientation[0];
+  float roll = lastRoll * easing + (1 - easing) * orientation[1];
 
   /*
   Serial.println();
