@@ -1,4 +1,11 @@
+/**
+ * helper file for UI related stuff
+ */
 
+
+/**
+ * setup the UI components
+ */
 void setupUI() {
 
 	int x = 10;
@@ -7,13 +14,14 @@ void setupUI() {
 	cp5 = new ControlP5(this);
 
 	// bluetooth connect UI
-	cp5.addButton("connectBluetooth")
+	buttonConnectBluetooth = cp5.addButton("connectBluetooth")
 	.setPosition(x, 20)
 	.setSize(100, 20);
 
-	cp5.addButton("closeBluetooth")
-	.setPosition(x, 50)
-	.setSize(30, 20);
+	buttonCloseBluetooth = cp5.addButton("closeBluetooth")
+	.setPosition(x, 20)
+	.setSize(100, 20)
+	.hide();
 
 	bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
 	.setPosition(170, 30)
