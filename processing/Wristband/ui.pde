@@ -68,7 +68,7 @@ void setupUI() {
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 0, 255));
 
-	graph = new Grapher(250, 500, 300, 100);
+	graph = new Grapher(200, 500, 400, 100);
 
 
 	// file handling buttons
@@ -76,12 +76,16 @@ void setupUI() {
 	.setPosition(x, 300)
 	.setSize(100, 20);
 
-	cp5.addButton("recordFile")
+	cp5.addButton("recordPattern")
 	.setPosition(x, 330)
 	.setSize(100, 20);
 
-	cp5.addButton("saveFile")
+	cp5.addButton("recordMatch")
 	.setPosition(x, 360)
+	.setSize(100, 20);
+
+	cp5.addButton("saveFile")
+	.setPosition(x, 390)
 	.setSize(100, 20);
 
 
@@ -97,6 +101,6 @@ void setupUI() {
 
 	// helper for testing atm
 	cp5.addButton("similarity")
-	.setPosition(500, 20);
+	.setPosition(500, 350);
 
 }

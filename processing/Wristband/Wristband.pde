@@ -7,6 +7,7 @@
 */
 import processing.serial.*;
 import controlP5.*;
+import java.lang.RuntimeException;
 
 String defaultSerial = "/dev/tty.wristbandproto-SPP";
 
@@ -46,6 +47,8 @@ boolean autoConnectActive = false;
 
 // playback and recording
 JSONArray recording = new JSONArray();
+JSONArray recordingMatch = new JSONArray();
+String recordingWhat = "";
 int recordingIndex = 0;
 boolean record = false;
 boolean play = false;
@@ -54,6 +57,7 @@ JSONArray playback = new JSONArray();
 
 int recordLimit = 100;
 Grapher recordingGraph;
+Grapher recordingMatchGraph;
 
 
 // graphing the readings
@@ -121,14 +125,25 @@ void draw() {
         values.setFloat("roll", rotationX);
         values.setFloat("heading", rotationY);
         values.setFloat("pitch", rotationZ);
-        recording.setJSONObject(recordingIndex, values);
-        recordingIndex++;
+        if (recordingWhat == "pattern") {
+            recording.setJSONObject(recordingIndex, values);
+        } else if (recordingWhat == "match") {
+            recordingMatch.setJSONObject(recordingIndex, values);
+        }
+        recordingIndex++;   
         debugText.setText(debugText.getText() + values + "\n");
         debugText.scroll(1);
         if (recordingIndex == recordLimit) {
             record = false;
-            recordingGraph = new Grapher(250, 400, 300, 100);
-            recordingGraph.addDataArray(recording);
+            if (recordingWhat == "pattern") {
+                recordingGraph = new Grapher(400, 400, 200, 100);
+                recordingGraph.addDataArray(recording);
+            } else if (recordingWhat == "match") {
+                recordingMatchGraph = new Grapher(200, 400, 200, 100);
+                recordingMatchGraph.addDataArray(recordingMatch);                
+            }
+
+            recordingWhat = "";
         }
     }
 
@@ -141,6 +156,10 @@ void draw() {
 
     if (recordingGraph != null) {
         recordingGraph.plot();
+    }
+
+    if (recordingMatchGraph != null) {
+        recordingMatchGraph.plot();
     }
 
     if (connection != null) {
@@ -157,7 +176,9 @@ void draw() {
 void serialEvent(Serial port) {
     String s = connection.readString();
     s = s.substring(0, s.length() - 1);
-    println("serialEvent: ", s);
+    
+    //println("serialEvent: ", s);
+
     if (s.indexOf("{") > -1) {  
     JSONObject obj = JSONObject.parse(s);
         cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
@@ -193,14 +214,27 @@ void fileSelected(File selection) {
 }
 
 
-void recordFile(int val) {
+void recordPattern(int val) {   // recordingIndex = 0;
+    // recording = new JSONArray();
+    // debugText.setText("");
+    // record = true;
+    recordSample(recording);
+    recordingWhat = "pattern";
+}
+
+void recordMatch(int val) {
+    recordSample(recordingMatch);
+    recordingWhat = "match";
+}
+
+void recordSample(JSONArray data) {
     if (record) {
         println("finish recording");
         record = false;
     } else {
-        print("start recording");
+        print("start recording");     
         recordingIndex = 0;
-        recording = new JSONArray();
+        data = new JSONArray();
         debugText.setText("");
         record = true;
     }
@@ -296,9 +330,36 @@ void autoConnectCheckbox(float[] vals) {
 }
 
 
+/**
+ * Button click handler to start calculating matches
+ */
 void similarity(int val) {
 
+    if (recording == null || recordingMatch == null) {
+        throw new RuntimeException("Similarity calculation missing information");
+    }
+
+
     Similarity s = new Similarity();
+    double [][] patternValues = new double[2][100];
+    double [][] matchValues = new double[2][100];
+
+    // TODO also check JSONArray lengths for equality
+    for (int i = 0; i < recording.size(); i++) {
+        JSONObject recordingAtI = recording.getJSONObject(i);
+        patternValues[0][i] = (double)recordingAtI.getFloat("roll");
+        patternValues[1][i] = (double)recordingAtI.getFloat("pitch");
+
+        JSONObject matchAtI = recordingMatch.getJSONObject(i);
+        matchValues[0][i] = (double)matchAtI.getFloat("roll");
+        matchValues[1][i] = (double)matchAtI.getFloat("pitch");
+    }
+
+    float sim = s.compare(patternValues, matchValues);
+    println(sim);
+    debugText.setText("" + sim);
+
+    /*
     double [][] testscores = { 
         {36, 62, 31, 76, 46, 12, 39, 30, 22, 9, 32, 40, 64, 
           36, 24, 50, 42, 2, 56, 59, 28, 19, 36, 54, 14}, 
@@ -321,5 +382,5 @@ void similarity(int val) {
          62, 49, 51, 50, 16, 32, 62, 63, 30, 52, 58, 20}, 
         {58, 54, 42, 78, 56, 42, 46, 51, 32, 40, 49, 62, 75, 
          38, 46, 50, 42, 35, 53, 72, 50, 46, 56, 57, 35}}; 
-    println(s.compare(testscores, testscores2));
+     */
 }
