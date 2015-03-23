@@ -66,13 +66,15 @@ float[] mag = new float[3];
 
 // graphing the readings
 Grapher graph;
-JSONObject config = JSONObject.parse("{ \"rotationX\": { \"color\": " + color(255, 0, 0) + 
-  "} , \"rotationY\": { \"color\": " + color(0, 255, 0) + "}, " + 
-  "\"rotationZ\": { \"color\": " + color(0, 0, 255) + "}, " +
-  "\"accelX\": { \"color\": " + color(0, 125, 0) + "}, " +
-  "\"accelY\": { \"color\": " + color(0, 125, 50) + "}, " +
-  "\"accelZ\": { \"color\": " + color(0, 125, 125) + "} " 
-  + "}");
+JSONObject config = JSONObject.parse("{ " + 
+    "\"resolutionX\": 1.00, \"resolutionY\": 400.00, " +
+    "\"rotationX\": { \"color\": " + color(255, 0, 0) + "}, " + 
+    "\"rotationY\": { \"color\": " + color(0, 255, 0) + "}, " + 
+    "\"rotationZ\": { \"color\": " + color(0, 0, 255) + "}, " +
+    "\"accelX\": { \"color\": " + color(0, 125, 0) + "}, " +
+    "\"accelY\": { \"color\": " + color(0, 125, 50) + "}, " +
+    "\"accelZ\": { \"color\": " + color(0, 125, 125) + "} " 
+    + "}");
 
 
 void setup() {

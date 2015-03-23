@@ -31,9 +31,9 @@ void setupUI() {
 
 	autoConnect = cp5.addCheckBox("autoConnectCheckbox")
 	.setPosition(x, 50)
-	.addItem("on", 1)
-	.activate(0);
-	autoConnectActive = true;
+	.addItem("on", 1);
+	// .activate(0);
+	// autoConnectActive = true;
 
 
 	mode = cp5.addRadioButton("modeRadioButton")
