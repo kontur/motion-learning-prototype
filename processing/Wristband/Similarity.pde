@@ -12,6 +12,12 @@ class Similarity {
 
 	float compare(double[][] d1, double[][] d2) {
 
+		// for (int a = 0; a < d1.length; a++) {
+		// 	for (int b = 0; b < d1[a].length; b++) {
+		// 		println("a", a, "b", b, d1[a][b]);
+		// 	}
+		// }
+
         // get the principal components of the multidimensional array of values (i.e. 9 dof x time)
         // for both sets of data to compare
 		double[][] pcaA = getPCA(d1);
@@ -25,12 +31,18 @@ class Similarity {
 		ArrayList<Float> vA = new ArrayList<Float>();
 		ArrayList<Float> vB = new ArrayList<Float>();
 
-		for (int i = 0; i < min(pcaA.length, pcaB.length); i++) {
+		for (int i = 0; i < min(pcaA[0].length, pcaB[0].length); i++) {
 			println("adding similarity principal component dimension " + i + " for comparison");
-			vA.add(new Double(pcaA[i][0]).floatValue());
-			vB.add(new Double(pcaB[i][0]).floatValue());
+			try {
+				float a = new Double(pcaA[0][i]).floatValue();
+				float b = new Double(pcaB[0][i]).floatValue();
+				vA.add(a);
+				vB.add(b);	
+			} catch (RuntimeException e) {
+				println(e);
+			}
 		}
-		println("similarity between", vA, vB);
+		println("similarity between", vA, vB, vA.size(), vB.size());
 
 		float similarity = getCosineSimilarity(vA, vB);
 		return similarity;
@@ -65,6 +77,7 @@ class Similarity {
 
 		magnitudeA = sqrt(magnitudeA);
 		magnitudeB = sqrt(magnitudeB);
+		println("dot", dot, "magnitudeA", magnitudeA, "magnitudeB", magnitudeB);
 		float cosineSimilarity = dot / (magnitudeA * magnitudeB);
 		
 		return cosineSimilarity;
@@ -80,12 +93,10 @@ class Similarity {
 		// Non-null constructor 
 		PCA pca = new PCA(0.95, "covariance", values); 
 		double [] firstComponent = pca.principalComponents[0]; 
+		//println("principalComponents.length " + pca.principalComponents.length);
 		for (double d : firstComponent) {
 			println("Component", d);
 		}
-		// println("TEST1", firstComponent[0], firstComponent[1]);
-		// println("TEST1", pca.principalComponents);
-
 		return pca.principalComponents;
 	}
 

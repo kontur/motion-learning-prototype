@@ -377,18 +377,24 @@ void similarity(int val) {
 
 
     Similarity s = new Similarity();
-    double [][] patternValues = new double[2][100];
-    double [][] matchValues = new double[2][100];
+    double [][] patternValues = new double[5][100];
+    double [][] matchValues = new double[5][100];
 
     // TODO also check JSONArray lengths for equality
     for (int i = 0; i < recording.size(); i++) {
         JSONObject recordingAtI = recording.getJSONObject(i);
         patternValues[0][i] = (double)recordingAtI.getFloat("roll");
         patternValues[1][i] = (double)recordingAtI.getFloat("pitch");
+        patternValues[2][i] = (double)recordingAtI.getFloat("accelX");
+        patternValues[3][i] = (double)recordingAtI.getFloat("accelY");
+        patternValues[4][i] = (double)recordingAtI.getFloat("accelZ");
 
         JSONObject matchAtI = recordingMatch.getJSONObject(i);
         matchValues[0][i] = (double)matchAtI.getFloat("roll");
         matchValues[1][i] = (double)matchAtI.getFloat("pitch");
+        matchValues[2][i] = (double)matchAtI.getFloat("accelX");
+        matchValues[3][i] = (double)matchAtI.getFloat("accelY");
+        matchValues[4][i] = (double)matchAtI.getFloat("accelZ");
     }
 
     float sim = s.compare(patternValues, matchValues);
