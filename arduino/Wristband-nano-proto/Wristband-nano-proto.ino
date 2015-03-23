@@ -103,13 +103,6 @@ String test = "";
 
 void loop () 
 { 
-
-  /*
-  printGyro();  // Print "G: gx, gy, gz"
-   printAccel(); // Print "A: ax, ay, az"
-   printMag();   // Print "M: mx, my, mz"
-   */
-  Serial.println(mySerial.available());
   if (mySerial.available() > -1) {
     test = "";
     boolean rec = true;
@@ -123,7 +116,6 @@ void loop ()
         rec = false;
       }
     }
-    Serial.println(test);
 
     // expected string something like:
     // roll:12.0,heading:180.29,pitch:123.00;
@@ -140,6 +132,21 @@ void loop ()
   dof.readGyro();
   dof.readAccel();
   dof.readMag();
+  
+  
+  printMag();
+  /*
+  Serial.println(dof.calcMag(dof.mx));
+  Serial.println(dof.calcMag(dof.my));
+  Serial.println(dof.calcMag(dof.mz));
+  Serial.println("---");
+  */
+
+  /*
+  printGyro();  // Print "G: gx, gy, gz"
+  printAccel(); // Print "A: ax, ay, az"
+  printMag();   // Print "M: mx, my, mz"
+  */
 
   printAccel(&accel[0]);
 
@@ -153,7 +160,7 @@ void loop ()
   dof.calcAccel(dof.az), 
   &orientation[0]
     );
-  
+
   float heading = lastHeading * easing + (1 - easing) * headingReading;
   float pitch = lastPitch * easing + (1 - easing) * orientation[0];
   float roll = lastRoll * easing + (1 - easing) * orientation[1];
@@ -204,7 +211,16 @@ void loop ()
 
   mySerial.println("{ heading: " + String(heading) + 
     ", pitch: " + String(pitch) + 
-    ", roll: " + String(roll) + " };");
+    ", roll: " + String(roll) + 
+    ", magX: " + String(dof.calcMag(dof.mx)) + 
+    ", magY: " + String(dof.calcMag(dof.my)) +
+    ", magZ: " + String(dof.calcMag(dof.mz)) +  
+    ", gyroX: " + String(dof.calcGyro(dof.gx)) + 
+    ", gyroY: " + String(dof.calcGyro(dof.gy)) +
+    ", gyroZ: " + String(dof.calcGyro(dof.gz)) +  
+    ", accelX: " + String(dof.calcAccel(dof.ax)) + 
+    ", accelY: " + String(dof.calcAccel(dof.ay)) +
+    ", accelZ: " + String(dof.calcAccel(dof.az)) + " };");
 
   delay(1000/12);
 }
@@ -235,7 +251,6 @@ void printAccel(float *pdata)
   // readAccel() function. When this exits, it'll update the
   // ax, ay, and az variables with the most current data.
   dof.readAccel();
-
 
   pdata[0] = dof.calcAccel(dof.ax);
   pdata[1] = dof.calcAccel(dof.ay);
@@ -280,7 +295,7 @@ float printHeading(float hx, float hy)
 
   // normalized for Helsinki, Finland
   // ?!?
-  heading = heading - 8;
+  // heading = heading - 8;
 
   return heading;
 }
@@ -300,6 +315,7 @@ void printOrientation(float x, float y, float z, float *pdata)
   pdata[0] = pitch;
   pdata[1] = roll;
 }
+
 
 
 

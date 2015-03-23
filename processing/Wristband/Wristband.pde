@@ -59,12 +59,20 @@ int recordLimit = 100;
 Grapher recordingGraph;
 Grapher recordingMatchGraph;
 
+float[] accel = new float[3];
+float[] gyro = new float[3];
+float[] mag = new float[3];
+
 
 // graphing the readings
 Grapher graph;
 JSONObject config = JSONObject.parse("{ \"rotationX\": { \"color\": " + color(255, 0, 0) + 
-  "} , \"rotationY\": { \"color\": " + color(0, 255, 0) + 
-  "}, \"rotationZ\": { \"color\": " + color(0, 0, 255) + "}}");
+  "} , \"rotationY\": { \"color\": " + color(0, 255, 0) + "}, " + 
+  "\"rotationZ\": { \"color\": " + color(0, 0, 255) + "}, " +
+  "\"accelX\": { \"color\": " + color(0, 125, 0) + "}, " +
+  "\"accelY\": { \"color\": " + color(0, 125, 50) + "}, " +
+  "\"accelZ\": { \"color\": " + color(0, 125, 125) + "} " 
+  + "}");
 
 
 void setup() {
@@ -91,7 +99,7 @@ void draw() {
         if (rotationY > 360) rotationY = 0;
         if (rotationZ > 360) rotationZ = 0;
         cp5.getController("rotationX").setValue(rotationX);
-        cp5.getController("rotationY").setValue(rotationY);
+        //cp5.getController("rotationY").setValue(rotationY);
         cp5.getController("rotationZ").setValue(rotationZ);
 
     } else if (modeSelected == 2) {
@@ -99,7 +107,7 @@ void draw() {
         println(playback.getJSONObject(playbackIndex));  
         JSONObject values = playback.getJSONObject(playbackIndex);
         cp5.getController("rotationX").setValue(values.getFloat("roll"));
-        cp5.getController("rotationY").setValue(values.getFloat("heading"));
+        //cp5.getController("rotationY").setValue(values.getFloat("heading"));
         cp5.getController("rotationZ").setValue(values.getFloat("pitch"));
 
         playbackIndex++;
@@ -125,6 +133,13 @@ void draw() {
         values.setFloat("roll", rotationX);
         values.setFloat("heading", rotationY);
         values.setFloat("pitch", rotationZ);
+        values.setFloat("accelX", map(accel[0], -1, 1, 0, 300));
+        values.setFloat("accelY", map(accel[1], -1, 1, 0, 300));
+        values.setFloat("accelZ", map(accel[2], -1, 1, 0, 300));
+        values.setFloat("gyroX", map(gyro[0], -360, 360, 0, 300));
+        values.setFloat("gyroY", map(gyro[1], -360, 360, 0, 300));
+        values.setFloat("gyroZ", map(gyro[2], -360, 360, 0, 300));
+
         if (recordingWhat == "pattern") {
             recording.setJSONObject(recordingIndex, values);
         } else if (recordingWhat == "match") {
@@ -151,6 +166,16 @@ void draw() {
     obj.setFloat("rotationX", rotationX);
     //obj.setFloat("rotationY", rotationY);
     obj.setFloat("rotationZ", rotationZ);
+    // obj.setFloat("accelX", map(accel[0], -1, 1, 0, 300));
+    // obj.setFloat("accelY", map(accel[1], -1, 1, 0, 300));
+    // obj.setFloat("accelZ", map(accel[2], -1, 1, 0, 300));
+    // obj.setFloat("gyroX", map(gyro[0], -360, 360, 0, 300));
+    // obj.setFloat("gyroY", map(gyro[1], -360, 360, 0, 300));
+    // obj.setFloat("gyroZ", map(gyro[2], -360, 360, 0, 300));
+    // obj.setFloat("magX", map(mag[0], -1, 1, 0, 300));
+    // obj.setFloat("magY", map(mag[1], -1, 1, 0, 300));
+    // obj.setFloat("magZ", map(mag[2], -1, 1, 0, 300));
+
     graph.addData(obj);
     graph.plot();
 
@@ -177,13 +202,22 @@ void serialEvent(Serial port) {
     String s = connection.readString();
     s = s.substring(0, s.length() - 1);
     
-    //println("serialEvent: ", s);
+    // println("serialEvent: ", s);
 
-    if (s.indexOf("{") > -1) {  
+    if (s.indexOf("{") > -1) {
     JSONObject obj = JSONObject.parse(s);
         cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
         //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
         cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
+        accel[0] = obj.getFloat("accelX");
+        accel[1] = obj.getFloat("accelY");
+        accel[2] = obj.getFloat("accelZ");
+        gyro[0] = obj.getFloat("gyroX");
+        gyro[1] = obj.getFloat("gyroY");
+        gyro[2] = obj.getFloat("gyroZ");
+        mag[0] = obj.getFloat("magX");
+        mag[1] = obj.getFloat("magY");
+        mag[2] = obj.getFloat("magZ");
     }
 }
 
