@@ -36,8 +36,10 @@ class Similarity {
 			try {
 				float a = new Double(pcaA[0][i]).floatValue();
 				float b = new Double(pcaB[0][i]).floatValue();
-				vA.add(a);
-				vB.add(b);	
+				if (a != 0.0 && b != 0.0) {
+					vA.add(a);
+					vB.add(b);	
+				}
 			} catch (RuntimeException e) {
 				println(e);
 			}
@@ -62,6 +64,8 @@ class Similarity {
 		// Multiple the magnitudes of A and B.
 		// Divide the dot product of A and B by the product of the magnitudes of A and B.
 
+		int dimensions = a.size();
+
 		if (a.size() != b.size()) {
 			throw new RuntimeException("Vector dimensions mismatch");
 		}
@@ -69,10 +73,14 @@ class Similarity {
 		float dot = 0;
 		float magnitudeA = 0;
 		float magnitudeB = 0;
-		for (int d = 0; d < a.size(); d++) {
+		for (int d = 0; d < dimensions; d++) {
+			// println("a", a.get(d), "a2", (a.get(d) * a.get(d)), "b", b.get(d), "b2", (b.get(d) * b.get(d)));
+			
 			dot += a.get(d) * b.get(d);
-			magnitudeA += (a.get(d) * a.get(d));
-			magnitudeB += (b.get(d) * b.get(d));
+
+			magnitudeA += pow(a.get(d), 2);
+			magnitudeB += pow(b.get(d), 2);
+			println("magnitudeA", magnitudeA, "magnitudeB", magnitudeB);
 		}
 
 		magnitudeA = sqrt(magnitudeA);

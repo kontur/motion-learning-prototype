@@ -8,6 +8,10 @@
 import processing.serial.*;
 import controlP5.*;
 import java.lang.RuntimeException;
+import javax.swing.*; 
+
+VisualizationFrame visualizationFrame; // the window holding the visualization
+Visualization v;
 
 String defaultSerial = "/dev/tty.wristbandproto-SPP";
 
@@ -91,6 +95,10 @@ void draw() {
     c.setRotation(rotationX, rotationY, rotationZ);
     c.setPosition(winW / 2, winH / 2, 0);
     c.render();
+
+    if (visualizationFrame != null) {
+        v.setColor(int(random(25)));
+    }
 
     // show spinny animation until connected
     if (modeSelected == 0) {
@@ -425,4 +433,14 @@ void similarity(int val) {
         {58, 54, 42, 78, 56, 42, 46, 51, 32, 40, 49, 62, 75, 
          38, 46, 50, 42, 35, 53, 72, 50, 46, 56, 57, 35}}; 
      */
+}
+
+
+void startVisualization() {
+    // visualization frame
+    visualizationFrame = new VisualizationFrame(displayWidth, displayHeight);
+    frame.setTitle("first window");
+    visualizationFrame.setTitle("second window");
+    fill(0);
+    v = visualizationFrame.getVisualization();
 }

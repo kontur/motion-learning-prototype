@@ -89,6 +89,12 @@ void setupUI() {
 	.setSize(100, 20);
 
 
+	//
+	cp5.addButton("startVisualization")
+	.setPosition(x, 200)
+	.setSize(100, 20);
+
+
 	// file I/O check textarea
 	debugText = cp5.addTextarea("txt")
 	.setPosition((winW - 200), 0)
