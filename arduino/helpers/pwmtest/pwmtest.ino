@@ -47,14 +47,15 @@ int val = 0;
 int newval = 0;
 int valStep = 10;
 void loop() {
-  /*
+  
   // Drive each PWM in a 'wave'
   for (uint16_t i=0; i<4096; i += 8) {
     for (uint8_t pwmnum=0; pwmnum < 16; pwmnum++) {
+      Serial.println((i + (4096/16)*pwmnum) % 4096);
       pwm.setPWM(pwmnum, 0, (i + (4096/16)*pwmnum) % 4096 );
     }
   }
-  */
+  /*
   if (val > 4096 || val < 0) {
     valStep *= -1;
   }
@@ -64,4 +65,5 @@ void loop() {
   pwm.setPWM(1, 0, newval);
   pwm.setPWM(2, 0, newval);
   val = newval;
+  */
 }

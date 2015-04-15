@@ -13,7 +13,8 @@ import javax.swing.*;
 VisualizationFrame visualizationFrame; // the window holding the visualization
 Visualization v;
 
-String defaultSerial = "/dev/tty.wristbandproto-SPP";
+//String defaultSerial = "/dev/tty.wristbandproto-SPP";
+String defaultSerial = "/dev/tty.RNBT-C094-RNI-SPP";
 
 float rotationX = 0;
 float rotationY = 0;
@@ -215,10 +216,11 @@ void serialEvent(Serial port) {
     // println("serialEvent: ", s);
 
     if (s.indexOf("{") > -1) {
-    JSONObject obj = JSONObject.parse(s);
+        JSONObject obj = JSONObject.parse(s);
         cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
         //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
         cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
+        /*
         accel[0] = obj.getFloat("accelX");
         accel[1] = obj.getFloat("accelY");
         accel[2] = obj.getFloat("accelZ");
@@ -228,6 +230,7 @@ void serialEvent(Serial port) {
         mag[0] = obj.getFloat("magX");
         mag[1] = obj.getFloat("magY");
         mag[2] = obj.getFloat("magZ");
+        */
     }
 }
 

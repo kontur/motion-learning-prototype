@@ -11,24 +11,16 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // you can also call it with a different address you want
 //Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x41);
 
-
-
 const int baudrate = 9600;
 
-const int rx = 8;
-const int tx = 7;
-SoftwareSerial mySerial(rx,tx);
+const int rx = 7;
+const int tx = 8;
+SoftwareSerial mySerial(rx, tx);
+
+const int onBoardLedPin = 6;
 
 int data[2];
 int serialIndex = 0;
-
-
-int pinLedR = 3;
-int pinLedG = 5;
-int pinLedB = 6;
-//int pinBluetoothTx = 5;
-//int pinBluetoothRx = 6;
-
 
 int lastRotation = 0;
 
@@ -66,29 +58,22 @@ LSM9DS0 dof(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
 
 #define PRINT_SPEED 500 // 500 ms between prints
 
-void setup () 
+void setup ()
 {
-  //Serial.begin(115200); // Start serial at 115200 bps
-
-  //Serial.begin(baudrate);
-  //Serial.println("listening.");
+  Serial.begin(9600);
+  Serial.println("hello serial");
   mySerial.begin(baudrate);
 
-  pinMode(pinLedR, OUTPUT);
-  pinMode(pinLedG, OUTPUT);
-  pinMode(pinLedB, OUTPUT);
 
   uint16_t status = dof.begin();
-  /*
   Serial.print("LSM9DS0 WHO_AM_I's returned: 0x");
-   Serial.println(status, HEX);
-   Serial.println("Should be 0x49D4");
-   Serial.println();
-   */
+  Serial.println(status, HEX);
+  Serial.println("Should be 0x49D4");
+  Serial.println();
 
-  Serial.begin(9600);
 
-  // adafruit pwm driver  
+
+  // adafruit pwm driver
   pwm.begin();
   pwm.setPWMFreq(1600);  // This is the maximum PWM frequency
 
@@ -97,12 +82,14 @@ void setup ()
   // must be changed after calling Wire.begin() (inside pwm.begin())
   TWBR = 12; // upgrade to 400KHz!
 
+  analogWrite(onBoardLedPin, LOW);
+  
 }
 
 String test = "";
 
-void loop () 
-{ 
+void loop ()
+{
   if (mySerial.available() > -1) {
     test = "";
     boolean rec = true;
@@ -111,7 +98,7 @@ void loop ()
       String s = String(b);
       if (s != ";") {
         test = test + s;
-      } 
+      }
       else {
         rec = false;
       }
@@ -121,7 +108,7 @@ void loop ()
     // roll:12.0,heading:180.29,pitch:123.00;
     String roll = test.substring(0, test.indexOf(":"));
     String heading = test.substring(test.indexOf(":") + 1, test.indexOf("pitch") - 2);
-    String pitch = test.substring(test.lastIndexOf(":" + 1)); 
+    String pitch = test.substring(test.lastIndexOf(":" + 1));
 
     Serial.println(roll + " " + heading + " " + pitch);
 
@@ -132,8 +119,8 @@ void loop ()
   dof.readGyro();
   dof.readAccel();
   dof.readMag();
-  
-  
+
+
   printMag();
   /*
   Serial.println(dof.calcMag(dof.mx));
@@ -155,11 +142,11 @@ void loop ()
   float orientation[2];
 
   printOrientation(
-  dof.calcAccel(dof.ax), 
-  dof.calcAccel(dof.ay), 
-  dof.calcAccel(dof.az), 
-  &orientation[0]
-    );
+    dof.calcAccel(dof.ax),
+    dof.calcAccel(dof.ay),
+    dof.calcAccel(dof.az),
+    &orientation[0]
+  );
 
   float heading = lastHeading * easing + (1 - easing) * headingReading;
   float pitch = lastPitch * easing + (1 - easing) * orientation[0];
@@ -167,12 +154,12 @@ void loop ()
 
   /*
   Serial.println();
-   
+
    Serial.println(heading);
    Serial.println(orientation[0]);
    Serial.println(orientation[1]);
-   
-   
+
+
    Serial.println();
    Serial.print("accel ");
    Serial.print(accel[0]);
@@ -208,27 +195,41 @@ void loop ()
   //Serial.println(String(r) + "," + String(g) + "," + String(b));
 
   setRGB(r, g, b);
+  
+  Serial.println("{ heading: " + String(heading) +
+                   ", pitch: " + String(pitch) +
+                   ", roll: " + String(roll) +
+                   ", magX: " + String(dof.calcMag(dof.mx)) +
+                   ", magY: " + String(dof.calcMag(dof.my)) +
+                   ", magZ: " + String(dof.calcMag(dof.mz)) +
+                   ", gyroX: " + String(dof.calcGyro(dof.gx)) +
+                   ", gyroY: " + String(dof.calcGyro(dof.gy)) +
+                   ", gyroZ: " + String(dof.calcGyro(dof.gz)) +
+                   ", accelX: " + String(dof.calcAccel(dof.ax)) +
+                   ", accelY: " + String(dof.calcAccel(dof.ay)) +
+                   ", accelZ: " + String(dof.calcAccel(dof.az)) + " };");
 
-  mySerial.println("{ heading: " + String(heading) + 
-    ", pitch: " + String(pitch) + 
-    ", roll: " + String(roll) + 
-    ", magX: " + String(dof.calcMag(dof.mx)) + 
-    ", magY: " + String(dof.calcMag(dof.my)) +
-    ", magZ: " + String(dof.calcMag(dof.mz)) +  
-    ", gyroX: " + String(dof.calcGyro(dof.gx)) + 
-    ", gyroY: " + String(dof.calcGyro(dof.gy)) +
-    ", gyroZ: " + String(dof.calcGyro(dof.gz)) +  
-    ", accelX: " + String(dof.calcAccel(dof.ax)) + 
-    ", accelY: " + String(dof.calcAccel(dof.ay)) +
-    ", accelZ: " + String(dof.calcAccel(dof.az)) + " };");
+  mySerial.println("{ heading: " + String(heading) +
+                   ", pitch: " + String(pitch) +
+                   ", roll: " + String(roll) +
+                   ", magX: " + String(dof.calcMag(dof.mx)) +
+                   ", magY: " + String(dof.calcMag(dof.my)) +
+                   ", magZ: " + String(dof.calcMag(dof.mz)) +
+                   ", gyroX: " + String(dof.calcGyro(dof.gx)) +
+                   ", gyroY: " + String(dof.calcGyro(dof.gy)) +
+                   ", gyroZ: " + String(dof.calcGyro(dof.gz)) +
+                   ", accelX: " + String(dof.calcAccel(dof.ax)) +
+                   ", accelY: " + String(dof.calcAccel(dof.ay)) +
+                   ", accelZ: " + String(dof.calcAccel(dof.az)) + " };");
 
-  delay(1000/12);
+  delay(1000 / 12);
 }
 
 
 // helper to controll the LED colors
-void setRGB (int r, int g, int b) 
+void setRGB (int r, int g, int b)
 {
+  //Serial.println("setRGB " + String(r) + " " + String(g) + " " + String(b));
   pwm.setPWM(0, 0, map(r, 0, 255, 4096, 0));
   pwm.setPWM(1, 0, map(g, 0, 255, 4096, 0));
   pwm.setPWM(2, 0, map(b, 0, 255, 4096, 0));
