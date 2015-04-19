@@ -61,29 +61,6 @@ int notes[] = {
 };
 
 
-/*
-///////////////////////
-// Example I2C Setup //
-///////////////////////
-// Comment out this section if you're using SPI
-// SDO_XM and SDO_G are both grounded, so our addresses are:
-LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
-LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
-// Create an instance of the LSM9DS0 library called `dof` the
-// parameters for this constructor are:
-// [SPI or I2C Mode declaration],[gyro I2C address],[xm I2C add.]
-LSM9DS0 dof(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
-
-// Do you want to print calculated values or raw ADC ticks read
-// from the sensor? Comment out ONE of the two #defines below
-// to pick:
-PRINT_CALCULATED
-//PRINT_RAW
-
-PRINT_SPEED 500 // 500 ms between prints
-*/
-
-
 // custom pcb led channels for pwm library access
 // led numbers with USB connector facing toward you, left top is 1, then clockwise
 // note that with 4 leds a 3 channels not all 16 pwm channels are used
@@ -115,15 +92,6 @@ void setup ()
   delay(5);
   dof.init(); //begin the IMU
   delay(5);
-
-  /*
-    uint16_t status = dof.begin();
-    Serial.print("LSM9DS0 WHO_AM_I's returned: 0x");
-    Serial.println(status, HEX);
-    Serial.println("Should be 0x49D4");
-    Serial.println();
-  */
-
 
   // adafruit pwm driver
   pwm.begin();
@@ -203,10 +171,20 @@ void loop ()
   // the new reading, thus easing the value to be less jumpy for drastic changes
   float pitch = lastPitch * easing + (1 - easing) * pitchReading;
   float roll = lastRoll * easing + (1 - easing) * rollReading;
+  
+  float values[6];
+  dof.getValues(values);
 
   String p = "{ heading: " + String(heading) +
              ", pitch: " + String(pitch) +
-             ", roll: " + String(roll) + " };";
+             ", roll: " + String(roll) + 
+             ", accelX: " + String(values[0]) +
+             ", accelY: " + String(values[1]) +
+             ", accelZ: " + String(values[2]) +
+             ", gyroX: " + String(values[3]) +
+             ", gyroY: " + String(values[4]) +
+             ", gyroZ: " + String(values[5]) +           
+             " };";
 
   // print to bluetooth connection and debug monitor
   mySerial.println(p);

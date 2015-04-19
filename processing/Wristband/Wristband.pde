@@ -47,7 +47,7 @@ int modeSelected = 0;
 Button buttonConnectBluetooth;
 Button buttonCloseBluetooth;
 CheckBox autoConnect;
-boolean autoConnectActive = false;
+boolean autoConnectActive = true;
 
 
 // playback and recording
@@ -72,7 +72,7 @@ float[] mag = new float[3];
 // graphing the readings
 Grapher graph;
 JSONObject config = JSONObject.parse("{ " + 
-    "\"resolutionX\": 1.00, \"resolutionY\": 400.00, " +
+    "\"resolutionX\": 0.50, \"resolutionY\": 400.00, " +
     "\"rotationX\": { \"color\": " + color(255, 0, 0) + "}, " + 
     "\"rotationY\": { \"color\": " + color(0, 255, 0) + "}, " + 
     "\"rotationZ\": { \"color\": " + color(0, 0, 255) + "}, " +
@@ -80,6 +80,19 @@ JSONObject config = JSONObject.parse("{ " +
     "\"accelY\": { \"color\": " + color(0, 125, 50) + "}, " +
     "\"accelZ\": { \"color\": " + color(0, 125, 125) + "} " 
     + "}");
+JSONObject configPatterns = JSONObject.parse("{ " + 
+    "\"resolutionX\": 1.00, \"resolutionY\": 400.00, " +
+    "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
+    "\"heading\": { \"color\": " + color(0, 255, 0) + "}, " + 
+    "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, " +
+    "\"accelX\": { \"color\": " + color(0, 125, 0) + "}, " +
+    "\"accelY\": { \"color\": " + color(0, 125, 50) + "}, " +
+    "\"accelZ\": { \"color\": " + color(0, 125, 125) + "}, " +
+    "\"gyroX\": { \"color\": " + color(0, 125, 0) + "}, " +
+    "\"gyroY\": { \"color\": " + color(0, 125, 50) + "}, " +
+    "\"gyroZ\": { \"color\": " + color(0, 125, 125) + "} " 
+    + "}");
+
 
 
 void setup() {
@@ -110,7 +123,7 @@ void draw() {
         if (rotationY > 360) rotationY = 0;
         if (rotationZ > 360) rotationZ = 0;
         cp5.getController("rotationX").setValue(rotationX);
-        //cp5.getController("rotationY").setValue(rotationY);
+        cp5.getController("rotationY").setValue(rotationY);
         cp5.getController("rotationZ").setValue(rotationZ);
 
     } else if (modeSelected == 2) {
@@ -118,7 +131,7 @@ void draw() {
         println(playback.getJSONObject(playbackIndex));  
         JSONObject values = playback.getJSONObject(playbackIndex);
         cp5.getController("rotationX").setValue(values.getFloat("roll"));
-        //cp5.getController("rotationY").setValue(values.getFloat("heading"));
+        cp5.getController("rotationY").setValue(values.getFloat("heading"));
         cp5.getController("rotationZ").setValue(values.getFloat("pitch"));
 
         playbackIndex++;
@@ -162,10 +175,12 @@ void draw() {
         if (recordingIndex == recordLimit) {
             record = false;
             if (recordingWhat == "pattern") {
-                recordingGraph = new Grapher(400, 400, 200, 100);
+                recordingGraph = new Grapher(200, 400, 200, 100);
+                recordingGraph.setConfiguration(configPatterns);
                 recordingGraph.addDataArray(recording);
             } else if (recordingWhat == "match") {
-                recordingMatchGraph = new Grapher(200, 400, 200, 100);
+                recordingMatchGraph = new Grapher(400, 400, 200, 100);
+                recordingMatchGraph.setConfiguration(configPatterns);
                 recordingMatchGraph.addDataArray(recordingMatch);                
             }
 
@@ -175,7 +190,7 @@ void draw() {
 
     JSONObject obj = new JSONObject();
     obj.setFloat("rotationX", rotationX);
-    //obj.setFloat("rotationY", rotationY);
+    obj.setFloat("rotationY", rotationY);
     obj.setFloat("rotationZ", rotationZ);
     // obj.setFloat("accelX", map(accel[0], -1, 1, 0, 300));
     // obj.setFloat("accelY", map(accel[1], -1, 1, 0, 300));
@@ -218,15 +233,17 @@ void serialEvent(Serial port) {
     if (s.indexOf("{") > -1) {
         JSONObject obj = JSONObject.parse(s);
         cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
-        //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
+        cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
         cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
-        /*
+        
         accel[0] = obj.getFloat("accelX");
         accel[1] = obj.getFloat("accelY");
         accel[2] = obj.getFloat("accelZ");
         gyro[0] = obj.getFloat("gyroX");
         gyro[1] = obj.getFloat("gyroY");
         gyro[2] = obj.getFloat("gyroZ");
+
+        /*
         mag[0] = obj.getFloat("magX");
         mag[1] = obj.getFloat("magY");
         mag[2] = obj.getFloat("magZ");

@@ -76,16 +76,8 @@ void setupUI() {
 	.setPosition(x, 300)
 	.setSize(100, 20);
 
-	cp5.addButton("recordPattern")
-	.setPosition(x, 330)
-	.setSize(100, 20);
-
-	cp5.addButton("recordMatch")
-	.setPosition(x, 360)
-	.setSize(100, 20);
-
 	cp5.addButton("saveFile")
-	.setPosition(x, 390)
+	.setPosition(x, 330)
 	.setSize(100, 20);
 
 
@@ -105,8 +97,18 @@ void setupUI() {
 	.setColorBackground(color(255, 100));
 
 
+
 	// helper for testing atm
+
+	cp5.addButton("recordPattern")
+	.setPosition(500, 300)
+	.setSize(100, 20);
+
+	cp5.addButton("recordMatch")
+	.setPosition(500, 330)
+	.setSize(100, 20);
+
 	cp5.addButton("similarity")
-	.setPosition(500, 350);
+	.setPosition(500, 360);
 
 }
