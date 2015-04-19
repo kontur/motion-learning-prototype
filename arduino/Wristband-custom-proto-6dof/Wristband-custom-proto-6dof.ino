@@ -12,6 +12,7 @@
 #include <FIMU_ADXL345.h>
 #include <FIMU_ITG3200.h>
 
+// defined shortcuts for notes with common musical names
 #include "pitches.h"
 
 // called this way, it uses the default address 0x40
@@ -172,24 +173,9 @@ void loop ()
   float pitch = lastPitch * easing + (1 - easing) * pitchReading;
   float roll = lastRoll * easing + (1 - easing) * rollReading;
   
+  // get the raw values of accelerometer (index 0-2) and magnetometer (index 3-5)
   float values[6];
   dof.getValues(values);
-
-  String p = "{ heading: " + String(heading) +
-             ", pitch: " + String(pitch) +
-             ", roll: " + String(roll) + 
-             ", accelX: " + String(values[0]) +
-             ", accelY: " + String(values[1]) +
-             ", accelZ: " + String(values[2]) +
-             ", gyroX: " + String(values[3]) +
-             ", gyroY: " + String(values[4]) +
-             ", gyroZ: " + String(values[5]) +           
-             " };";
-
-  // print to bluetooth connection and debug monitor
-  mySerial.println(p);
-  //Serial.println(p);
-
 
 
   // calculate some values for feedback from current sensor readings
@@ -202,19 +188,19 @@ void loop ()
   // play notes on movement
   // ======================
 
-  Serial.println(headingDifference);
-  Serial.println(heading);
+  //Serial.println(headingDifference);
+  //Serial.println(heading);
 
   if (abs(headingDifference) > 5) {
     int noteIndex = map(headingDifference, -90, 90, 0, 6);
     note = notes[noteIndex];
-    Serial.println("new note");
-    Serial.println(note);
+    //Serial.println("new note");
+    //Serial.println(note);
   }
 
   if (lastNoteStarted == 0 || lastNoteStarted > millis() + 1000 / 3) {
-    Serial.println("play new note");
     if (note > 0 && note != lastNote) {
+      Serial.println("play new note");
       tone(buzzerPin, note, 1000 / 3);
       lastNote = note;
     }
@@ -246,7 +232,7 @@ void loop ()
   // abs() does a bit weird things, so tenary abs() and * 100 in one
   hueDifference = hueDifference < 0 ? hueDifference * -100 : hueDifference * 100;
   // * 5 to amplify difference value => sensitiviy
-  hueDifference = constrain(hueDifference * 4, 0, 100);
+  hueDifference = constrain(hueDifference * 2, 0, 100);
   int vibration = map(hueDifference, 0, 100, 0, 255);
   if (vibration > 125) {
     analogWrite(vibrationPin, vibration);
@@ -277,6 +263,25 @@ void loop ()
   lastHeading = heading;
   lastPitch = pitch;
   lastRoll = roll;
+  
+  
+  
+  
+  String p = "{ heading: " + String(heading) +
+             ", pitch: " + String(pitch) +
+             ", roll: " + String(roll) + 
+             ", accelX: " + String(values[0]) +
+             ", accelY: " + String(values[1]) +
+             ", accelZ: " + String(values[2]) +
+             ", gyroX: " + String(values[3]) +
+             ", gyroY: " + String(values[4]) +
+             ", gyroZ: " + String(values[5]) +
+             ", rgb: \"" + rgbColor[0] + "," + rgbColor[1] + "," + rgbColor[2] + "\""
+             " };";
+
+  // print to bluetooth connection and debug monitor
+  mySerial.println(p);
+  //Serial.println(p);
 }
 
 

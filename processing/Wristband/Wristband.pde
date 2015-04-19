@@ -6,9 +6,17 @@
 * file recording and playback fps
 */
 import processing.serial.*;
+import processing.opengl.*;
+
 import controlP5.*;
+
 import java.lang.RuntimeException;
+import java.awt.Color;
+
 import javax.swing.*; 
+
+import toxi.geom.*;
+
 
 VisualizationFrame visualizationFrame; // the window holding the visualization
 Visualization v;
@@ -47,7 +55,8 @@ int modeSelected = 0;
 Button buttonConnectBluetooth;
 Button buttonCloseBluetooth;
 CheckBox autoConnect;
-boolean autoConnectActive = true;
+// flag for automatically trying to connect to the default bluetooth device
+boolean autoConnectActive = false; 
 
 
 // playback and recording
@@ -67,10 +76,12 @@ Grapher recordingMatchGraph;
 float[] accel = new float[3];
 float[] gyro = new float[3];
 float[] mag = new float[3];
+Color deviceRGB;
 
 
 // graphing the readings
 Grapher graph;
+
 JSONObject config = JSONObject.parse("{ " + 
     "\"resolutionX\": 0.50, \"resolutionY\": 400.00, " +
     "\"rotationX\": { \"color\": " + color(255, 0, 0) + "}, " + 
@@ -80,6 +91,7 @@ JSONObject config = JSONObject.parse("{ " +
     "\"accelY\": { \"color\": " + color(0, 125, 50) + "}, " +
     "\"accelZ\": { \"color\": " + color(0, 125, 125) + "} " 
     + "}");
+    
 JSONObject configPatterns = JSONObject.parse("{ " + 
     "\"resolutionX\": 1.00, \"resolutionY\": 400.00, " +
     "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
@@ -96,7 +108,7 @@ JSONObject configPatterns = JSONObject.parse("{ " +
 
 
 void setup() {
-    size(winW, winH, P3D);
+    size(winW, winH, OPENGL);
     setupUI();
     graph.setConfiguration(config);
 }
@@ -110,8 +122,18 @@ void draw() {
     c.setPosition(winW / 2, winH / 2, 0);
     c.render();
 
+    // interact with the second open window which displays the visualization
     if (visualizationFrame != null) {
-        v.setColor(int(random(25)));
+        if (deviceRGB != null) {
+            v.setColor(deviceRGB);
+        }
+
+        float limit = 0.85;
+        v.setDirection(new Vec3D(
+            map(rotationX, 0, 360, -limit, limit), 
+            map(rotationZ, 0, 360, -limit, limit),             
+            map(rotationY, 0, 360, -limit, limit)
+        ));
     }
 
     // show spinny animation until connected
@@ -125,6 +147,11 @@ void draw() {
         cp5.getController("rotationX").setValue(rotationX);
         cp5.getController("rotationY").setValue(rotationY);
         cp5.getController("rotationZ").setValue(rotationZ);
+        deviceRGB = new Color(
+            int(map(rotationX, 0, 360, 0, 255)), 
+            int(map(rotationY, 0, 360, 0, 255)), 
+            int(map(rotationZ, 0, 360, 0, 255))
+        );
 
     } else if (modeSelected == 2) {
 
@@ -218,7 +245,7 @@ void draw() {
     }
 
     if (connection == null && autoConnectActive == true && tryingToConnect == false) {
-        println("AUTOCONNECT");
+        log("Autoconnect set");
         connectBluetooth(1);
     }
 }
@@ -228,8 +255,9 @@ void serialEvent(Serial port) {
     String s = connection.readString();
     s = s.substring(0, s.length() - 1);
     
-    // println("serialEvent: ", s);
+    //println("serialEvent: ", s);
 
+    // if the serial string read contains a json opening { parse info from arduino
     if (s.indexOf("{") > -1) {
         JSONObject obj = JSONObject.parse(s);
         cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
@@ -243,6 +271,11 @@ void serialEvent(Serial port) {
         gyro[1] = obj.getFloat("gyroY");
         gyro[2] = obj.getFloat("gyroZ");
 
+
+        String rgb = obj.getString("rgb");
+        String colorComponents[] = rgb.split(",");
+        deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
+    
         /*
         mag[0] = obj.getFloat("magX");
         mag[1] = obj.getFloat("magY");
@@ -272,7 +305,7 @@ void fileSelected(File selection) {
             modeSelected = 2;
         } 
         catch (RuntimeException e) {
-           println("loadFile failed, " + e.getMessage());
+           log("LoadFile failed, " + e.getMessage());
         }
     }
 }
@@ -293,10 +326,10 @@ void recordMatch(int val) {
 
 void recordSample(JSONArray data) {
     if (record) {
-        println("finish recording");
+        log("Finish recording");
         record = false;
     } else {
-        print("start recording");     
+        log("Start recording");     
         recordingIndex = 0;
         data = new JSONArray();
         debugText.setText("");
@@ -306,7 +339,7 @@ void recordSample(JSONArray data) {
 
 
 void saveFile(int val) {
-    println("saveFile " + val);
+    log("SaveFile " + val);
     selectOutput("File to save to:", "fileToSave");
 }
 
@@ -341,14 +374,15 @@ void connectBluetooth(int val) {
     modeSelected = 1;
     String[] ports = Serial.list();
     buttonConnectBluetooth.hide();
+    String port = defaultSerial;
+    println(Serial.list());
+    if (bluetoothDeviceList.getValue() != 0) {
+        port = ports[int(bluetoothDeviceList.getValue()) - 1];
+    }
+    log("Attempting to open serial port: " + port); 
+    
     try {
         tryingToConnect = true;
-        String port = defaultSerial;
-        println(Serial.list());
-        if (bluetoothDeviceList.getValue() != 0) {
-            port = ports[int(bluetoothDeviceList.getValue()) - 1];
-        }
-        println("Attempting to open serial port: " + port);
         connection = new Serial(this, port, 9600);
 
         // set a character that limits transactions and initiates reading the buffer
@@ -356,9 +390,10 @@ void connectBluetooth(int val) {
         connection.bufferUntil(byte(c));
         buttonConnectBluetooth.hide();
         buttonCloseBluetooth.show();
+        log("Bluetooth connected to " + port);
     } 
     catch (RuntimeException e) {
-        println("error: " + e.getMessage());
+        log("Error opening serial port " + port + ": \n" + e.getMessage());
         buttonConnectBluetooth.show();
         buttonCloseBluetooth.hide();
         tryingToConnect = false;
@@ -400,6 +435,7 @@ void autoConnectCheckbox(float[] vals) {
 void similarity(int val) {
 
     if (recording == null || recordingMatch == null) {
+        log("Can't calculate similarity, missing pattern or match to test against");
         throw new RuntimeException("Similarity calculation missing information");
     }
 
@@ -426,8 +462,7 @@ void similarity(int val) {
     }
 
     float sim = s.compare(patternValues, matchValues);
-    println(sim);
-    debugText.setText("" + sim);
+    log("Calucalted similarity from 0 - 1: " + sim);
 
     /*
     double [][] testscores = { 
@@ -458,9 +493,22 @@ void similarity(int val) {
 
 void startVisualization() {
     // visualization frame
-    visualizationFrame = new VisualizationFrame(displayWidth, displayHeight);
-    frame.setTitle("first window");
-    visualizationFrame.setTitle("second window");
-    fill(0);
-    v = visualizationFrame.getVisualization();
+    log("Starting visualization");
+    try {
+        visualizationFrame = new VisualizationFrame(displayWidth, displayHeight);
+        frame.setTitle("Motion Learning");
+        visualizationFrame.setTitle("Motion Learning - Visualization");
+        fill(0);
+        v = visualizationFrame.getVisualization();
+    } catch (RuntimeException e) {
+        log("Failed to initiate visualization. \n Error: " + e.getMessage());
+    }
 }
+
+
+void log(String msg) {
+    msg = msg + "\n" + debugText.getText();
+    debugText.setText(msg);
+}
+
+
