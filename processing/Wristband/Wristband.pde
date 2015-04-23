@@ -219,16 +219,7 @@ void draw() {
     obj.setFloat("rotationX", rotationX);
     obj.setFloat("rotationY", rotationY);
     obj.setFloat("rotationZ", rotationZ);
-    // obj.setFloat("accelX", map(accel[0], -1, 1, 0, 300));
-    // obj.setFloat("accelY", map(accel[1], -1, 1, 0, 300));
-    // obj.setFloat("accelZ", map(accel[2], -1, 1, 0, 300));
-    // obj.setFloat("gyroX", map(gyro[0], -360, 360, 0, 300));
-    // obj.setFloat("gyroY", map(gyro[1], -360, 360, 0, 300));
-    // obj.setFloat("gyroZ", map(gyro[2], -360, 360, 0, 300));
-    // obj.setFloat("magX", map(mag[0], -1, 1, 0, 300));
-    // obj.setFloat("magY", map(mag[1], -1, 1, 0, 300));
-    // obj.setFloat("magZ", map(mag[2], -1, 1, 0, 300));
-
+    
     graph.addData(obj);
     graph.plot();
 
@@ -275,12 +266,6 @@ void serialEvent(Serial port) {
         String rgb = obj.getString("rgb");
         String colorComponents[] = rgb.split(",");
         deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
-    
-        /*
-        mag[0] = obj.getFloat("magX");
-        mag[1] = obj.getFloat("magY");
-        mag[2] = obj.getFloat("magZ");
-        */
     }
 }
 
@@ -311,7 +296,8 @@ void fileSelected(File selection) {
 }
 
 
-void recordPattern(int val) {   // recordingIndex = 0;
+void recordPattern(int val) {   
+    // recordingIndex = 0;
     // recording = new JSONArray();
     // debugText.setText("");
     // record = true;
@@ -438,7 +424,6 @@ void similarity(int val) {
         log("Can't calculate similarity, missing pattern or match to test against");
         throw new RuntimeException("Similarity calculation missing information");
     }
-
 
     Similarity s = new Similarity();
     double [][] patternValues = new double[5][100];

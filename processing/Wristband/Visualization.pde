@@ -11,6 +11,7 @@ import java.awt.Color;
 
 
 
+
 public class Visualization extends PApplet {
 
   private Color c;
