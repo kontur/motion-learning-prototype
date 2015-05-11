@@ -22,7 +22,8 @@ VisualizationFrame visualizationFrame; // the window holding the visualization
 Visualization v;
 
 //String defaultSerial = "/dev/tty.wristbandproto-SPP";
-String defaultSerial = "/dev/tty.RNBT-C094-RNI-SPP";
+//String defaultSerial = "/dev/tty.RNBT-C094-RNI-SPP";
+String defaultSerial = "/dev/cu.RNBT-BF5D-RNI-SPP";
 
 float rotationX = 0;
 float rotationY = 0;
@@ -56,7 +57,7 @@ Button buttonConnectBluetooth;
 Button buttonCloseBluetooth;
 CheckBox autoConnect;
 // flag for automatically trying to connect to the default bluetooth device
-boolean autoConnectActive = false; 
+boolean autoConnectActive = true; 
 
 
 // playback and recording
@@ -245,6 +246,7 @@ void draw() {
 void serialEvent(Serial port) {
     String s = connection.readString();
     s = s.substring(0, s.length() - 1);
+    println(s);
     
     //println("serialEvent: ", s);
 
@@ -255,6 +257,8 @@ void serialEvent(Serial port) {
         cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
         cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
         
+        println(obj.getFloat("pitch"));
+
         accel[0] = obj.getFloat("accelX");
         accel[1] = obj.getFloat("accelY");
         accel[2] = obj.getFloat("accelZ");
