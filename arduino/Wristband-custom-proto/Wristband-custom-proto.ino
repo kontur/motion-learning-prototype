@@ -53,6 +53,14 @@ float lastAccel[3];
 float lastGyro[3];
 float lastMag[3];
 
+float changeAccel[3] = { 0, 0, 0 };
+float changeGyro[3] = { 0, 0, 0 };
+float changeMag[3] = { 0, 0, 0 };
+
+float maxAccel[3] = { 1, 1, 1 };
+float maxGyro[3] = { 200, 200, 200 };
+float maxMag[3] = { 0.25, 0.25, 0.25 };
+
 float easing = 0.5; // 0 - 1 as factor of "last frame reading" impact on new reading
 
 
@@ -102,16 +110,16 @@ void setup ()
   pwmR.setPWMFreq(1600);  // This is the maximum PWM frequency
   pwmL.begin();
   pwmL.setPWMFreq(1600);
-  
+
   // save I2C bitrate
   uint8_t twbrbackup = TWBR;
   // must be changed after calling Wire.begin() (inside pwm.begin())
   TWBR = 12; // upgrade to 400KHz!
 
   analogWrite(onBoardLedPin, LOW);
-  
+
   setRGBs(0, 0, 0);
-  
+
   delay(500);
 
 }
@@ -194,24 +202,95 @@ void loop ()
   );
   pitch = orientation[0];
   roll = orientation[1];
-  
 
-  Serial.println(lastAccel[0] - accel[0]);
-  Serial.println(lastAccel[1] - accel[1]);
-  Serial.println(lastAccel[2] - accel[2]);
-  lastAccel[0] = accel[0];
-  lastAccel[1] = accel[1];
-  lastAccel[2] = accel[2];
+  for (int i = 0; i < 3; i++) {
+    // ease the new values to contain a portion of the previous value, thus making them less
+    // fluctuating at the cost of being slightly less responsive
+    accel[i] = lastAccel[i] * easing + (1 - accel[i] * easing);
+    gyro[i] = lastGyro[i] * easing + (1 - gyro[i] * easing);
+    mag[i] = lastMag[i] * easing + (1 - mag[i] * easing);
+    
+    
+    // dynamically readjust edge values for all three sensor readings if the current new reading goes
+    // beyond the current edge value
+    // note abs() doesn't properly work with floats, so there is slightly less elegant code doing abs()
+    // checks and saves
+    if (accel[i] > 0 && accel[i] > maxAccel[i] ||
+      accel[i] < 0 && accel[i] < -maxAccel[i]) {
+      Serial.print("Incremented max accel ");
+      Serial.print(i);
+      Serial.print(" to abs ");
+      Serial.println(accel[i]);
+      maxAccel[i] = accel[i] > 0 ? accel[i] : -accel[i];
+    }
+    if (gyro[i] > 0 && gyro[i] > maxGyro[i] ||
+      gyro[i] < 0 && gyro[i] < -maxGyro[i]) {
+      Serial.print("Incremented max gyro ");
+      Serial.print(i);
+      Serial.print(" to abs ");
+      Serial.println(gyro[i]);
+      maxGyro[i] = gyro[i] > 0 ? gyro[i] : -gyro[i];
+    }
+    if (mag[i] > 0 && mag[i] > maxMag[i] ||
+      mag[i] < 0 && mag[i] < -maxMag[i]) {
+      Serial.print("Incremented max mag ");
+      Serial.print(i);
+      Serial.print(" to abs ");
+      Serial.println(mag[i]);
+      maxMag[i] = mag[i] > 0 ? mag[i] : -mag[i];
+    }
+  }
+
+  for (int i = 0; i < 3; i++) {
+
+      Serial.print("maxAccel ");
+      Serial.println(maxAccel[i]);
+
+      Serial.print("maxGyro ");
+      Serial.println(maxGyro[i]);
+
+      Serial.print("maxMag ");
+      Serial.println(maxMag[i]);
+    
+    
+    Serial.println(i);
+    Serial.println("new gyro:");
+    Serial.println(gyro[i]);
+    Serial.println("last gyro:");
+    Serial.println(lastGyro[i]);
+    Serial.println(gyro[i] - lastGyro[i]);
+    Serial.println((gyro[i] - lastGyro[i]) / maxGyro[i]);
+    Serial.println((gyro[i] - lastGyro[i]) / maxGyro[i] * 100);
+    Serial.println("***");
+
+    changeAccel[i] = (accel[i] - lastAccel[i]) / maxAccel[i] * 100;
+    changeGyro[i] = (gyro[i] - lastGyro[i]) / maxGyro[i] * 100;
+    Serial.println(changeGyro[i]);
+    changeMag[i] = (mag[i] - lastMag[i]) / maxMag[i] * 100;
+
+    lastAccel[i] = accel[i];
+    lastGyro[i] = gyro[i];
+    lastMag[i] = mag[i];
+  }
+
+  Serial.println("---");
   
- 
-  Serial.println(lastGyro[0] - gyro[0]);
-  Serial.println(lastGyro[1] - gyro[1]);
-  Serial.println(lastGyro[2] - gyro[2]);
-  lastGyro[0] = gyro[0];
-  lastGyro[1] = gyro[1];
-  lastGyro[2] = gyro[2]; 
- 
+  Serial.println(changeAccel[0]);
+  Serial.println(changeAccel[1]);
+  Serial.println(changeAccel[2]);
+  Serial.println("---");
   
+  Serial.println(changeGyro[0]);
+  Serial.println(changeGyro[1]);
+  Serial.println(changeGyro[2]);
+  Serial.println("---");
+  
+  Serial.println(changeMag[0]);
+  Serial.println(changeMag[1]);
+  Serial.println(changeMag[2]);
+  Serial.println("---");
+
+
   String p = "{ heading: " + String(heading) +
              ", pitch: " + String(pitch) +
              ", roll: " + String(roll) +
@@ -230,9 +309,9 @@ void loop ()
   // print to bluetooth connection and debug monitor
   mySerial.println(p);
   Serial.println(p);
-  
- 
-  delay(1000/12);
+
+
+  delay(1000 / 12);
 }
 
 
@@ -254,13 +333,13 @@ void setRGBsL(int red, int green, int blue)
 {
   setRGB(4, red, green, blue);
   setRGB(5, red, green, blue);
-  setRGB(6, red, green, blue);  
+  setRGB(6, red, green, blue);
 }
 void setRGBsR(int red, int green, int blue)
 {
   setRGB(1, red, green, blue);
   setRGB(2, red, green, blue);
-  setRGB(3, red, green, blue);  
+  setRGB(3, red, green, blue);
 }
 
 // helper to control indivudual RGB LED colors
@@ -320,7 +399,7 @@ void setRGB (int led, int red, int green, int blue)
     pwmR.setPin(r, red);
     pwmR.setPin(g, green);
     pwmR.setPin(b, blue);
-  } else { 
+  } else {
     pwmL.setPin(r, red);
     pwmL.setPin(g, green);
     pwmL.setPin(b, blue);
