@@ -49,6 +49,9 @@ int lastRoll = 0;
 int lastHeading = 0;
 int lastPitch = 0;
 int lastRotation = 0;
+float lastAccel[3];
+float lastGyro[3];
+float lastMag[3];
 
 float easing = 0.5; // 0 - 1 as factor of "last frame reading" impact on new reading
 
@@ -94,13 +97,11 @@ void setup ()
   Serial.println("Should be 0x49D4");
   Serial.println();
 
-  /*
   // adafruit pwm driver
   pwmR.begin();
   pwmR.setPWMFreq(1600);  // This is the maximum PWM frequency
   pwmL.begin();
   pwmL.setPWMFreq(1600);
-  */
   
   // save I2C bitrate
   uint8_t twbrbackup = TWBR;
@@ -185,7 +186,6 @@ void loop ()
   getGyro(&gyro[0]);
   getMag(&mag[0]);
   getHeading(dof.mx, dof.my);
-  
   getOrientation(
     dof.calcAccel(dof.ax),
     dof.calcAccel(dof.ay),
@@ -195,6 +195,22 @@ void loop ()
   pitch = orientation[0];
   roll = orientation[1];
   
+
+  Serial.println(lastAccel[0] - accel[0]);
+  Serial.println(lastAccel[1] - accel[1]);
+  Serial.println(lastAccel[2] - accel[2]);
+  lastAccel[0] = accel[0];
+  lastAccel[1] = accel[1];
+  lastAccel[2] = accel[2];
+  
+ 
+  Serial.println(lastGyro[0] - gyro[0]);
+  Serial.println(lastGyro[1] - gyro[1]);
+  Serial.println(lastGyro[2] - gyro[2]);
+  lastGyro[0] = gyro[0];
+  lastGyro[1] = gyro[1];
+  lastGyro[2] = gyro[2]; 
+ 
   
   String p = "{ heading: " + String(heading) +
              ", pitch: " + String(pitch) +
@@ -215,6 +231,7 @@ void loop ()
   mySerial.println(p);
   Serial.println(p);
   
+ 
   delay(1000/12);
 }
 

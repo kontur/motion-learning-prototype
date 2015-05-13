@@ -124,8 +124,12 @@ class Grapher {
         // get how many points there are to draw
         int pointsTotal = min(points, data.size());
 
+        println(pointsTotal);
+        float lastY;
+
         for (int i = 0; i < pointsTotal; i++) {
             float point_x = i * resX;
+            println(point_x);
             JSONObject dataAtPoint = data.getJSONObject(indexStart + i);
             Iterator it = dataAtPoint.keyIterator();
             while (it.hasNext()) {
@@ -135,7 +139,10 @@ class Grapher {
                 } catch (Exception e) {
                     stroke(125);
                 }
-                point(x + drawingStart + point_x, y + h / 2 - dataAtPoint.getFloat(k.toString()) / resY / 2 * 100);
+                float _y = y + h / 2 - dataAtPoint.getFloat(k.toString()) / resY / 2 * 100;
+                point(x + drawingStart + point_x, _y);
+                println("last y ", _y);
+
             }           
         }
     }
