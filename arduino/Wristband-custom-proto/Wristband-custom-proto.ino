@@ -375,7 +375,7 @@ void loop ()
 
     int msSinceVibrationStart = now - lastVibrationStart;
     */
-    int vibration = map(combinedChange, threshold, 200.0, 100, 255);
+    int vibration = map(combinedChange, threshold, 200.0, 110, 255);
 
     /*
     if (vibration <= lastVibration + 15) {
@@ -404,21 +404,28 @@ void loop ()
   
   // leds
   
-  // roll: 90 is all up, -90 all down
-  // pitch: 90 all left, 90 all right
+  // roll: 90 is all up, -90 all down / or reverse if put on the other way around ;)
+  // pitch: 90 all left, 90 all right / or reverse on other hand ;)
   
-  // the more the roll is away from 0, the less pitch should account for
-  float rollFactor = map(roll, -90.0, 90.0, 0, 100);
-  float pitchFactor = map(pitch, -90.0, 90.0, 0, 100);
+  // the more the roll is away from 0 (-90 / 90), the less pitch should account for
+  // the more the roll is close to 0 the more pitch should account for
+  float rollFactor = map(roll, -90.0, 90.0, 0, 200) - 100; // -1.00 - 1.00 (* 100)
+  float pitchFactor = map(pitch, -90.0, 90.0, 0, 100); // 0.00 - 1.00 (* 100)
   
   rollFactor = rollFactor / 100;
   pitchFactor = pitchFactor / 100;
   
+  rollFactor = rollFactor > 0 ? rollFactor : -rollFactor;
+  
   Serial.println(rollFactor);
   Serial.println(pitchFactor);
   
-  float hue = pitchFactor * rollFactor + rollFactor * (1 - rollFactor);
+  float hue = pitchFactor * (1 - rollFactor) + rollFactor;
   Serial.print("hue: ");
+  Serial.println(hue);
+  
+  hue = round(hue * 6) / 6;
+  Serial.print("hue rounded: ");
   Serial.println(hue);
   
   H2R_HSBtoRGBfloat(hue, 1, 1, &rgbColor[0]);
@@ -428,7 +435,6 @@ void loop ()
   Serial.print(rgbColor[1]);
   Serial.print(", ");
   Serial.println(rgbColor[2]);
-
 
 
   String json = "{ heading: " + String(heading) +
