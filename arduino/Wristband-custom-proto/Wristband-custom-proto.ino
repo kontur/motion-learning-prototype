@@ -30,13 +30,15 @@ Adafruit_PWMServoDriver pwmL = Adafruit_PWMServoDriver(0x41);
 
 const int baudrate = 9600;
 
-const int rx = 7;
-const int tx = 8;
-SoftwareSerial mySerial(rx, tx);
-
+// PINS
 const int onBoardLedPin = 6;
 const int vibrationPin = 5;
 const int buzzerPin = 11;
+
+// Bluetooth connection pins and serial
+const int rx = 7;
+const int tx = 8;
+SoftwareSerial mySerial(rx, tx);
 
 int data[2];
 int serialIndex = 0;
@@ -49,19 +51,38 @@ int lastRoll = 0;
 int lastHeading = 0;
 int lastPitch = 0;
 int lastRotation = 0;
+
+// arrays holding the last sensor readings per axis
 float lastAccel[3];
 float lastGyro[3];
 float lastMag[3];
 
+// arrays holding the percentual change of sensor readings between loops
 float changeAccel[3] = { 0, 0, 0 };
 float changeGyro[3] = { 0, 0, 0 };
 float changeMag[3] = { 0, 0, 0 };
 
+// absolute upper peaks for each sensor value
+// gets dynamically increased when new peaks are reached
+// NOTE: these values are conservative estimates and intentionally low enough to dynamically
+// get increased on use; this also means the device needs some "wild movement" calibration
+// after startup
 float maxAccel[3] = { 1, 1, 1 };
 float maxGyro[3] = { 200, 200, 200 };
 float maxMag[3] = { 0.25, 0.25, 0.25 };
 
-float easing = 0.5; // 0 - 1 as factor of "last frame reading" impact on new reading
+float easing = 0.75; // 0 - 1 as factor of "last frame reading" impact on new reading
+
+
+int notes[] = {
+  NOTE_C3, NOTE_D3, NOTE_E3, NOTE_F3, NOTE_G3, NOTE_A4, NOTE_B4, NOTE_C4, NOTE_D4, NOTE_E4
+};
+
+unsigned long noteStart = 0;
+unsigned long noteEnd = 0;
+int noteDuration = 0;
+
+
 
 
 // custom pcb led channels for pwm library access
@@ -137,12 +158,42 @@ int note = 0;
 int lastNote = 0;
 int lastNoteStarted = 0;
 
+float changeBuffer[10];
+
+unsigned long lastVibrationStart = 0;
+unsigned long now;
+unsigned long lastFrame;
+
 /*
 RGBConverter col = RGBConverter();
 */
 
+
+// in loop variables
+// declared outside the loop and reused to save initialization every loop
+float accel[3];
+float gyro[3];
+float mag[3];
+
+float heading;
+float orientation[2];
+float pitch;
+float roll;
+
+float combinedAccelerationChange;
+float absCombinedAccelerationChange;
+float combinedRotationChange;
+float absCombinedRotationChange;
+float combinedChange;
+
+float threshold = 5.0;
+String json;
+
 void loop ()
 {
+  Serial.println("---");
+
+  now = millis();
 
   // reading bluetooth
   // =================
@@ -180,14 +231,6 @@ void loop ()
   lastRoll = roll;
   */
 
-  float accel[3];
-  float gyro[3];
-  float mag[3];
-
-  float heading;
-  float orientation[2];
-  float pitch;
-  float roll;
 
 
   getAccel(&accel[0]);
@@ -209,109 +252,159 @@ void loop ()
     accel[i] = lastAccel[i] * easing + (1 - accel[i] * easing);
     gyro[i] = lastGyro[i] * easing + (1 - gyro[i] * easing);
     mag[i] = lastMag[i] * easing + (1 - mag[i] * easing);
-    
-    
+
+
     // dynamically readjust edge values for all three sensor readings if the current new reading goes
     // beyond the current edge value
     // note abs() doesn't properly work with floats, so there is slightly less elegant code doing abs()
     // checks and saves
     if (accel[i] > 0 && accel[i] > maxAccel[i] ||
-      accel[i] < 0 && accel[i] < -maxAccel[i]) {
-      Serial.print("Incremented max accel ");
-      Serial.print(i);
-      Serial.print(" to abs ");
-      Serial.println(accel[i]);
+        accel[i] < 0 && accel[i] < -maxAccel[i]) {
       maxAccel[i] = accel[i] > 0 ? accel[i] : -accel[i];
     }
     if (gyro[i] > 0 && gyro[i] > maxGyro[i] ||
-      gyro[i] < 0 && gyro[i] < -maxGyro[i]) {
-      Serial.print("Incremented max gyro ");
-      Serial.print(i);
-      Serial.print(" to abs ");
-      Serial.println(gyro[i]);
+        gyro[i] < 0 && gyro[i] < -maxGyro[i]) {
       maxGyro[i] = gyro[i] > 0 ? gyro[i] : -gyro[i];
     }
     if (mag[i] > 0 && mag[i] > maxMag[i] ||
-      mag[i] < 0 && mag[i] < -maxMag[i]) {
-      Serial.print("Incremented max mag ");
-      Serial.print(i);
-      Serial.print(" to abs ");
-      Serial.println(mag[i]);
+        mag[i] < 0 && mag[i] < -maxMag[i]) {
       maxMag[i] = mag[i] > 0 ? mag[i] : -mag[i];
     }
-  }
 
-  for (int i = 0; i < 3; i++) {
+    /*
+    Serial.print("maxAccel ");
+    Serial.println(maxAccel[i]);
 
-      Serial.print("maxAccel ");
-      Serial.println(maxAccel[i]);
+    Serial.print("maxGyro ");
+    Serial.println(maxGyro[i]);
 
-      Serial.print("maxGyro ");
-      Serial.println(maxGyro[i]);
+    Serial.print("maxMag ");
+    Serial.println(maxMag[i]);
+    */
 
-      Serial.print("maxMag ");
-      Serial.println(maxMag[i]);
-    
-    
-    Serial.println(i);
-    Serial.println("new gyro:");
-    Serial.println(gyro[i]);
-    Serial.println("last gyro:");
-    Serial.println(lastGyro[i]);
-    Serial.println(gyro[i] - lastGyro[i]);
-    Serial.println((gyro[i] - lastGyro[i]) / maxGyro[i]);
-    Serial.println((gyro[i] - lastGyro[i]) / maxGyro[i] * 100);
-    Serial.println("***");
-
+    // calculate the percentual change of the values to last values in regards to the maximum range
+    // for that value
+    // note that this can go beyond 100%, as a) the max value can increase, and for example the gyro
+    // can flip from -200 to 200 degrees... TODO fix this somehow better than by mere easing applied
+    // above
     changeAccel[i] = (accel[i] - lastAccel[i]) / maxAccel[i] * 100;
     changeGyro[i] = (gyro[i] - lastGyro[i]) / maxGyro[i] * 100;
-    Serial.println(changeGyro[i]);
     changeMag[i] = (mag[i] - lastMag[i]) / maxMag[i] * 100;
 
+    // store current readings for next loop comparison
     lastAccel[i] = accel[i];
     lastGyro[i] = gyro[i];
     lastMag[i] = mag[i];
   }
 
+
+  combinedAccelerationChange = changeAccel[0] + changeAccel[1] + changeAccel[2];
+  combinedRotationChange = changeGyro[0] + changeGyro[1] + changeGyro[2];
+
+  absCombinedAccelerationChange = combinedAccelerationChange > 0 ? combinedAccelerationChange : -combinedAccelerationChange;
+  absCombinedRotationChange = combinedRotationChange > 0 ? combinedRotationChange : -combinedRotationChange;
+
+  combinedChange = absCombinedAccelerationChange + absCombinedRotationChange;
+
+  /*
   Serial.println("---");
-  
   Serial.println(changeAccel[0]);
   Serial.println(changeAccel[1]);
   Serial.println(changeAccel[2]);
   Serial.println("---");
-  
   Serial.println(changeGyro[0]);
   Serial.println(changeGyro[1]);
   Serial.println(changeGyro[2]);
   Serial.println("---");
-  
   Serial.println(changeMag[0]);
   Serial.println(changeMag[1]);
   Serial.println(changeMag[2]);
   Serial.println("---");
+  */
+
+  Serial.println("Combined percentual acceleration change: ");
+  Serial.println(combinedAccelerationChange);
+  //Serial.println(absCombinedAccelerationChange);
+
+  Serial.println("Combined percentual rotation change: ");
+  Serial.println(combinedRotationChange);
+  //Serial.println(absCombinedRotationChange);
+
+  Serial.println("Combined percentual change: ");
+  Serial.println(combinedChange);
 
 
-  String p = "{ heading: " + String(heading) +
-             ", pitch: " + String(pitch) +
-             ", roll: " + String(roll) +
-             ", accelX: " + String(accel[0]) +
-             ", accelY: " + String(accel[1]) +
-             ", accelZ: " + String(accel[2]) +
-             ", gyroX: " + String(gyro[0]) +
-             ", gyroY: " + String(gyro[1]) +
-             ", gyroZ: " + String(gyro[2]) +
-             ", magX: " + String(mag[0]) +
-             ", magY: " + String(mag[1]) +
-             ", magZ: " + String(mag[2]) +
-             ", rgb: \"" + 255 + "," + 255 + "," + 255 + "\""
-             " };";
+  // provide sensory feedback
+
+
+
+  if (combinedChange > threshold) {
+    if (lastVibrationStart <= 0) {
+      lastVibrationStart = now;
+    }
+
+    int msSinceVibrationStart = now - lastVibrationStart;
+    Serial.print("msSinceVibrationStart: ");
+    Serial.println(msSinceVibrationStart);
+
+    //if (msSinceVibrationStart > 500) {
+      Serial.println("STAAART");
+      int vibration = map(combinedChange, threshold, 200.0, 110, 255);
+
+      Serial.print("vibration ");
+      Serial.println(vibration);
+      analogWrite(vibrationPin, vibration);
+      lastVibrationStart = now;
+    //}
+    /*
+    if (msSinceVibrationStart > 50 && msSinceVibrationStart < 500) {
+      Serial.println("STOOOP");
+      analogWrite(vibrationPin, 0);
+    }
+    */
+  } else {
+    analogWrite(vibrationPin, 0);
+  }
+
+  /*
+  for (int i = 0; i < 255; i = i + 10) {
+    Serial.print("vibration ");
+    Serial.println(i);
+    analogWrite(vibrationPin, i);
+    delay(500);
+  }
+  */
+
+
+  String json = "{ heading: " + String(heading) +
+                ", pitch: " + String(pitch) +
+                ", roll: " + String(roll) +
+                ", accelX: " + String(accel[0]) +
+                ", accelY: " + String(accel[1]) +
+                ", accelZ: " + String(accel[2]) +
+                ", gyroX: " + String(gyro[0]) +
+                ", gyroY: " + String(gyro[1]) +
+                ", gyroZ: " + String(gyro[2]) +
+                ", magX: " + String(mag[0]) +
+                ", magY: " + String(mag[1]) +
+                ", magZ: " + String(mag[2]) +
+                ", rgb: \"" + 255 + "," + 255 + "," + 255 + "\""
+                " };";
 
   // print to bluetooth connection and debug monitor
-  mySerial.println(p);
-  Serial.println(p);
+  mySerial.println(json);
+  //Serial.println(json);
 
+  float fps = 1000 / 12; // ~83
+  Serial.print("Actual framerate: ");
+  Serial.println(1000 / (now - lastFrame));
 
-  delay(1000 / 12);
+  // compensate to achieve a delay as close as possible to the actual desired framerate
+  float delayUntilNextFrame = min(max(0, fps - ((now - lastFrame) - fps)), fps);
+  Serial.println(delayUntilNextFrame);
+
+  lastFrame = now;
+  delay(delayUntilNextFrame);
 }
 
 
@@ -498,13 +591,4 @@ void getOrientation(float x, float y, float z, float *pdata)
   pdata[0] = pitch;
   pdata[1] = roll;
 }
-
-
-
-
-
-
-
-
-
 
