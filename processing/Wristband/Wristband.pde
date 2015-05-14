@@ -70,7 +70,7 @@ boolean play = false;
 int playbackIndex = 0;
 JSONArray playback = new JSONArray();
 
-int recordLimit = 100;
+int recordLimit = 1000;
 Grapher recordingGraph;
 Grapher recordingMatchGraph;
 
@@ -79,6 +79,9 @@ float[] gyro = new float[3];
 float[] mag = new float[3];
 Color deviceRGB;
 
+int lastClick = 0;
+int numClicks = 0;
+int doubleClickThreshold = 500;
 
 // graphing the readings
 Grapher graph;
@@ -122,6 +125,45 @@ void draw() {
     c.setRotation(rotationX, rotationY, rotationZ);
     c.setPosition(winW / 2, winH / 2, 0);
     c.render();
+
+    if (lastClick != 0 && millis() - lastClick  > doubleClickThreshold) {
+        println("--------");
+        println(numClicks + " detected");
+
+        switch (numClicks) {
+            case 1:
+                if (recording.size() == 0) {
+                    if (record) {
+                        println("stop recording");
+                        stopRecording();
+                    } else {
+                        println("start recording");
+                        recordPattern(1);
+                    }
+                    break;
+                } else {
+                    if (record) {
+                        println("stop recording match");
+                        stopRecording();
+                    } else {
+                        println("start recording match");
+                        recordMatch(1);
+                    }
+                }
+                break;
+
+            case 2:
+                println("delete recording");
+                recording = new JSONArray();
+                recordingMatch = new JSONArray();
+                break;
+
+            default: 
+                break;
+        }
+        numClicks = 0;
+        lastClick = 0;
+    }
 
     // interact with the second open window which displays the visualization
     if (visualizationFrame != null) {
@@ -200,19 +242,14 @@ void draw() {
         recordingIndex++;   
         debugText.setText(debugText.getText() + values + "\n");
         debugText.scroll(1);
-        if (recordingIndex == recordLimit) {
-            record = false;
-            if (recordingWhat == "pattern") {
-                recordingGraph = new Grapher(200, 400, 200, 100);
-                recordingGraph.setConfiguration(configPatterns);
-                recordingGraph.addDataArray(recording);
-            } else if (recordingWhat == "match") {
-                recordingMatchGraph = new Grapher(400, 400, 200, 100);
-                recordingMatchGraph.setConfiguration(configPatterns);
-                recordingMatchGraph.addDataArray(recordingMatch);                
-            }
 
-            recordingWhat = "";
+
+        if (recordingIndex == recordLimit) {
+            stopRecording();
+        }
+
+        if (recordingWhat == "match" && recordingIndex >= recording.size()) {
+            stopRecording();
         }
     }
 
@@ -246,30 +283,43 @@ void draw() {
 void serialEvent(Serial port) {
     String s = connection.readString();
     s = s.substring(0, s.length() - 1);
-    println(s);
     
     //println("serialEvent: ", s);
 
     // if the serial string read contains a json opening { parse info from arduino
     if (s.indexOf("{") > -1) {
         JSONObject obj = JSONObject.parse(s);
-        cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
-        cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-        cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
-        
-        println(obj.getFloat("pitch"));
 
-        accel[0] = obj.getFloat("accelX");
-        accel[1] = obj.getFloat("accelY");
-        accel[2] = obj.getFloat("accelZ");
-        gyro[0] = obj.getFloat("gyroX");
-        gyro[1] = obj.getFloat("gyroY");
-        gyro[2] = obj.getFloat("gyroZ");
+        if (s.indexOf("buttonDown") > -1) {
+            obj.getInt("buttonDown");
+            println("BUTTON DOWN");
+            onButtonDown();
+        } else {
+
+            cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
+            cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
+            cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
+            
+            accel[0] = obj.getFloat("accelX");
+            accel[1] = obj.getFloat("accelY");
+            accel[2] = obj.getFloat("accelZ");
+            gyro[0] = obj.getFloat("gyroX");
+            gyro[1] = obj.getFloat("gyroY");
+            gyro[2] = obj.getFloat("gyroZ");
 
 
-        String rgb = obj.getString("rgb");
-        String colorComponents[] = rgb.split(",");
-        deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
+            String rgb = obj.getString("rgb");
+            String colorComponents[] = rgb.split(",");
+            deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
+        }
+    }
+}
+
+
+void onButtonDown() {
+    if (numClicks == 0 || millis() - lastClick < doubleClickThreshold) {
+        numClicks++;
+        lastClick = millis();
     }
 }
 
@@ -300,11 +350,7 @@ void fileSelected(File selection) {
 }
 
 
-void recordPattern(int val) {   
-    // recordingIndex = 0;
-    // recording = new JSONArray();
-    // debugText.setText("");
-    // record = true;
+void recordPattern(int val) {
     recordSample(recording);
     recordingWhat = "pattern";
 }
@@ -314,6 +360,8 @@ void recordMatch(int val) {
     recordingWhat = "match";
 }
 
+
+// helper
 void recordSample(JSONArray data) {
     if (record) {
         log("Finish recording");
@@ -325,6 +373,40 @@ void recordSample(JSONArray data) {
         debugText.setText("");
         record = true;
     }
+}
+
+void stopRecording() {
+    record = false;
+    if (recordingWhat == "pattern") {
+        recordingGraph = new Grapher(200, 400, 200, 100);
+        recordingGraph.setConfiguration(configPatterns);
+        recordingGraph.addDataArray(recording);
+    } else if (recordingWhat == "match") {
+        int missingFrames = recording.size() - recordingMatch.size();
+        if (missingFrames > 0) {
+            for (int i = recordingMatch.size(); i < recording.size(); i++) {
+
+                JSONObject values = new JSONObject();
+                values.setInt("id", i);
+                values.setFloat("roll", 0);
+                values.setFloat("heading", 0);
+                values.setFloat("pitch", 0);
+                values.setFloat("accelX", 0);
+                values.setFloat("accelY", 0);
+                values.setFloat("accelZ", 0);
+                values.setFloat("gyroX", 0);
+                values.setFloat("gyroY", 0);
+                values.setFloat("gyroZ", 0);
+
+                recordingMatch.setJSONObject(i, values);
+            }
+        }
+        recordingMatchGraph = new Grapher(400, 400, 200, 100);
+        recordingMatchGraph.setConfiguration(configPatterns);
+        recordingMatchGraph.addDataArray(recordingMatch);                
+    }
+
+    recordingWhat = "";
 }
 
 
@@ -424,17 +506,28 @@ void autoConnectCheckbox(float[] vals) {
  */
 void similarity(int val) {
 
-    if (recording == null || recordingMatch == null) {
+    if (recording == null || recordingMatch == null || recording.size() == 0 || recordingMatch.size() == 0) {
         log("Can't calculate similarity, missing pattern or match to test against");
-        throw new RuntimeException("Similarity calculation missing information");
+        throw new RuntimeException("Similarity calculation impossible, missing pattern or match data");
     }
 
-    Similarity s = new Similarity();
-    double [][] patternValues = new double[5][100];
-    double [][] matchValues = new double[5][100];
+    if (recording.size() != recordingMatch.size()) {
+        log("Can't calculate similarity, non equal length pattern and match");
+        throw new RuntimeException("Similarity calculation impossible, non equal pattern and match");
+    }
 
-    // TODO also check JSONArray lengths for equality
+    println(recording.size(), recordingMatch.size());
+
+    Similarity s = new Similarity();
+    double [][] patternValues = new double[5][recording.size()];
+    double [][] matchValues = new double[5][recording.size()];
+
+
+    
     for (int i = 0; i < recording.size(); i++) {
+
+        println(i);
+
         JSONObject recordingAtI = recording.getJSONObject(i);
         patternValues[0][i] = (double)recordingAtI.getFloat("roll");
         patternValues[1][i] = (double)recordingAtI.getFloat("pitch");
@@ -451,32 +544,9 @@ void similarity(int val) {
     }
 
     float sim = s.compare(patternValues, matchValues);
-    log("Calucalted similarity from 0 - 1: " + sim);
 
-    /*
-    double [][] testscores = { 
-        {36, 62, 31, 76, 46, 12, 39, 30, 22, 9, 32, 40, 64, 
-          36, 24, 50, 42, 2, 56, 59, 28, 19, 36, 54, 14}, 
-        {58, 54, 42, 78, 56, 42, 46, 51, 32, 40, 49, 62, 75, 
-         38, 46, 50, 42, 35, 53, 72, 50, 46, 56, 57, 35}, 
-        {43, 50, 41, 69, 52, 38, 51, 54, 43, 47, 54, 51, 70, 
-         58, 44, 54, 52, 32, 42, 70, 50, 49, 56, 59, 38}, 
-        {36, 46, 40, 66, 56, 38, 54, 52, 28, 30, 37, 40, 66, 
-         62, 55, 52, 38, 22, 40, 66, 42, 40, 54, 62, 29}, 
-        {37, 52, 29, 81, 40, 28, 41, 32, 22, 24, 52, 49, 63, 
-         62, 49, 51, 50, 16, 32, 62, 63, 30, 52, 58, 20}}; 
-    double [][] testscores2 = { 
-        {36, 62, 31, 76, 46, 12, 39, 30, 22, 9, 32, 40, 64, 
-          36, 24, 50, 42, 2, 56, 59, 28, 19, 36, 54, 14}, 
-        {43, 50, 41, 69, 52, 38, 51, 54, 43, 47, 54, 51, 70, 
-         58, 44, 54, 52, 32, 42, 70, 50, 49, 56, 59, 38}, 
-        {36, 46, 40, 66, 56, 38, 54, 52, 28, 30, 37, 40, 66, 
-         62, 55, 52, 38, 22, 40, 66, 42, 40, 54, 62, 29},
-        {97, 52, 29, 81, 40, 28, 41, 92, 22, 24, 52, 49, 69, 
-         62, 49, 51, 50, 16, 32, 62, 63, 30, 52, 58, 20}, 
-        {58, 54, 42, 78, 56, 42, 46, 51, 32, 40, 49, 62, 75, 
-         38, 46, 50, 42, 35, 53, 72, 50, 46, 56, 57, 35}}; 
-     */
+    println("Calucalted similarity from 0 - 1: " + sim);
+    log("Calucalted similarity from 0 - 1: " + sim);
 }
 
 

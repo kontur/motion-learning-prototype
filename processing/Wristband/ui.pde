@@ -70,7 +70,7 @@ void setupUI() {
 
 	graph = new Grapher(200, 500, 400, 100);
 
-
+	/*
 	// file handling buttons
 	cp5.addButton("loadFile")
 	.setPosition(x, 300)
@@ -79,6 +79,7 @@ void setupUI() {
 	cp5.addButton("saveFile")
 	.setPosition(x, 330)
 	.setSize(100, 20);
+	*/
 
 
 	//

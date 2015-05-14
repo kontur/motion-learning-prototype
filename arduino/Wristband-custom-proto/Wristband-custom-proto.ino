@@ -34,6 +34,7 @@ const int baudrate = 9600;
 const int onBoardLedPin = 6;
 const int vibrationPin = 5;
 const int buzzerPin = 11;
+const int buttonPin = 12;
 
 // Bluetooth connection pins and serial
 const int rx = 7;
@@ -201,11 +202,21 @@ float combinedChange;
 float threshold = 2.5;
 String json;
 
+int button = 0;
+
 void loop ()
 {
   Serial.println("---");
 
   now = millis();
+  
+  if (button == 0) {
+    button = digitalRead(buttonPin);
+    if (button == 1) {
+      sendButtonDown();
+      button = 0;
+    }
+  }
 
   // reading bluetooth
   // =================
@@ -652,5 +663,15 @@ void getOrientation(float x, float y, float z, float *pdata)
 
   pdata[0] = pitch;
   pdata[1] = roll;
+}
+
+
+// relay button pressed status to client
+void sendButtonDown() {
+  String json = "{ buttonDown: 1 }";
+  // print to bluetooth connection and debug monitor
+  setRGBs(255, 0, 0);
+  mySerial.println(json);
+  Serial.println(json);
 }
 
