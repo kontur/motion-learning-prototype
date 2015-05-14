@@ -54,7 +54,7 @@ class Grapher {
         if (config.hasKey("resolutionY") == false) {
             config.setFloat("resolutionY", resolutionYDefault);
         }
-        println("CONFIG \n" + config);
+        //println("CONFIG \n" + config);
     }
 
 

@@ -11,6 +11,7 @@ import processing.opengl.*;
 import controlP5.*;
 
 import java.lang.RuntimeException;
+import java.lang.ArrayIndexOutOfBoundsException;
 import java.awt.Color;
 
 import javax.swing.*; 
@@ -83,6 +84,8 @@ int lastClick = 0;
 int numClicks = 0;
 int doubleClickThreshold = 500;
 
+boolean finishedComparison = true;
+
 // graphing the readings
 Grapher graph;
 
@@ -133,22 +136,19 @@ void draw() {
         switch (numClicks) {
             case 1:
                 if (recording.size() == 0) {
-                    if (record) {
+                    println("start recording");
+                    recordPattern(1);
+                } else if (record) {
+                    if (recordingWhat == "pattern") {
                         println("stop recording");
                         stopRecording();
-                    } else {
-                        println("start recording");
-                        recordPattern(1);
-                    }
-                    break;
-                } else {
-                    if (record) {
+                    } else if (recordingWhat == "match") {                        
                         println("stop recording match");
                         stopRecording();
-                    } else {
-                        println("start recording match");
-                        recordMatch(1);
                     }
+                } else if (recording.size() != 0 && !record) {
+                    println("start recording match");
+                    recordMatch(1);
                 }
                 break;
 
@@ -240,12 +240,27 @@ void draw() {
             recordingMatch.setJSONObject(recordingIndex, values);
         }
         recordingIndex++;   
-        debugText.setText(debugText.getText() + values + "\n");
-        debugText.scroll(1);
 
+        log("recording " + recordingWhat + " at index " + recordingIndex);
+        
 
         if (recordingIndex == recordLimit) {
             stopRecording();
+        }
+
+        if (recordingWhat == "match") {
+            println("finishedComparison", finishedComparison);
+            if (finishedComparison) {            
+                try {
+                    println("try to calc similarity");
+                    log(similarity(1));
+                } catch (RuntimeException e) {
+                    log (e.getMessage());
+                }
+            } else {
+                println("Similarity calculating still in progress, skip");
+            }
+            
         }
 
         if (recordingWhat == "match" && recordingIndex >= recording.size()) {
@@ -403,7 +418,9 @@ void stopRecording() {
         }
         recordingMatchGraph = new Grapher(400, 400, 200, 100);
         recordingMatchGraph.setConfiguration(configPatterns);
-        recordingMatchGraph.addDataArray(recordingMatch);                
+        recordingMatchGraph.addDataArray(recordingMatch);   
+
+        similarity(1);
     }
 
     recordingWhat = "";
@@ -504,49 +521,74 @@ void autoConnectCheckbox(float[] vals) {
 /**
  * Button click handler to start calculating matches
  */
-void similarity(int val) {
+float similarity(int val) {
+    finishedComparison = false;
 
     if (recording == null || recordingMatch == null || recording.size() == 0 || recordingMatch.size() == 0) {
         log("Can't calculate similarity, missing pattern or match to test against");
         throw new RuntimeException("Similarity calculation impossible, missing pattern or match data");
     }
 
+    /*
     if (recording.size() != recordingMatch.size()) {
         log("Can't calculate similarity, non equal length pattern and match");
         throw new RuntimeException("Similarity calculation impossible, non equal pattern and match");
     }
+    */
 
     println(recording.size(), recordingMatch.size());
 
+    int commonLength = min(recording.size(), recordingMatch.size());
+    println(commonLength);
+
+    if (commonLength < 20) {
+        finishedComparison = true;
+        return 0.0;
+    }
+
     Similarity s = new Similarity();
-    double [][] patternValues = new double[5][recording.size()];
-    double [][] matchValues = new double[5][recording.size()];
+    double [][] patternValues = new double[8][commonLength];
+    double [][] matchValues = new double[8][commonLength];
 
+    try {
 
-    
-    for (int i = 0; i < recording.size(); i++) {
+        for (int i = 0; i < commonLength; i++) {
 
-        println(i);
+            JSONObject recordingAtI = recording.getJSONObject(i);
+            patternValues[0][i] = (double)recordingAtI.getFloat("roll");
+            patternValues[1][i] = (double)recordingAtI.getFloat("pitch");
+            patternValues[2][i] = (double)recordingAtI.getFloat("accelX");
+            patternValues[3][i] = (double)recordingAtI.getFloat("accelY");
+            patternValues[4][i] = (double)recordingAtI.getFloat("accelZ");
+            patternValues[5][i] = (double)recordingAtI.getFloat("gyroX");
+            patternValues[6][i] = (double)recordingAtI.getFloat("gyroY");
+            patternValues[7][i] = (double)recordingAtI.getFloat("gyroZ");
 
-        JSONObject recordingAtI = recording.getJSONObject(i);
-        patternValues[0][i] = (double)recordingAtI.getFloat("roll");
-        patternValues[1][i] = (double)recordingAtI.getFloat("pitch");
-        patternValues[2][i] = (double)recordingAtI.getFloat("accelX");
-        patternValues[3][i] = (double)recordingAtI.getFloat("accelY");
-        patternValues[4][i] = (double)recordingAtI.getFloat("accelZ");
-
-        JSONObject matchAtI = recordingMatch.getJSONObject(i);
-        matchValues[0][i] = (double)matchAtI.getFloat("roll");
-        matchValues[1][i] = (double)matchAtI.getFloat("pitch");
-        matchValues[2][i] = (double)matchAtI.getFloat("accelX");
-        matchValues[3][i] = (double)matchAtI.getFloat("accelY");
-        matchValues[4][i] = (double)matchAtI.getFloat("accelZ");
+            JSONObject matchAtI = recordingMatch.getJSONObject(i);
+            matchValues[0][i] = (double)matchAtI.getFloat("roll");
+            matchValues[1][i] = (double)matchAtI.getFloat("pitch");
+            matchValues[2][i] = (double)matchAtI.getFloat("accelX");
+            matchValues[3][i] = (double)matchAtI.getFloat("accelY");
+            matchValues[4][i] = (double)matchAtI.getFloat("accelZ");
+            matchValues[5][i] = (double)matchAtI.getFloat("gyroX");
+            matchValues[6][i] = (double)matchAtI.getFloat("gyroY");
+            matchValues[7][i] = (double)matchAtI.getFloat("gyroZ");
+        }
+    } catch (ArrayIndexOutOfBoundsException e) {
+        log(e.getMessage());
+        log("Exiting similarity()");
+        connection.stop();
+        return 0.0;
     }
 
     float sim = s.compare(patternValues, matchValues);
 
     println("Calucalted similarity from 0 - 1: " + sim);
     log("Calucalted similarity from 0 - 1: " + sim);
+    
+    finishedComparison = true;
+
+    return sim;
 }
 
 
