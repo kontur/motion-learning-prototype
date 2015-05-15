@@ -122,6 +122,7 @@ void setup() {
 
 
 void draw() {
+    println(frameRate);
     background(225);
     stroke(0);  
     ColorCube c = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
