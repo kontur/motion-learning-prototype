@@ -3,6 +3,12 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 
+// capacitive sensing for touch button
+#include <CapacitiveSensor.h>
+
+// math helpers
+#include <math.h>
+
 // convenient RGB HSL
 #include <HSBColor.h>
 
@@ -28,6 +34,9 @@ LSM9DS0 dof(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
 Adafruit_PWMServoDriver pwmR = Adafruit_PWMServoDriver(0x40);
 Adafruit_PWMServoDriver pwmL = Adafruit_PWMServoDriver(0x41);
 
+CapacitiveSensor cs = CapacitiveSensor(2, 3);
+float lastCap = 0;
+
 const int baudrate = 9600;
 
 // PINS
@@ -46,7 +55,7 @@ int serialIndex = 0;
 
 // desired fps rate between loops
 // NOTE that this is in reality MUCH lower, ~4 fps
-float fps = 12;
+float fps = 6;
 float msPerFrame = 1000 / fps; // ~83
   
 int lastR = 0;
@@ -119,38 +128,6 @@ const int led6G = 8;
 const int led6B = 10;
 
 
-
-void setup ()
-{
-  Serial.begin(115200);
-  Serial.println("hello serial");
-  mySerial.begin(baudrate);
-
-  uint16_t status = dof.begin();
-  Serial.print("LSM9DS0 WHO_AM_I's returned: 0x");
-  Serial.println(status, HEX);
-  Serial.println("Should be 0x49D4");
-  Serial.println();
-
-  // adafruit pwm driver
-  pwmR.begin();
-  pwmR.setPWMFreq(1600);  // This is the maximum PWM frequency
-  pwmL.begin();
-  pwmL.setPWMFreq(1600);
-
-  // save I2C bitrate
-  uint8_t twbrbackup = TWBR;
-  // must be changed after calling Wire.begin() (inside pwm.begin())
-  TWBR = 12; // upgrade to 400KHz!
-
-  analogWrite(onBoardLedPin, LOW);
-
-  setRGBs(0, 0, 0);
-
-  delay(500);
-
-}
-
 String test = "";
 
 float lastHue = 0;
@@ -204,6 +181,45 @@ String json;
 
 int button = 0;
 
+
+
+void setup ()
+{
+  Serial.begin(115200);
+  Serial.println("hello serial");
+  mySerial.begin(baudrate);
+
+  uint16_t status = dof.begin();
+  Serial.print("LSM9DS0 WHO_AM_I's returned: 0x");
+  Serial.println(status, HEX);
+  Serial.println("Should be 0x49D4");
+  Serial.println();
+
+  // adafruit pwm driver
+  pwmR.begin();
+  pwmR.setPWMFreq(1600);  // This is the maximum PWM frequency
+  pwmL.begin();
+  pwmL.setPWMFreq(1600);
+
+  // save I2C bitrate
+  uint8_t twbrbackup = TWBR;
+  // must be changed after calling Wire.begin() (inside pwm.begin())
+  TWBR = 12; // upgrade to 400KHz!
+
+  // turn off on-board led
+  analogWrite(onBoardLedPin, LOW);
+  
+  // initiate capacitive sensing
+  cs.set_CS_AutocaL_Millis(0xFFFFFFFF);
+  cs.set_CS_Timeout_Millis(250);
+
+  setRGBs(0, 0, 0);
+
+  delay(500);
+
+}
+
+
 void loop ()
 {
   Serial.println("---");
@@ -217,6 +233,20 @@ void loop ()
       button = 0;
     }
   }
+  
+  
+  // capsense
+  // ========
+  
+  float cap = cs.capacitiveSensor(1);
+  
+  // 3000 18000 -> 0.2
+  // 3000 2000 -> 1.25
+  int touch = 0;
+  int change = 0;
+  
+  
+  
 
   // reading bluetooth
   // =================
@@ -448,19 +478,22 @@ void loop ()
   Serial.println(rgbColor[2]);
 
 
-  String json = "{ heading: " + String(heading) +
-                ", pitch: " + String(pitch) +
-                ", roll: " + String(roll) +
-                ", accelX: " + String(accel[0]) +
-                ", accelY: " + String(accel[1]) +
-                ", accelZ: " + String(accel[2]) +
-                ", gyroX: " + String(gyro[0]) +
-                ", gyroY: " + String(gyro[1]) +
-                ", gyroZ: " + String(gyro[2]) +
-                ", magX: " + String(mag[0]) +
-                ", magY: " + String(mag[1]) +
-                ", magZ: " + String(mag[2]) +
-                ", rgb: \"" + 255 + "," + 255 + "," + 255 + "\""
+  String json = "{ \"heading\": " + String(heading) +
+                ", \"pitch\": " + String(pitch) +
+                ", \"roll\": " + String(roll) +
+                ", \"aX\": " + String(accel[0]) +
+                ", \"aY\": " + String(accel[1]) +
+                ", \"aZ\": " + String(accel[2]) +
+                ", \"gX\": " + String(gyro[0]) +
+                ", \"gY\": " + String(gyro[1]) +
+                ", \"gZ\": " + String(gyro[2]) +
+//                ", mX: " + String(mag[0]) +
+//                ", mY: " + String(mag[1]) +
+//                ", mZ: " + String(mag[2]) +
+                ", \"rgb\": \"" + 255 + "," + 255 + "," + 255 + "\"" +
+                ", \"cap\": " + cap +
+                ", \"change\": " + change +
+                ", \"touch\": " + touch +
                 " };";
 
   // print to bluetooth connection and debug monitor

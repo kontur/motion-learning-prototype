@@ -122,7 +122,6 @@ void setup() {
 
 
 void draw() {
-    println(frameRate);
     background(225);
     stroke(0);  
     ColorCube c = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
@@ -300,7 +299,9 @@ void serialEvent(Serial port) {
     String s = connection.readString();
     s = s.substring(0, s.length() - 1);
     
-    //println("serialEvent: ", s);
+    println("serialEvent: ", s);
+
+    try {
 
     // if the serial string read contains a json opening { parse info from arduino
     if (s.indexOf("{") > -1) {
@@ -312,16 +313,21 @@ void serialEvent(Serial port) {
             onButtonDown();
         } else {
 
+            /*
+            println("cap: ", obj.getFloat("cap"));
+            println("change: ", obj.getFloat("change"));
+            */
+
             cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
             cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
             cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
             
-            accel[0] = obj.getFloat("accelX");
-            accel[1] = obj.getFloat("accelY");
-            accel[2] = obj.getFloat("accelZ");
-            gyro[0] = obj.getFloat("gyroX");
-            gyro[1] = obj.getFloat("gyroY");
-            gyro[2] = obj.getFloat("gyroZ");
+            accel[0] = obj.getFloat("aX");
+            accel[1] = obj.getFloat("aY");
+            accel[2] = obj.getFloat("aZ");
+            gyro[0] = obj.getFloat("gX");
+            gyro[1] = obj.getFloat("gY");
+            gyro[2] = obj.getFloat("gZ");
 
 
             String rgb = obj.getString("rgb");
@@ -329,6 +335,9 @@ void serialEvent(Serial port) {
             deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
         }
     }
+} catch (RuntimeException e) {
+    println(e.getMessage());
+}
 }
 
 
