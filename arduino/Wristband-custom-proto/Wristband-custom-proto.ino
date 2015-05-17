@@ -3,6 +3,9 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 
+// math helpers
+#include <math.h>
+
 // convenient RGB HSL
 #include <HSBColor.h>
 
@@ -89,6 +92,8 @@ unsigned long noteEnd = 0;
 int noteDuration = 0;
 
 
+unsigned long vibrationStart = 0;
+
 
 
 // custom pcb led channels for pwm library access
@@ -118,38 +123,6 @@ const int led6R = 9;
 const int led6G = 8;
 const int led6B = 10;
 
-
-
-void setup ()
-{
-  Serial.begin(115200);
-  Serial.println("hello serial");
-  mySerial.begin(baudrate);
-
-  uint16_t status = dof.begin();
-  Serial.print("LSM9DS0 WHO_AM_I's returned: 0x");
-  Serial.println(status, HEX);
-  Serial.println("Should be 0x49D4");
-  Serial.println();
-
-  // adafruit pwm driver
-  pwmR.begin();
-  pwmR.setPWMFreq(1600);  // This is the maximum PWM frequency
-  pwmL.begin();
-  pwmL.setPWMFreq(1600);
-
-  // save I2C bitrate
-  uint8_t twbrbackup = TWBR;
-  // must be changed after calling Wire.begin() (inside pwm.begin())
-  TWBR = 12; // upgrade to 400KHz!
-
-  analogWrite(onBoardLedPin, LOW);
-
-  setRGBs(0, 0, 0);
-
-  delay(500);
-
-}
 
 String test = "";
 
@@ -204,8 +177,44 @@ String json;
 
 int button = 0;
 
-void loop ()
+
+
+void setup ()
 {
+  Serial.begin(115200);
+  Serial.println("hello serial");
+  mySerial.begin(baudrate);
+
+  uint16_t status = dof.begin();
+  Serial.print("LSM9DS0 WHO_AM_I's returned: 0x");
+  Serial.println(status, HEX);
+  Serial.println("Should be 0x49D4");
+  Serial.println();
+
+  // adafruit pwm driver
+  pwmR.begin();
+  pwmR.setPWMFreq(1600);  // This is the maximum PWM frequency
+  pwmL.begin();
+  pwmL.setPWMFreq(1600);
+
+  // save I2C bitrate
+  uint8_t twbrbackup = TWBR;
+  // must be changed after calling Wire.begin() (inside pwm.begin())
+  TWBR = 12; // upgrade to 400KHz!
+
+  // turn off on-board led
+  analogWrite(onBoardLedPin, LOW);
+
+  setRGBs(0, 0, 0);
+
+  delay(500);
+
+}
+
+
+unsigned long lastSensorRead = 0;
+
+void loop () {
   Serial.println("---");
 
   now = millis();
@@ -217,6 +226,36 @@ void loop ()
       button = 0;
     }
   }
+  
+
+  Serial.print("Actual framerate: ");
+  float actualFps = 1000 / (now - lastFrame);
+  Serial.println(actualFps);
+
+  // compensate to achieve a delay between frames as close as possible to the actual desired framerate
+  float delayUntilNextFrame = min(max(0, msPerFrame - ((now - lastFrame) - msPerFrame)), msPerFrame);
+  Serial.print("Delay until next frame: ");
+  Serial.println(delayUntilNextFrame);
+
+  lastFrame = now;
+  delay(delayUntilNextFrame);
+  
+  if (lastSensorRead == 0 || now - lastSensorRead > 500) {
+    Serial.println("SENSORS**********************");
+    readSensors();
+    lastSensorRead = now;
+  }
+  
+  if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
+    Serial.println("VIBRATION STOP~~~~");
+    analogWrite(vibrationPin, 0);
+    vibrationStart = 0;
+  }
+}
+
+
+void readSensors ()
+{  
 
   // reading bluetooth
   // =================
@@ -275,13 +314,14 @@ void loop ()
   lastPitch = pitch;
   lastRoll = roll;
   
+  /*
   Serial.print("heading ");
   Serial.println(heading);
   Serial.print("pitch ");
   Serial.println(pitch);
   Serial.print("roll ");
   Serial.println(roll);
-  
+  */  
 
   for (int i = 0; i < 3; i++) {
     // ease the new values to contain a portion of the previous value, thus making them less
@@ -386,7 +426,7 @@ void loop ()
 
     int msSinceVibrationStart = now - lastVibrationStart;
     */
-    int vibration = map(combinedChange, threshold, 200.0, 110, 255);
+    int vibration = map(combinedChange, threshold, 100.0, 80, 255);
 
     /*
     if (vibration <= lastVibration + 15) {
@@ -396,12 +436,14 @@ void loop ()
     Serial.print("vibration ");
     Serial.println(vibration);
     analogWrite(vibrationPin, vibration);
+    vibrationStart = now;
     /*
     lastVibrationStart = now;
     lastVibration = vibration;
     */
   } else {
     analogWrite(vibrationPin, 0);
+    vibrationStart = 0;
   }
 
   /*
@@ -448,36 +490,25 @@ void loop ()
   Serial.println(rgbColor[2]);
 
 
-  String json = "{ heading: " + String(heading) +
-                ", pitch: " + String(pitch) +
-                ", roll: " + String(roll) +
-                ", accelX: " + String(accel[0]) +
-                ", accelY: " + String(accel[1]) +
-                ", accelZ: " + String(accel[2]) +
-                ", gyroX: " + String(gyro[0]) +
-                ", gyroY: " + String(gyro[1]) +
-                ", gyroZ: " + String(gyro[2]) +
-                ", magX: " + String(mag[0]) +
-                ", magY: " + String(mag[1]) +
-                ", magZ: " + String(mag[2]) +
-                ", rgb: \"" + 255 + "," + 255 + "," + 255 + "\""
+  String json = "{ \"heading\": " + String(heading) +
+                ", \"pitch\": " + String(pitch) +
+                ", \"roll\": " + String(roll) +
+                ", \"aX\": " + String(accel[0]) +
+                ", \"aY\": " + String(accel[1]) +
+                ", \"aZ\": " + String(accel[2]) +
+                ", \"gX\": " + String(gyro[0]) +
+                ", \"gY\": " + String(gyro[1]) +
+                ", \"gZ\": " + String(gyro[2]) +
+//                ", mX: " + String(mag[0]) +
+//                ", mY: " + String(mag[1]) +
+//                ", mZ: " + String(mag[2]) +
+                ", \"rgb\": \"" + 255 + "," + 255 + "," + 255 + "\"" +
                 " };";
 
   // print to bluetooth connection and debug monitor
   mySerial.println(json);
   //Serial.println(json);
 
-  Serial.print("Actual framerate: ");
-  float actualFps = 1000 / (now - lastFrame);
-  Serial.println(actualFps);
-
-  // compensate to achieve a delay between frames as close as possible to the actual desired framerate
-  float delayUntilNextFrame = min(max(0, msPerFrame - ((now - lastFrame) - msPerFrame)), msPerFrame);
-  Serial.print("Delay until next frame: ");
-  Serial.println(delayUntilNextFrame);
-
-  lastFrame = now;
-  delay(delayUntilNextFrame);
 }
 
 
