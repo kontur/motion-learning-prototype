@@ -58,7 +58,7 @@ Button buttonConnectBluetooth;
 Button buttonCloseBluetooth;
 CheckBox autoConnect;
 // flag for automatically trying to connect to the default bluetooth device
-boolean autoConnectActive = true; 
+boolean autoConnectActive = false; 
 
 
 // playback and recording
@@ -111,6 +111,14 @@ JSONObject configPatterns = JSONObject.parse("{ " +
     "\"gyroY\": { \"color\": " + color(0, 125, 50) + "}, " +
     "\"gyroZ\": { \"color\": " + color(0, 125, 125) + "} " 
     + "}");
+
+
+// testing video 
+
+void mousePressed() {
+  println("pressed");
+  playFeedback();
+}
 
 
 
@@ -292,6 +300,10 @@ void draw() {
     if (connection == null && autoConnectActive == true && tryingToConnect == false) {
         log("Autoconnect set");
         connectBluetooth(1);
+    }
+
+    if (moviePlaying == true) {
+        drawMovie();
     }
 }
 

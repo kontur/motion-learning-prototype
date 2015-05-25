@@ -6,6 +6,9 @@
 // math helpers
 #include <math.h>
 
+// variable size arrays with push and pop
+#include <StackArray.h>
+
 // convenient RGB HSL
 #include <HSBColor.h>
 
