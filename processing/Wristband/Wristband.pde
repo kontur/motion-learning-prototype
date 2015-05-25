@@ -113,15 +113,6 @@ JSONObject configPatterns = JSONObject.parse("{ " +
     + "}");
 
 
-// testing video 
-
-void mousePressed() {
-  println("pressed");
-  playFeedback();
-}
-
-
-
 void setup() {
     size(winW, winH, OPENGL);
     setupUI();
@@ -130,7 +121,6 @@ void setup() {
 
 
 void draw() {
-    println(frameRate);
     background(225);
     stroke(0);  
     ColorCube c = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
@@ -214,20 +204,10 @@ void draw() {
         cp5.getController("rotationZ").setValue(values.getFloat("pitch"));
 
         playbackIndex++;
+
         if (playbackIndex > playback.size() - 1) {
             playbackIndex = 0;
         }
-
-        if (connection != null) {
-            try {
-                connection.write("roll:" + rotationX + ",heading:" + rotationY + ",pitch:" + rotationZ + ";");
-            }
-            catch (RuntimeException e) {
-                println("play: exception " + e.getMessage());
-            }
-        }
-
-    // TODO send this info back to arduino
     }
 
     if (record) {
@@ -309,6 +289,8 @@ void draw() {
 
 
 void serialEvent(Serial port) {
+
+        try {
     String s = connection.readString();
     s = s.substring(0, s.length() - 1);
     
@@ -318,29 +300,32 @@ void serialEvent(Serial port) {
     if (s.indexOf("{") > -1) {
         JSONObject obj = JSONObject.parse(s);
 
-        if (s.indexOf("buttonDown") > -1) {
-            obj.getInt("buttonDown");
-            println("BUTTON DOWN");
-            onButtonDown();
-        } else {
+            if (s.indexOf("buttonDown") > -1) {
+                obj.getInt("buttonDown");
+                println("BUTTON DOWN");
+                onButtonDown();
+            } else {
 
-            cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
-            cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-            cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
-            
-            accel[0] = obj.getFloat("accelX");
-            accel[1] = obj.getFloat("accelY");
-            accel[2] = obj.getFloat("accelZ");
-            gyro[0] = obj.getFloat("gyroX");
-            gyro[1] = obj.getFloat("gyroY");
-            gyro[2] = obj.getFloat("gyroZ");
+                cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
+                cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
+                cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
+                
+                accel[0] = obj.getFloat("aX");
+                accel[1] = obj.getFloat("aY");
+                accel[2] = obj.getFloat("aZ");
+                gyro[0] = obj.getFloat("gX");
+                gyro[1] = obj.getFloat("gY");
+                gyro[2] = obj.getFloat("gZ");
 
 
-            String rgb = obj.getString("rgb");
-            String colorComponents[] = rgb.split(",");
-            deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
-        }
+                String rgb = obj.getString("rgb");
+                String colorComponents[] = rgb.split(",");
+                deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
+            }
     }
+        } catch (RuntimeException e) {
+            log("Error reading bluetooth: " + e.getMessage());
+        }
 }
 
 
@@ -393,9 +378,11 @@ void recordMatch(int val) {
 void recordSample(JSONArray data) {
     if (record) {
         log("Finish recording");
+        sendBluetoothCommand("recordingEnd");
         record = false;
     } else {
         log("Start recording");     
+        sendBluetoothCommand("recordingStart");
         recordingIndex = 0;
         data = new JSONArray();
         debugText.setText("");
@@ -601,6 +588,14 @@ float similarity(int val) {
     
     finishedComparison = true;
 
+    if (sim < 0.5) {        
+        sendBluetoothCommand("feedbackFail");
+    } else if (sim >= 0.5 && < 0.8) {
+        sendBluetoothCommand("feedbackGood");
+    } else {
+        sendBluetoothCommand("feedbackPerfect");
+    }
+
     return sim;
 }
 
@@ -620,9 +615,32 @@ void startVisualization() {
 }
 
 
+void sendBluetoothCommand(String command) {
+    if (connection != null) {
+        try {
+            //connection.write("roll:" + rotationX + ",heading:" + rotationY + ",pitch:" + rotationZ + ";");
+            connection.write("command:" + command + ";");
+        }
+        catch (RuntimeException e) {
+            log("Cannot send command to Arduino; exception: " + e.getMessage());
+        }
+    } else {
+        log("Cannot send command to Arduino; no Bluetooth connection");
+    }
+}
+
+
 void log(String msg) {
     msg = msg + "\n" + debugText.getText();
     debugText.setText(msg);
 }
 
 
+
+
+// testing video 
+void mousePressed() {
+    println("pressed");
+    playFeedback();
+    sendBluetoothCommand("recordStart");
+}
