@@ -27,6 +27,12 @@ class ColorCube {
         rotationZ = rotationZ * rotationEasing + (1 - _rotationZ * rotationEasing);
     }
 
+    void applyColor(color _colorFront, color _colorSide, color _colorTop) {
+        colorFront = _colorFront;
+        colorSide = _colorSide;
+        colorTop = _colorTop;
+    }
+
     void render() {
         noStroke();
         pushMatrix();
@@ -88,12 +94,6 @@ class ColorCube {
         endShape();   
 
         popMatrix();
-    }
-
-    void applyColor(color _colorFront, color _colorSide, color _colorTop) {
-        colorFront = _colorFront;
-        colorSide = _colorSide;
-        colorTop = _colorTop;
     }
 }
 

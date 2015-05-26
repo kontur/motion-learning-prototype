@@ -71,7 +71,7 @@ Grapher recordingMatchGraph;
 float[] accel = new float[3];
 float[] gyro = new float[3];
 float[] mag = new float[3];
-Color deviceRGB;
+Color deviceRGB = new Color(150, 150, 200);
 
 int lastClick = 0;
 int numClicks = 0;
@@ -125,11 +125,14 @@ void draw() {
     
     c.setRotation(rotationZ, rotationY, rotationX);
     c.setPosition(winW / 4, winH / 2, 0);
+    c.applyColor(deviceRGB.getRGB(), deviceRGB.getRGB(), deviceRGB.getRGB());
     c.render();
 
     c2.setRotation(rotationZ, rotationY, rotationX);
     c2.setPosition(winW / 4 * 3, winH / 2, 0);
+    c2.applyColor(deviceRGB.getRGB(), deviceRGB.getRGB(), deviceRGB.getRGB());
     c2.render();
+
 
     if (lastClick != 0 && millis() - lastClick  > doubleClickThreshold) {
         println("--------");
@@ -300,9 +303,9 @@ void serialEvent(Serial port) {
                     gyro[1] = obj.getFloat("gY");
                     gyro[2] = obj.getFloat("gZ");
 
-                    //String rgb = obj.getString("rgb");
-                    //String colorComponents[] = rgb.split(",");
-                    //deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
+                    String rgb = obj.getString("rgb");
+                    String colorComponents[] = rgb.split(",");
+                    deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
                 }
         }
     } catch (RuntimeException e) {
@@ -472,8 +475,6 @@ void log(String msg) {
     msg = msg + "\n" + debugText.getText();
     debugText.setText(msg);
 }
-
-
 
 
 // testing video 

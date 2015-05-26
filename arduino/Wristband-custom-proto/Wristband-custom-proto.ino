@@ -437,6 +437,7 @@ void sendJson() {
                 ", \"gX\": " + String(gyro[0]) +
                 ", \"gY\": " + String(gyro[1]) +
                 ", \"gZ\": " + String(gyro[2]) +
+                ", \"rgb\": \"" + rgbColor[0] + "," + rgbColor[1] + "," + rgbColor[2] + "\"" +
                 " };";
 
   // print to bluetooth connection and debug monitor
