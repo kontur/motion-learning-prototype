@@ -143,9 +143,9 @@ void setup () {
   analogWrite(onBoardLedPin, LOW);
 
   setRGBs(0, 0, 0);
-
-  delay(500);
-
+  
+  // startup sound
+  playSound(5);
 }
 
 
@@ -408,6 +408,7 @@ void sendButtonDown() {
   setRGBs(255, 0, 0);
   mySerial.println(json);
   Serial.println(json);
+  playSound(6);
 }
 
 
