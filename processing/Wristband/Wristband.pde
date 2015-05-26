@@ -19,9 +19,6 @@ import javax.swing.*;
 import toxi.geom.*;
 
 
-VisualizationFrame visualizationFrame; // the window holding the visualization
-Visualization v;
-
 //String defaultSerial = "/dev/tty.wristbandproto-SPP";
 //String defaultSerial = "/dev/tty.RNBT-C094-RNI-SPP";
 String defaultSerial = "/dev/cu.RNBT-BF5D-RNI-SPP";
@@ -52,13 +49,9 @@ Serial connection;
 ControlP5 cp5;
 Textarea debugText;
 DropdownList bluetoothDeviceList;
-RadioButton mode;
 int modeSelected = 0;
 Button buttonConnectBluetooth;
 Button buttonCloseBluetooth;
-CheckBox autoConnect;
-// flag for automatically trying to connect to the default bluetooth device
-boolean autoConnectActive = false; 
 
 
 // playback and recording
@@ -164,19 +157,6 @@ void draw() {
         lastClick = 0;
     }
 
-    // interact with the second open window which displays the visualization
-    if (visualizationFrame != null) {
-        if (deviceRGB != null) {
-            v.setColor(deviceRGB);
-        }
-
-        float limit = 0.85;
-        v.setDirection(new Vec3D(
-            map(rotationX, 0, 360, -limit, limit), 
-            map(rotationZ, 0, 360, -limit, limit),             
-            map(rotationY, 0, 360, -limit, limit)
-        ));
-    }
 
     // show spinny animation until connected
     if (modeSelected == 0) {
@@ -277,11 +257,6 @@ void draw() {
         tryingToConnect = false;
     }
 
-    if (connection == null && autoConnectActive == true && tryingToConnect == false) {
-        log("Autoconnect set");
-        connectBluetooth(1);
-    }
-
     if (moviePlaying == true) {
         drawMovie();
     }
@@ -333,32 +308,6 @@ void onButtonDown() {
     if (numClicks == 0 || millis() - lastClick < doubleClickThreshold) {
         numClicks++;
         lastClick = millis();
-    }
-}
-
-
-void modeRadioButton(int a) {
-    modeSelected = a;
-}
-
-
-void loadFile(int val) {
-    selectInput("File", "fileSelected");
-}
-
-
-void fileSelected(File selection) {
-    if (selection != null) {
-        try {
-            JSONArray values = loadJSONArray(selection);
-            playback = values;
-            playbackIndex = 0;
-            mode.activate(2);
-            modeSelected = 2;
-        } 
-        catch (RuntimeException e) {
-           log("LoadFile failed, " + e.getMessage());
-        }
     }
 }
 
@@ -427,95 +376,6 @@ void stopRecording() {
 }
 
 
-void saveFile(int val) {
-    log("SaveFile " + val);
-    selectOutput("File to save to:", "fileToSave");
-}
-
-
-void fileToSave(File selection) {
-    println("save to " + selection);
-    if (selection != null) {
-        try {
-            saveJSONArray(recording, selection.toString());
-        } 
-        catch (RuntimeException e) {
-            println("fileToSave failed, " + e.getMessage());
-        }
-    }
-}
-
-
-// helper to dump a list of available serial ports into the passed in DropdownList
-void getBluetoothDeviceList(DropdownList list) {
-    String[] ports = Serial.list();
-    bluetoothDeviceList.addItem("---", 0);
-    for (int p = 0; p < ports.length; p++) {
-        String port = ports[p];
-        bluetoothDeviceList.addItem(port, p  + 1);
-    }
-}
-
-
-// helper function to start a bluetooth connection based on the selected dropdown list item
-void connectBluetooth(int val) {
-    mode.activate(1);
-    modeSelected = 1;
-    String[] ports = Serial.list();
-    buttonConnectBluetooth.hide();
-    String port = defaultSerial;
-    println(Serial.list());
-    if (bluetoothDeviceList.getValue() != 0) {
-        port = ports[int(bluetoothDeviceList.getValue()) - 1];
-    }
-    log("Attempting to open serial port: " + port); 
-    
-    try {
-        tryingToConnect = true;
-        connection = new Serial(this, port, 9600);
-
-        // set a character that limits transactions and initiates reading the buffer
-        char c = ';';
-        connection.bufferUntil(byte(c));
-        buttonConnectBluetooth.hide();
-        buttonCloseBluetooth.show();
-        log("Bluetooth connected to " + port);
-    } 
-    catch (RuntimeException e) {
-        log("Error opening serial port " + port + ": \n" + e.getMessage());
-        buttonConnectBluetooth.show();
-        buttonCloseBluetooth.hide();
-        tryingToConnect = false;
-    }
-}
-
-
-// helper function to close the bluetooth connection
-void closeBluetooth(int val) {
-    mode.activate(0);
-    modeSelected = 0;
-    try {
-        connection.stop();
-        connection = null;
-    }
-    catch (RuntimeException e) {
-        println("error: " + e.getMessage());
-        // TODO UI feedback
-    }
-    buttonConnectBluetooth.show();
-    buttonCloseBluetooth.hide();
-}
-
-
-void autoConnectCheckbox(float[] vals) {
-    println("autoConnectCheckbox", vals);
-    println(autoConnect.getArrayValue());
-    if (autoConnect.getArrayValue()[0] == 1.00) {
-        autoConnectActive = true;
-    } else {
-        autoConnectActive = false;
-    }
-}
 
 
 /**
@@ -590,7 +450,7 @@ float similarity(int val) {
 
     if (sim < 0.5) {        
         sendBluetoothCommand("feedbackFail");
-    } else if (sim >= 0.5 && < 0.8) {
+    } else if (sim >= 0.5 && sim < 0.8) {
         sendBluetoothCommand("feedbackGood");
     } else {
         sendBluetoothCommand("feedbackPerfect");
@@ -599,35 +459,6 @@ float similarity(int val) {
     return sim;
 }
 
-
-void startVisualization() {
-    // visualization frame
-    log("Starting visualization");
-    try {
-        visualizationFrame = new VisualizationFrame(displayWidth, displayHeight);
-        frame.setTitle("Motion Learning");
-        visualizationFrame.setTitle("Motion Learning - Visualization");
-        fill(0);
-        v = visualizationFrame.getVisualization();
-    } catch (RuntimeException e) {
-        log("Failed to initiate visualization. \n Error: " + e.getMessage());
-    }
-}
-
-
-void sendBluetoothCommand(String command) {
-    if (connection != null) {
-        try {
-            //connection.write("roll:" + rotationX + ",heading:" + rotationY + ",pitch:" + rotationZ + ";");
-            connection.write("command:" + command + ";");
-        }
-        catch (RuntimeException e) {
-            log("Cannot send command to Arduino; exception: " + e.getMessage());
-        }
-    } else {
-        log("Cannot send command to Arduino; no Bluetooth connection");
-    }
-}
 
 
 void log(String msg) {
@@ -641,6 +472,6 @@ void log(String msg) {
 // testing video 
 void mousePressed() {
     println("pressed");
-    playFeedback();
-    sendBluetoothCommand("recordStart");
+    //playFeedback();
+    //sendBluetoothCommand("recordStart");
 }

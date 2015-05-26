@@ -29,28 +29,6 @@ void setupUI() {
 
 	getBluetoothDeviceList(bluetoothDeviceList);        
 
-	autoConnect = cp5.addCheckBox("autoConnectCheckbox")
-	.setPosition(x, 50)
-	.addItem("on", 1);
-	// .activate(0);
-	// autoConnectActive = true;
-
-
-	mode = cp5.addRadioButton("modeRadioButton")
-	.setPosition(x, 250)
-	.setSize(10, 10)
-	.setColorForeground(color(120))
-	.setColorActive(color(255))
-	.setColorLabel(color(0))
-	.setItemsPerRow(3)
-	.setSpacingColumn(30)
-	.addItem("loop", 0)
-	.addItem("live", 1)
-	.addItem("file", 2)
-	;
-	mode.activate(0);
-	modeSelected = 0;
-
 
 	// manual rotation for cube visualisation
 	cp5.addSlider("rotationX")
@@ -69,23 +47,6 @@ void setupUI() {
 	.setColorCaptionLabel(color(0, 0, 255));
 
 	graph = new Grapher(200, 500, 400, 100);
-
-	/*
-	// file handling buttons
-	cp5.addButton("loadFile")
-	.setPosition(x, 300)
-	.setSize(100, 20);
-
-	cp5.addButton("saveFile")
-	.setPosition(x, 330)
-	.setSize(100, 20);
-	*/
-
-
-	//
-	cp5.addButton("startVisualization")
-	.setPosition(x, 200)
-	.setSize(100, 20);
 
 
 	// file I/O check textarea
@@ -108,8 +69,5 @@ void setupUI() {
 	cp5.addButton("recordMatch")
 	.setPosition(500, 330)
 	.setSize(100, 20);
-
-	cp5.addButton("similarity")
-	.setPosition(500, 360);
 
 }
