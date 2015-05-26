@@ -11,7 +11,6 @@ void setupUI() {
 	cp5 = new ControlP5(this);
 
 
-
 	// bluetooth connect UI
 	buttonConnectBluetooth = cp5.addButton("connectBluetooth")
 	.setPosition(guiLeft, 20)
@@ -31,21 +30,19 @@ void setupUI() {
 
 	// manual rotation for cube visualisation
 	cp5.addSlider("rotationX")
-	.setPosition(guiLeft, 470)
+	.setPosition(guiRight, guiHeader)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(255, 0, 0));
 
 	cp5.addSlider("rotationY")
-	.setPosition(guiLeft, 490)
+	.setPosition(guiRight, guiHeader + 20)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 255, 0));
 
 	cp5.addSlider("rotationZ")
-	.setPosition(guiLeft, 510)
+	.setPosition(guiRight, guiHeader + 40)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 0, 255));
-
-	//graph = new Grapher(guiLeft, guiTop + 150, 400, 100);
 
 
 	// file I/O check textarea
@@ -58,15 +55,24 @@ void setupUI() {
 
 
 
-	// helper for testing atm
-
+	// buttons for recording from the GUI instead of the device
 	cp5.addButton("recordPattern")
 	.setPosition(guiLeft, guiTop)
 	.setSize(100, 20);
 
-	cp5.addButton("recordMatch")
-	.setPosition(guiLeft, guiCenter)
+	cp5.addButton("clearPattern")
+	.setPosition(guiLeft + 110, guiTop)
 	.setSize(100, 20);
+
+
+	cp5.addButton("recordMatch")
+	.setPosition(guiLeft, guiMiddle)
+	.setSize(100, 20);
+
+	cp5.addButton("clearMatch")
+	.setPosition(guiLeft + 110, guiMiddle)
+	.setSize(100, 20);
+
 
 	cp5.addButton("playback")
 	.setPosition(guiLeft, guiHeader)

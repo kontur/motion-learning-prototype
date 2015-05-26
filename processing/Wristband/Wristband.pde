@@ -71,11 +71,10 @@ Button buttonCloseBluetooth;
 
 // playback and recording
 String recordingWhat = "";
-int recordingIndex = 0;
 boolean record = false;
 boolean play = false;
 
-int recordLimit = 1000;
+int playbackIndex = 0;
 
 float[] accel = new float[3];
 float[] gyro = new float[3];
@@ -115,16 +114,22 @@ void draw() {
         idleAnimation();
 
         JSONObject data = new JSONObject();
-        data.setFloat("roll", rotationZ);
-        data.setFloat("pitch", rotationX);
+
+        // as there is no sensor readings from bluetooth take the current
+        // animation positions
+        pitch = rotationZ;
+        roll = rotationX;
+
+        data.setFloat("pitch", pitch);
+        data.setFloat("roll", roll);
 
         if (pattern.hasRecording == false) {
-            pattern.updateCube(rotationZ, rotationX, deviceRGB.getRGB());            
+            pattern.updateCube(pitch, roll, deviceRGB.getRGB());            
             pattern.graph.addData(data);
         }
 
         if (match.hasRecording == false) {
-            match.updateCube(rotationZ, rotationX, deviceRGB.getRGB());
+            match.updateCube(pitch, roll, deviceRGB.getRGB());
             match.graph.addData(data);
         }
     }
@@ -136,28 +141,52 @@ void draw() {
 
     // mode 2 is bluetooth connected
     else if (mode == 2) {
-        pattern.updateCube(roll, pitch, deviceRGB.getRGB());
-
         JSONObject data = new JSONObject();
         data.setFloat("roll", roll);
         data.setFloat("pitch", pitch);
 
         pattern.graph.addData(data);
+        pattern.updateCube(roll, pitch, deviceRGB.getRGB());
     }
 
+    // mode 3 is playback
+    else if (mode == 3) {
+        println("playbackIndex", playbackIndex);
+        if (pattern.hasRecording == true) {
+            pattern.playbackAt(playbackIndex);
+        }
+        if (match.hasRecording == true) {
+            match.playbackAt(playbackIndex);
+        }
+        playbackIndex++;
+        if (playbackIndex >= pattern.getRecordingSize() || (pattern.hasRecording == false && match.hasRecording == false)) {
+            if (connection != null) {
+                mode = 2;
+            } else {
+                mode = 0;
+            }
+            playbackIndex = 0;
+        }
+    }
+
+
+
+    // handle recording separately
+    // ***************************
 
     if (record && recordingWhat == "pattern") {
         JSONObject values = new JSONObject();
         values.setFloat("roll", roll);
         //values.setFloat("heading", rotationY);
         values.setFloat("pitch", pitch);
-        values.setFloat("accelX", map(accel[0], -1, 1, 0, 300));
-        values.setFloat("accelY", map(accel[1], -1, 1, 0, 300));
-        values.setFloat("accelZ", map(accel[2], -1, 1, 0, 300));
-        values.setFloat("gyroX", map(gyro[0], -360, 360, 0, 300));
-        values.setFloat("gyroY", map(gyro[1], -360, 360, 0, 300));
-        values.setFloat("gyroZ", map(gyro[2], -360, 360, 0, 300));
+        values.setFloat("accelX", accel[0]);
+        values.setFloat("accelY", accel[1]);
+        values.setFloat("accelZ", accel[2]);
+        values.setFloat("gyroX", gyro[0]);
+        values.setFloat("gyroY", gyro[1]);
+        values.setFloat("gyroZ", gyro[2]);
         values.setInt("rgb", deviceRGB.getRGB());
+
         pattern.record(values);
     }
 
@@ -166,16 +195,20 @@ void draw() {
         values.setFloat("roll", roll);
         //values.setFloat("heading", rotationY);
         values.setFloat("pitch", pitch);
-        values.setFloat("accelX", map(accel[0], -1, 1, 0, 300));
-        values.setFloat("accelY", map(accel[1], -1, 1, 0, 300));
-        values.setFloat("accelZ", map(accel[2], -1, 1, 0, 300));
-        values.setFloat("gyroX", map(gyro[0], -360, 360, 0, 300));
-        values.setFloat("gyroY", map(gyro[1], -360, 360, 0, 300));
-        values.setFloat("gyroZ", map(gyro[2], -360, 360, 0, 300));
+        values.setFloat("accelX", accel[0]);
+        values.setFloat("accelY", accel[1]);
+        values.setFloat("accelZ", accel[2]);
+        values.setFloat("gyroX", gyro[0]);
+        values.setFloat("gyroY", gyro[1]);
+        values.setFloat("gyroZ", gyro[2]);
         values.setInt("rgb", deviceRGB.getRGB());
-        match.record(values);
+        
+        if (match.record(values)) {
+            pattern.playbackAt(match.recordingIndex);
+        } else {
+            stopRecording();
+        }
 
-        pattern.playbackAt(match.recordingIndex);
     }
 
         /*
@@ -275,7 +308,6 @@ void onButtonDown() {
 /**
  * Button handler for starting a recording
  */
- 
 void recordPattern(int val) {
     if (record == false) {
         recordingWhat = "pattern";
@@ -290,11 +322,19 @@ void recordPattern(int val) {
 /**
  * Button handler for starting a recording
  */
-
 void recordMatch(int val) {
     if (record == false) {
+
+        int limit = pattern.getRecordingSize();
+
+        if (limit <= 0) {
+            log("Record a pattern first");
+            return;
+        }
+
         recordingWhat = "match";
         record = true;
+        match.setRecordingLimit(limit);
         match.startRecording();
     } else {
         stopRecording();
@@ -482,6 +522,31 @@ void checkClicks() {
         numClicks = 0;
         lastClick = 0;
     }
+}
+
+
+/**
+ * Click handler of the playback button
+ */
+void playback(int val) {
+    mode = 3;
+    playbackIndex = 0;
+}
+
+
+/**
+ * Helper for clearning recordings
+ */
+void clearPattern(int val) {
+    pattern.clearRecording();
+}
+
+
+/**
+ * Helper for clearning recordings
+ */
+void clearMatch(int val) {
+    match.clearRecording();
 }
 
 
