@@ -47,6 +47,7 @@ SoftwareSerial mySerial(rx, tx);
 
 // tracking button pressed stated
 int button = 0;
+int lastButton = 0;
 
 // desired fps rate between loops
 // NOTE that this is in reality MUCH lower, ~4 fps
@@ -87,8 +88,11 @@ int rgbColor[3];
 
 unsigned long now;
 unsigned long lastFrame;
-
+unsigned long lastButtonUp = 0;
 unsigned long vibrationStart = 0;
+unsigned long lastSensorRead = 0;
+
+int framesSinceSensorRead = 0;
 
 // in loop variables
 // declared outside the loop and reused to save initialization every loop
@@ -141,36 +145,66 @@ void setup () {
   analogWrite(onBoardLedPin, LOW);
 
   setRGBs(0, 0, 0);
-  
+
   // startup sound
   playSound(5);
 }
 
 
-unsigned long lastSensorRead = 0;
-
 void loop () {
   Serial.println("---");
 
   now = millis();
-  
-  if (button == 0) {
-    button = digitalRead(buttonPin);
-    if (button == 1) {
-      sendButtonDown();
-      button = 0;
-    }
+
+  // register button click if there are any
+  // make sure not to register button clicks to "eagerly" so that a single press of the button
+  // won't be registered as a double click
+
+  button = digitalRead(buttonPin);
+  if (button == 1 && lastButton == 0) {
+    sendButtonDown();
+  }  
+  lastButton = button;
+
+
+  // read bluetooth commands from processing in
+  readBluetooth();
+
+
+  Serial.print("Actual frame delay: ");
+  float actualFps = 1000 / (now - lastFrame);
+  Serial.print(actualFps);
+
+
+  if (lastSensorRead == 0 || now - lastSensorRead > 500) {
+    Serial.println("SENSORS**********************");
+    readSensors();
+    lastSensorRead = now;
+    framesSinceSensorRead = 0;
+  } else {
+    framesSinceSensorRead++;
   }
   
+  if (framesSinceSensorRead == 1) {
+    setVibration();
+  }
   
-  // read bluetooth commands in
-  readBluetooth();
+  if (framesSinceSensorRead == 2) {
+    setLeds();
+  }
+  
+  if (framesSinceSensorRead == 3) {
+    sendJson();
+  }
   
 
-  Serial.print("Actual framerate: ");
-  float actualFps = 1000 / (now - lastFrame);
-  Serial.println(actualFps);
-
+  //if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
+  if (vibrationStart != 0 && now - vibrationStart > 250) {
+    Serial.println("VIBRATION STOP~~~~");
+    analogWrite(vibrationPin, 0);
+    vibrationStart = 0;
+  }
+  
   // compensate to achieve a delay between frames as close as possible to the actual desired framerate
   float delayUntilNextFrame = min(max(0, msPerFrame - ((now - lastFrame) - msPerFrame)), msPerFrame);
   Serial.print("Delay until next frame: ");
@@ -178,23 +212,14 @@ void loop () {
 
   lastFrame = now;
   delay(delayUntilNextFrame);
-  
-  if (lastSensorRead == 0 || now - lastSensorRead > 500) {
-    Serial.println("SENSORS**********************");
-    readSensors();
-    lastSensorRead = now;
-  } 
-  
-  //if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
-  if (vibrationStart != 0 && now - vibrationStart > 250) {
-    Serial.println("VIBRATION STOP~~~~");
-    analogWrite(vibrationPin, 0);
-    vibrationStart = 0;
-  }
 }
 
 
-void readSensors () {  
+void readSensors () {
+  
+  Serial.print("0 ");
+  Serial.println(millis() - now);
+  
   getAccel(&accel[0]);
   getGyro(&gyro[0]);
   getMag(&mag[0]);
@@ -208,18 +233,20 @@ void readSensors () {
   pitch = orientation[0];
   roll = orientation[1];
 
+  Serial.print("1 ");
+  Serial.println(millis() - now);
   /*
   // ease the readings for pitch, roll and heading to make them more smooth
   heading = lastHeading * easing + (1 - heading * easing);
   pitch = lastPitch * easing + (1 - pitch * easing);
   roll = lastRoll * easing + (1 - roll * easing);
   */
-  
+
   // store current values for next round to compare
   lastHeading = heading;
   lastPitch = pitch;
   lastRoll = roll;
-  
+
   /*
   Serial.print("heading ");
   Serial.println(heading);
@@ -227,7 +254,7 @@ void readSensors () {
   Serial.println(pitch);
   Serial.print("roll ");
   Serial.println(roll);
-  */  
+  */
 
   for (int i = 0; i < 3; i++) {
     // ease the new values to contain a portion of the previous value, thus making them less
@@ -254,6 +281,8 @@ void readSensors () {
       maxMag[i] = mag[i] > 0 ? mag[i] : -mag[i];
     }
 
+  Serial.print("2 ");
+  Serial.println(millis() - now);
     /*
     Serial.print("maxAccel ");
     Serial.println(maxAccel[i]);
@@ -313,20 +342,24 @@ void readSensors () {
   Serial.println("Combined percentual rotation change: ");
   Serial.println(combinedRotationChange);
   //Serial.println(absCombinedRotationChange);
-  
+
   Serial.println("Combined percentual change: ");
   Serial.println(combinedChange);
   */
+  Serial.print("3 ");
+  Serial.println(millis() - now);
+}
 
+void setVibration() {
   // provide vibraiton feedback
   // **************************
-  
-  if (combinedChange > threshold) {    
+
+  if (combinedChange > threshold) {
     int vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 255);
-      
+
     Serial.print("vibration ");
-    Serial.println(vibration);    
-    
+    Serial.println(vibration);
+
     analogWrite(vibrationPin, vibration);
     vibrationStart = now;
   } else {
@@ -334,40 +367,45 @@ void readSensors () {
     vibrationStart = 0;
   }
 
-  
+  Serial.print("4 ");
+  Serial.println(millis() - now);
+}
+
+void setLeds() {
+
   // leds
   // ****
-  
+
   // roll: 90 is all up, -90 all down / or reverse if put on the other way around ;)
   // pitch: 90 all left, 90 all right / or reverse on other hand ;)
-  
+
   // the more the roll is away from 0 (-90 / 90), the less pitch should account for
   // the more the roll is close to 0 the more pitch should account for
   float rollFactor = map(roll, -90.0, 90.0, 0, 200) - 100; // -1.00 - 1.00 (* 100)
   float pitchFactor = map(pitch, -90.0, 90.0, 0, 100); // 0.00 - 1.00 (* 100)
-  
+
   rollFactor = rollFactor / 100;
   pitchFactor = pitchFactor / 100;
-  
+
   rollFactor = rollFactor > 0 ? rollFactor : -rollFactor;
-  
+
   /*
   Serial.println(rollFactor);
   Serial.println(pitchFactor);
   */
-  
+
   float hue = pitchFactor * (1 - rollFactor) + rollFactor;
   /*
   Serial.print("hue: ");
   Serial.println(hue);
   */
-  
+
   hue = round(hue * 6) / 6;
   /*
   Serial.print("hue rounded: ");
   Serial.println(hue);
   */
-  
+
   H2R_HSBtoRGBfloat(hue, 1, 1, &rgbColor[0]);
   setRGBs(rgbColor[0], rgbColor[1], rgbColor[2]);
   /*
@@ -377,8 +415,12 @@ void readSensors () {
   Serial.print(", ");
   Serial.println(rgbColor[2]);
   */
+}
 
+void sendJson() {
 
+  Serial.print("5 ");
+  Serial.println(millis() - now);
   String json = "{ \"pitch\": " + String(pitch) +
                 ", \"roll\": " + String(roll) +
                 ", \"aX\": " + String(accel[0]) +
@@ -390,9 +432,11 @@ void readSensors () {
                 " };";
 
   // print to bluetooth connection and debug monitor
-  
-   // note that I made the observation that if the json wasn't printed to the Serial, it didn't
-   // print it to mySerial either... reasons?
+
+  Serial.print("6 ");
+  Serial.println(millis() - now);
+  // note that I made the observation that if the json wasn't printed to the Serial, it didn't
+  // print it to mySerial either... reasons?
   Serial.println(json);
   mySerial.println(json);
 }
@@ -409,10 +453,10 @@ void sendButtonDown() {
 
 
 void readBluetooth() {
-  
+
   // code for reading IN information from bluetooth
   // read in strings as one until the last ";", then split by colon ":"
-  
+
   if (mySerial.available() > -1) {
     String bluetoothString = "";
     boolean rec = true;
@@ -426,7 +470,7 @@ void readBluetooth() {
         rec = false;
       }
     }
-    
+
     /*
     // expected string something like:
     // roll:12.0,heading:180.29,pitch:123.00;
@@ -434,22 +478,22 @@ void readBluetooth() {
     String heading = test.substring(test.indexOf(":") + 1, test.indexOf("pitch") - 2);
     String pitch = test.substring(test.lastIndexOf(":" + 1));
     */
-    
+
     String command = bluetoothString.substring(bluetoothString.indexOf(":") + 1, bluetoothString.indexOf(";") - 1);
-    
+
     Serial.print("Command: ");
     Serial.println(command);
-    
+
     int soundNumber = -1;
-    
+
     if (command == "recordingStart") soundNumber = 0;
     if (command == "recordingEnd") soundNumber = 1;
     if (command == "feedbackPerfect") soundNumber = 2;
     if (command == "feedbackGood") soundNumber = 3;
     if (command == "feedbackFail") soundNumber = 4;
-    
+
     if (soundNumber != -1) {
       playSound(soundNumber);
     }
-  } 
+  }
 }
