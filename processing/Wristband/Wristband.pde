@@ -161,20 +161,18 @@ void draw() {
     // show spinny animation until connected
     if (modeSelected == 0) {
         rotationX += 0.5;
-        rotationY += 1;
+        //rotationY += 1;
         rotationZ += 2;
         if (rotationX > 360) rotationX = 0;
-        if (rotationY > 360) rotationY = 0;
+        //if (rotationY > 360) rotationY = 0;
         if (rotationZ > 360) rotationZ = 0;
         cp5.getController("rotationX").setValue(rotationX);
         cp5.getController("rotationY").setValue(rotationY);
         cp5.getController("rotationZ").setValue(rotationZ);
-        deviceRGB = new Color(
-            int(map(rotationX, 0, 360, 0, 255)), 
-            int(map(rotationY, 0, 360, 0, 255)), 
-            int(map(rotationZ, 0, 360, 0, 255))
-        );
 
+    // mode 1 is connecting
+
+    // mode 2 is connected
     } else if (modeSelected == 2) {
 
         println(playback.getJSONObject(playbackIndex));  
@@ -265,42 +263,41 @@ void draw() {
 
 void serialEvent(Serial port) {
 
-        try {
-    String s = connection.readString();
-    s = s.substring(0, s.length() - 1);
-    
-    //println("serialEvent: ", s);
+    try {   
+        String s = connection.readString();
+        s = s.substring(0, s.length() - 1);
+        
+        println("serialEvent: ", s);
 
-    // if the serial string read contains a json opening { parse info from arduino
-    if (s.indexOf("{") > -1) {
-        JSONObject obj = JSONObject.parse(s);
+        // if the serial string read contains a json opening { parse info from arduino
+        if (s.indexOf("{") > -1) {
+            JSONObject obj = JSONObject.parse(s);
 
-            if (s.indexOf("buttonDown") > -1) {
-                obj.getInt("buttonDown");
-                println("BUTTON DOWN");
-                onButtonDown();
-            } else {
+                if (s.indexOf("buttonDown") > -1) {
+                    obj.getInt("buttonDown");
+                    println("BUTTON DOWN");
+                    onButtonDown();
+                } else {
 
-                cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
-                cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-                cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
-                
-                accel[0] = obj.getFloat("aX");
-                accel[1] = obj.getFloat("aY");
-                accel[2] = obj.getFloat("aZ");
-                gyro[0] = obj.getFloat("gX");
-                gyro[1] = obj.getFloat("gY");
-                gyro[2] = obj.getFloat("gZ");
+                    cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
+                    //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
+                    cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
+                    
+                    accel[0] = obj.getFloat("aX");
+                    accel[1] = obj.getFloat("aY");
+                    accel[2] = obj.getFloat("aZ");
+                    gyro[0] = obj.getFloat("gX");
+                    gyro[1] = obj.getFloat("gY");
+                    gyro[2] = obj.getFloat("gZ");
 
-
-                String rgb = obj.getString("rgb");
-                String colorComponents[] = rgb.split(",");
-                deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
-            }
-    }
-        } catch (RuntimeException e) {
-            log("Error reading bluetooth: " + e.getMessage());
+                    //String rgb = obj.getString("rgb");
+                    //String colorComponents[] = rgb.split(",");
+                    //deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
+                }
         }
+    } catch (RuntimeException e) {
+        log("Error reading bluetooth: " + e.getMessage());
+    }
 }
 
 

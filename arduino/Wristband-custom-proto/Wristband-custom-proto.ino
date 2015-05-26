@@ -45,14 +45,12 @@ const int rx = 7;
 const int tx = 8;
 SoftwareSerial mySerial(rx, tx);
 
-String json;
-
 // tracking button pressed stated
 int button = 0;
 
 // desired fps rate between loops
 // NOTE that this is in reality MUCH lower, ~4 fps
-float fps = 4;
+float fps = 12;
 float msPerFrame = 1000 / fps; // ~83
 
 
@@ -187,7 +185,8 @@ void loop () {
     lastSensorRead = now;
   } 
   
-  if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
+  //if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
+  if (vibrationStart != 0 && now - vibrationStart > 250) {
     Serial.println("VIBRATION STOP~~~~");
     analogWrite(vibrationPin, 0);
     vibrationStart = 0;
@@ -314,10 +313,10 @@ void readSensors () {
   Serial.println("Combined percentual rotation change: ");
   Serial.println(combinedRotationChange);
   //Serial.println(absCombinedRotationChange);
-  */
+  
   Serial.println("Combined percentual change: ");
   Serial.println(combinedChange);
-  
+  */
 
   // provide vibraiton feedback
   // **************************
@@ -380,8 +379,7 @@ void readSensors () {
   */
 
 
-  String json = "{ \"heading\": " + String(heading) +
-                ", \"pitch\": " + String(pitch) +
+  String json = "{ \"pitch\": " + String(pitch) +
                 ", \"roll\": " + String(roll) +
                 ", \"aX\": " + String(accel[0]) +
                 ", \"aY\": " + String(accel[1]) +
@@ -389,16 +387,14 @@ void readSensors () {
                 ", \"gX\": " + String(gyro[0]) +
                 ", \"gY\": " + String(gyro[1]) +
                 ", \"gZ\": " + String(gyro[2]) +
-//                ", mX: " + String(mag[0]) +
-//                ", mY: " + String(mag[1]) +
-//                ", mZ: " + String(mag[2]) +
-                ", \"rgb\": \"" + 255 + "," + 255 + "," + 255 + "\"" +
                 " };";
 
   // print to bluetooth connection and debug monitor
+  
+   // note that I made the observation that if the json wasn't printed to the Serial, it didn't
+   // print it to mySerial either... reasons?
+  Serial.println(json);
   mySerial.println(json);
-  //Serial.println(json);
-
 }
 
 // relay button pressed status to client
