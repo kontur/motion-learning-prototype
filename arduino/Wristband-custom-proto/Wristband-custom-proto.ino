@@ -147,7 +147,7 @@ void setup () {
   setRGBs(0, 0, 0);
 
   // startup sound
-  playSound(5);
+  //playSound(5);
 }
 
 
@@ -163,7 +163,7 @@ void loop () {
   button = digitalRead(buttonPin);
   if (button == 1 && lastButton == 0) {
     sendButtonDown();
-  }  
+  }
   lastButton = button;
 
 
@@ -171,9 +171,9 @@ void loop () {
   readBluetooth();
 
 
-  Serial.print("Actual frame delay: ");
-  float actualFps = 1000 / (now - lastFrame);
-  Serial.print(actualFps);
+  Serial.print("Actual frame delay since last frame: ");
+  float actualFps = now - lastFrame;
+  Serial.println(actualFps);
 
 
   if (lastSensorRead == 0 || now - lastSensorRead > 500) {
@@ -181,22 +181,20 @@ void loop () {
     readSensors();
     lastSensorRead = now;
     framesSinceSensorRead = 0;
-  } else {
-    framesSinceSensorRead++;
   }
-  
+
   if (framesSinceSensorRead == 1) {
     setVibration();
   }
-  
+
   if (framesSinceSensorRead == 2) {
     setLeds();
   }
-  
+
   if (framesSinceSensorRead == 3) {
     sendJson();
   }
-  
+
 
   //if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
   if (vibrationStart != 0 && now - vibrationStart > 250) {
@@ -204,22 +202,26 @@ void loop () {
     analogWrite(vibrationPin, 0);
     vibrationStart = 0;
   }
-  
+
   // compensate to achieve a delay between frames as close as possible to the actual desired framerate
   float delayUntilNextFrame = min(max(0, msPerFrame - ((now - lastFrame) - msPerFrame)), msPerFrame);
-  Serial.print("Delay until next frame: ");
+  Serial.print("Delay until next frame to reach target fps: ");
   Serial.println(delayUntilNextFrame);
 
   lastFrame = now;
+
+  // always increment, it will start form 0 on sensor read and then be +1 for every frame after
+  framesSinceSensorRead++;
+  
   delay(delayUntilNextFrame);
 }
 
 
 void readSensors () {
-  
+
   Serial.print("0 ");
   Serial.println(millis() - now);
-  
+
   getAccel(&accel[0]);
   getGyro(&gyro[0]);
   getMag(&mag[0]);
@@ -281,8 +283,8 @@ void readSensors () {
       maxMag[i] = mag[i] > 0 ? mag[i] : -mag[i];
     }
 
-  Serial.print("2 ");
-  Serial.println(millis() - now);
+    Serial.print("2 ");
+    Serial.println(millis() - now);
     /*
     Serial.print("maxAccel ");
     Serial.println(maxAccel[i]);
@@ -343,9 +345,10 @@ void readSensors () {
   Serial.println(combinedRotationChange);
   //Serial.println(absCombinedRotationChange);
 
+  */
   Serial.println("Combined percentual change: ");
   Serial.println(combinedChange);
-  */
+  
   Serial.print("3 ");
   Serial.println(millis() - now);
 }
@@ -353,9 +356,11 @@ void readSensors () {
 void setVibration() {
   // provide vibraiton feedback
   // **************************
+  Serial.print("3.5 ");
+  Serial.println(millis() - now);
 
   if (combinedChange > threshold) {
-    int vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 255);
+    int vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 254);
 
     Serial.print("vibration ");
     Serial.println(vibration);
@@ -417,8 +422,8 @@ void setLeds() {
   */
 }
 
-void sendJson() {
 
+void sendJson() {
   Serial.print("5 ");
   Serial.println(millis() - now);
   String json = "{ \"pitch\": " + String(pitch) +
@@ -439,7 +444,11 @@ void sendJson() {
   // print it to mySerial either... reasons?
   Serial.println(json);
   mySerial.println(json);
+  
+  Serial.print("7 ");
+  Serial.println(millis() - now);
 }
+
 
 // relay button pressed status to client
 void sendButtonDown() {
