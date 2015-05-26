@@ -45,13 +45,13 @@ void setupUI() {
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 0, 255));
 
-	graph = new Grapher(guiLeft, guiTop + 150, 400, 100);
+	//graph = new Grapher(guiLeft, guiTop + 150, 400, 100);
 
 
 	// file I/O check textarea
 	debugText = cp5.addTextarea("txt")
 	.setPosition(guiLeft, guiBottom)
-	.setSize((winW - 60), (winH - guiBottom))
+	.setSize((winW), (winH - guiBottom))
 	.setFont(createFont("arial", 10))
 	.setColor(0);
 	//.setColorBackground(color(255, 100));
@@ -66,6 +66,10 @@ void setupUI() {
 
 	cp5.addButton("recordMatch")
 	.setPosition(guiLeft, guiCenter)
+	.setSize(100, 20);
+
+	cp5.addButton("playback")
+	.setPosition(guiLeft, guiHeader)
 	.setSize(100, 20);
 
 }
