@@ -21,14 +21,12 @@
 // defined shortcuts for notes with common musical names
 #include "pitches.h"
 
-
 // 9 DOF setup
 #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
 #define LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
 LSM9DS0 dof(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
 #define PRINT_CALCULATED
 #define PRINT_SPEED 500 // ms between prints?
-
 
 // PWM setup
 Adafruit_PWMServoDriver pwmR = Adafruit_PWMServoDriver(0x40);
@@ -47,18 +45,18 @@ const int rx = 7;
 const int tx = 8;
 SoftwareSerial mySerial(rx, tx);
 
-int data[2];
-int serialIndex = 0;
+String json;
+
+// tracking button pressed stated
+int button = 0;
 
 // desired fps rate between loops
 // NOTE that this is in reality MUCH lower, ~4 fps
-float fps = 12;
+float fps = 4;
 float msPerFrame = 1000 / fps; // ~83
-  
-int lastR = 0;
-int lastG = 100;
-int lastB = 200;
 
+
+// variables for saving the previous frame's readings
 int lastRoll = 0;
 int lastHeading = 0;
 int lastPitch = 0;
@@ -86,69 +84,13 @@ float maxMag[3] = { 0.25, 0.25, 0.25 };
 float easing = 0.75; // 0 - 1 as factor of "last frame reading" impact on new reading
 
 
-unsigned long noteStart = 0;
-unsigned long noteEnd = 0;
-int noteDuration = 0;
-
-
-unsigned long vibrationStart = 0;
-
-
-
-// custom pcb led channels for pwm library access
-// led numbers 1-3 are right, top to bottom
-// led numbers 4-6 are left, top to bottom
-const int led1R = 14;
-const int led1G = 15;
-const int led1B = 13;
-
-const int led2R = 3;
-const int led2G = 4;
-const int led2B = 2;
-
-const int led3R = 6;
-const int led3G = 7;
-const int led3B = 5;
-
-const int led4R = 4;
-const int led4G = 5;
-const int led4B = 3;
-
-const int led5R = 14;
-const int led5G = 15;
-const int led5B = 13;
-
-const int led6R = 9;
-const int led6G = 8;
-const int led6B = 10;
-
-
-String test = "";
-
-float lastHue = 0;
-float lastSaturation = 0;
-float lastBrightness = 1;
-
+// rgb color array
 int rgbColor[3];
-int lastVibration = 0;
-// factor by which to reduce vibration values in cases where the new value is lower than the previous
-// this speeds up "shuting" down the vibration to feel more responsive
-float vibrationDecay = 0.75; 
 
-int note = 0;
-int lastNote = 0;
-int lastNoteStarted = 0;
-
-float changeBuffer[10];
-
-unsigned long lastVibrationStart = 0;
 unsigned long now;
 unsigned long lastFrame;
 
-/*
-RGBConverter col = RGBConverter();
-*/
-
+unsigned long vibrationStart = 0;
 
 // in loop variables
 // declared outside the loop and reused to save initialization every loop
@@ -172,14 +114,10 @@ float absCombinedRotationChange;
 float combinedChange;
 
 float threshold = 2.5;
-String json;
-
-int button = 0;
 
 
 
-void setup ()
-{
+void setup () {
   Serial.begin(115200);
   Serial.println("hello serial");
   mySerial.begin(baudrate);
@@ -247,7 +185,7 @@ void loop () {
     Serial.println("SENSORS**********************");
     readSensors();
     lastSensorRead = now;
-  }
+  } 
   
   if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
     Serial.println("VIBRATION STOP~~~~");
@@ -257,8 +195,7 @@ void loop () {
 }
 
 
-void readSensors ()
-{  
+void readSensors () {  
   getAccel(&accel[0]);
   getGyro(&gyro[0]);
   getMag(&mag[0]);
@@ -377,59 +314,30 @@ void readSensors ()
   Serial.println("Combined percentual rotation change: ");
   Serial.println(combinedRotationChange);
   //Serial.println(absCombinedRotationChange);
-
+  */
   Serial.println("Combined percentual change: ");
   Serial.println(combinedChange);
-  */
+  
 
-  // provide sensory feedback
-
-
-
-  if (combinedChange > threshold) {
-    
-    /*
-    // if lastVibrationStart has never occured yet
-    if (lastVibrationStart <= 0) {
-      lastVibrationStart = now;
-    }
-
-    int msSinceVibrationStart = now - lastVibrationStart;
-    */
-    int vibration = map(combinedChange, threshold, 100.0, 80, 255);
-
-    /*
-    if (vibration <= lastVibration + 15) {
-      vibration *= vibrationDecay;
-    }
-    */
-    
-    /*
+  // provide vibraiton feedback
+  // **************************
+  
+  if (combinedChange > threshold) {    
+    int vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 255);
+      
     Serial.print("vibration ");
-    Serial.println(vibration);
-    */
+    Serial.println(vibration);    
     
     analogWrite(vibrationPin, vibration);
     vibrationStart = now;
-    /*
-    lastVibrationStart = now;
-    lastVibration = vibration;
-    */
   } else {
     analogWrite(vibrationPin, 0);
     vibrationStart = 0;
   }
 
-  /*
-  for (int i = 0; i < 255; i = i + 10) {
-    Serial.print("vibration ");
-    Serial.println(i);
-    analogWrite(vibrationPin, i);
-    delay(500);
-  }
-  */  
   
   // leds
+  // ****
   
   // roll: 90 is all up, -90 all down / or reverse if put on the other way around ;)
   // pitch: 90 all left, 90 all right / or reverse on other hand ;)
@@ -522,9 +430,6 @@ void readBluetooth() {
       }
     }
     
-    Serial.print("CommandString: ");
-    Serial.println(bluetoothString);
-    
     /*
     // expected string something like:
     // roll:12.0,heading:180.29,pitch:123.00;
@@ -542,9 +447,9 @@ void readBluetooth() {
     
     if (command == "recordingStart") soundNumber = 0;
     if (command == "recordingEnd") soundNumber = 1;
-    if (command == "recordingPerfect") soundNumber = 2;
-    if (command == "recordingGood") soundNumber = 3;
-    if (command == "recordingFail") soundNumber = 4;
+    if (command == "feedbackPerfect") soundNumber = 2;
+    if (command == "feedbackGood") soundNumber = 3;
+    if (command == "feedbackFail") soundNumber = 4;
     
     if (soundNumber != -1) {
       playSound(soundNumber);
