@@ -176,7 +176,8 @@ void loop () {
   Serial.println(actualFps);
 
 
-  if (lastSensorRead == 0 || now - lastSensorRead > 500) {
+  // this last value is arbitrary and just low enough so that we can read often
+  if (lastSensorRead == 0 || (now - lastSensorRead > 100 && framesSinceSensorRead > 3)) {
     Serial.println("SENSORS**********************");
     readSensors();
     lastSensorRead = now;
@@ -197,6 +198,8 @@ void loop () {
 
 
   //if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
+    
+  // this 250 is arbitrary
   if (vibrationStart != 0 && now - vibrationStart > 250) {
     Serial.println("VIBRATION STOP~~~~");
     analogWrite(vibrationPin, 0);

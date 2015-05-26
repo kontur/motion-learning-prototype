@@ -32,8 +32,8 @@ float rotationMax = 360;
 
 
 // TODO fullscreen?
-int winW = 800;
-int winH = 600;
+int winW = 1024;
+int winH = 768;
 
 
 // bluetooth connection
@@ -117,9 +117,15 @@ void draw() {
     background(225);
     stroke(0);  
     ColorCube c = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
-    c.setRotation(rotationX, rotationY, rotationZ);
-    c.setPosition(winW / 2, winH / 2, 0);
+    c.setRotation(rotationZ, rotationY, rotationX);
+    c.setPosition(winW / 4, winH / 2, 0);
     c.render();
+
+
+    ColorCube c2 = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
+    c2.setRotation(rotationZ, rotationY, rotationX);
+    c2.setPosition(winW / 4 * 3, winH / 2, 0);
+    c2.render();
 
     if (lastClick != 0 && millis() - lastClick  > doubleClickThreshold) {
         println("--------");
@@ -178,7 +184,7 @@ void draw() {
         println(playback.getJSONObject(playbackIndex));  
         JSONObject values = playback.getJSONObject(playbackIndex);
         cp5.getController("rotationX").setValue(values.getFloat("roll"));
-        cp5.getController("rotationY").setValue(values.getFloat("heading"));
+        cp5.getController("rotationY").setValue(110.0);
         cp5.getController("rotationZ").setValue(values.getFloat("pitch"));
 
         playbackIndex++;
