@@ -5,6 +5,7 @@ class ColorCube {
     float w, h, d;
     float x, y, z;
     float rotationX, rotationY, rotationZ;
+    float rotationEasing = 0.75;
     color colorFront, colorSide, colorTop;
 
     ColorCube(float _w, float _h, float _d, color _colorFront, color _colorSide, color _colorTop) {
@@ -21,9 +22,9 @@ class ColorCube {
     }
 
     void setRotation(float _rotationX, float _rotationY, float _rotationZ) {
-        rotationX = _rotationX;
-        rotationY = _rotationY;
-        rotationZ = _rotationZ;
+        rotationX = rotationX * rotationEasing + (1 - _rotationX * rotationEasing);
+        rotationY = rotationY * rotationEasing + (1 - _rotationY * rotationEasing);
+        rotationZ = rotationZ * rotationEasing + (1 - _rotationZ * rotationEasing);
     }
 
     void render() {

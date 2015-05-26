@@ -82,6 +82,9 @@ boolean finishedComparison = true;
 // graphing the readings
 Grapher graph;
 
+ColorCube c;
+ColorCube c2;
+
 JSONObject config = JSONObject.parse("{ " + 
     "\"resolutionX\": 0.50, \"resolutionY\": 400.00, " +
     "\"rotationX\": { \"color\": " + color(255, 0, 0) + "}, " + 
@@ -110,19 +113,20 @@ void setup() {
     size(winW, winH, OPENGL);
     setupUI();
     graph.setConfiguration(config);
+
+    c = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
+    c2 = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
 }
 
 
 void draw() {
     background(225);
     stroke(0);  
-    ColorCube c = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
+    
     c.setRotation(rotationZ, rotationY, rotationX);
     c.setPosition(winW / 4, winH / 2, 0);
     c.render();
 
-
-    ColorCube c2 = new ColorCube(100.0, 50.0, 10.0, color(255, 0, 0), color(0, 255, 0), color(0, 0, 255));
     c2.setRotation(rotationZ, rotationY, rotationX);
     c2.setPosition(winW / 4 * 3, winH / 2, 0);
     c2.render();
@@ -198,7 +202,7 @@ void draw() {
         JSONObject values = new JSONObject();
         values.setInt("id", recordingIndex);
         values.setFloat("roll", rotationX);
-        values.setFloat("heading", rotationY);
+        //values.setFloat("heading", rotationY);
         values.setFloat("pitch", rotationZ);
         values.setFloat("accelX", map(accel[0], -1, 1, 0, 300));
         values.setFloat("accelY", map(accel[1], -1, 1, 0, 300));
@@ -356,7 +360,7 @@ void stopRecording() {
                 JSONObject values = new JSONObject();
                 values.setInt("id", i);
                 values.setFloat("roll", 0);
-                values.setFloat("heading", 0);
+                //values.setFloat("heading", 0);
                 values.setFloat("pitch", 0);
                 values.setFloat("accelX", 0);
                 values.setFloat("accelY", 0);
