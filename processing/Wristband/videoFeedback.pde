@@ -16,8 +16,8 @@ void playFeedback() {
 void drawMovie() {
   if (moviePlaying) {
     pushMatrix();
-    scale(0.5);
-    image(feedbackMovie, 0, 0, 1920, 1080);
+    scale(0.25);
+    image(feedbackMovie, guiRight, guiTop, 1920, 1080);
     popMatrix();
     if (feedbackMovie.time() >= feedbackMovie.duration()) {
       println("rewind");
