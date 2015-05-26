@@ -100,9 +100,9 @@ class Grapher {
             setConfiguration(new JSONObject());
         }
 
-        fill(255);
-        stroke(0);
-        rect(x, y, w, h);
+        //fill(255);
+        //stroke(0);
+        //rect(x, y, w, h);
 
         float resX = config.getFloat("resolutionX");
         float resY = config.getFloat("resolutionY");

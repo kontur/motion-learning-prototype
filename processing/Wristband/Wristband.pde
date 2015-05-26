@@ -35,6 +35,15 @@ float rotationMax = 360;
 int winW = 1024;
 int winH = 768;
 
+int guiLeft = 10;
+int guiCenter = 400;
+int guiRight = 700;
+
+int guiHeader = 100;
+int guiTop = 150;
+int guiMiddle = 400;
+int guiBottom = 600;
+
 
 // bluetooth connection
 char[] inBuffer = new char[12];
@@ -71,7 +80,7 @@ Grapher recordingMatchGraph;
 float[] accel = new float[3];
 float[] gyro = new float[3];
 float[] mag = new float[3];
-Color deviceRGB = new Color(150, 150, 200);
+Color deviceRGB = new Color(100, 100, 100);
 
 int lastClick = 0;
 int numClicks = 0;
@@ -124,12 +133,12 @@ void draw() {
     stroke(0);  
     
     c.setRotation(rotationZ, rotationY, rotationX);
-    c.setPosition(winW / 4, winH / 2, 0);
+    c.setPosition(guiLeft + 200, guiTop + 100, 0);
     c.applyColor(deviceRGB.getRGB(), deviceRGB.getRGB(), deviceRGB.getRGB());
     c.render();
 
     c2.setRotation(rotationZ, rotationY, rotationX);
-    c2.setPosition(winW / 4 * 3, winH / 2, 0);
+    c2.setPosition(guiLeft + 200, guiCenter + 100, 0);
     c2.applyColor(deviceRGB.getRGB(), deviceRGB.getRGB(), deviceRGB.getRGB());
     c2.render();
 
