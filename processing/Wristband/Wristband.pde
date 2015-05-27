@@ -98,6 +98,13 @@ Track pattern;
 Track match;
 
 
+// helpers for triggering a delay bluetooth command with millis() instead of delay()
+String delayedCommand = ""; // empty string or/and delayedCommandStart == 0 skip execution
+int delayedCommandStart = 0;
+int delayedCommandDelay = 0;
+
+
+
 /**
  * automatically run in fullscreen mode
  */
@@ -126,6 +133,8 @@ void draw() {
     image(logo, 10, 10);
 
     checkClicks();
+
+    executeDelayedCommand();
 
     // show spinny animation until connected
     if (mode == 0) {
@@ -389,12 +398,12 @@ void stopRecording() {
         match.stopRecording();
 
         float sim = similarity();
-        if (sim < 0.5) {        
-            sendBluetoothCommand("feedbackFail");
+        if (sim < 0.5) {
+            neg(1);
         } else if (sim >= 0.5 && sim < 0.8) {
-            sendBluetoothCommand("feedbackGood");
+            neu(1);
         } else {
-            sendBluetoothCommand("feedbackPerfect");
+            pos(1);
         }
 
         /*
@@ -595,21 +604,52 @@ void clearMatch(int val) {
 }
 
 
+/**
+ * Helpers for the three different outcomes that also double as button even
+ * handlers for the three helper buttons in the demo
+ */
 void pos(int val) {
-    sendBluetoothCommand("feedbackPerfect");
+    registerDelayedCommand("feedbackPerfect", 2000);
     playFeedback("perfect.mov");
 }
 
 
 void neu(int val) {
-    sendBluetoothCommand("feedbackGood");
+    registerDelayedCommand("feedbackGood", 2000);
     playFeedback("good.mov");
 }
 
 
 void neg(int val) {
-    sendBluetoothCommand("feedbackFail");
+    registerDelayedCommand("feedbackFail", 2000);
     playFeedback("fail.mov");
+}
+
+
+/**
+ * Helper to setup a command to be executed after a delay without halting the programm
+ */
+void registerDelayedCommand(String _command, int _delay) {
+    delayedCommand = _command;
+    delayedCommandDelay = _delay;
+    delayedCommandStart = millis();
+}
+
+
+/**
+ * Helper to check for and exectue a delay command if there is any
+ */
+void executeDelayedCommand() {
+    // first check if there is any command set up to be sent
+    if (delayedCommand != "" && delayedCommandStart != 0) {
+        // then only send it if delay has elapsed
+        if (millis() > delayedCommandStart + delayedCommandDelay) {
+            sendBluetoothCommand(delayedCommand);
+            delayedCommand = "";
+            delayedCommandDelay = 0;
+            delayedCommandStart = 0;
+        }
+    }
 }
 
 
