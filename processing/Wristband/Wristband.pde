@@ -144,12 +144,12 @@ void draw() {
         if (pattern.hasRecording == false) {
             pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
             pattern.addToGraph(data);
-            //pattern.graph.addData(data);
+            log(pattern.graph.data.size());
         }
 
         if (match.hasRecording == false) {
             match.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
-            match.graph.addData(data);
+            //match.graph.addData(data);
             match.addToGraph(data);
         }
     }
