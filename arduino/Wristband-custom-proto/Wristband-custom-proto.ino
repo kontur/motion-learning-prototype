@@ -147,7 +147,7 @@ void setup () {
   setRGBs(0, 0, 0);
 
   // startup sound
-  //playSound(5);
+  playSound(5);
 }
 
 
@@ -494,7 +494,6 @@ void readBluetooth() {
 
   // code for reading IN information from bluetooth
   // read in strings as one until the last ";", then split by colon ":"
-
   Serial.println(mySerial.available());
 
   if (mySerial.available() > -1) {
@@ -531,6 +530,9 @@ void readBluetooth() {
     if (command == "feedbackPerfect") soundNumber = 2;
     if (command == "feedbackGood") soundNumber = 3;
     if (command == "feedbackFail") soundNumber = 4;
+    
+    if (command == "bluetoothConnected") soundNumber = 7;
+    if (command == "bluetoothDisconnected") soundNumber = 8;
 
     if (soundNumber != -1) {
       playSound(soundNumber);
