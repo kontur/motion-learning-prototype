@@ -137,7 +137,7 @@ void draw() {
     executeDelayedCommand();
 
     // show spinny animation until connected
-    if (mode == 0) {
+    if (mode == 0) {        
         idleAnimation();
 
         JSONObject data = new JSONObject();
@@ -168,6 +168,7 @@ void draw() {
 
     // mode 2 is bluetooth connected
     else if (mode == 2) {
+
         JSONObject data = new JSONObject();
         data.setFloat("roll", roll);
         data.setFloat("pitch", pitch);
@@ -349,8 +350,10 @@ void recordPattern(int val) {
         record = true;
         match.clearRecording();
         pattern.startRecording();
+        playFeedback("processing.mov", (guiRight + 5), (guiTop + 5), true);
     } else {
         stopRecording();
+        stopMovie();
     }
 }
 
@@ -375,8 +378,10 @@ void recordMatch(int val) {
         record = true;
         match.setRecordingLimit(limit);
         match.startRecording();
+        playFeedback("processing.mov", (guiRight + 5), (guiMiddle + 5), true);
     } else {
         stopRecording();
+        stopMovie();
     }
 }
 
@@ -610,19 +615,19 @@ void clearMatch(int val) {
  */
 void pos(int val) {
     registerDelayedCommand("feedbackPerfect", 2000);
-    playFeedback("perfect.mov");
+    playFeedback("perfect.mov", (guiRight + 5), (guiTop + 5), false);
 }
 
 
 void neu(int val) {
     registerDelayedCommand("feedbackGood", 2000);
-    playFeedback("good.mov");
+    playFeedback("good.mov", (guiRight + 5), (guiTop + 5), false);
 }
 
 
 void neg(int val) {
     registerDelayedCommand("feedbackFail", 2000);
-    playFeedback("fail.mov");
+    playFeedback("fail.mov", (guiRight + 5), (guiTop + 5), false);
 }
 
 

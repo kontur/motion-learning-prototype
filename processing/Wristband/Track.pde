@@ -4,7 +4,6 @@
  class Track {
 
  	ColorCube cube;
- 	VideoWrapper video;
  	Grapher graph;
  	JSONObject graphConfig;
  	JSONArray recording;
@@ -22,19 +21,16 @@
 
  	String label = "";
 
- 	PApplet applet;
-
 
  	/**
  	 * @param int _x: Position offset on x axis
  	 * @param int _y: Position offset on y axis
  	 * @param String label: TODO Text label
  	 */
- 	Track(int _x, int _y, String _label, PApplet _applet) {
+ 	Track(int _x, int _y, String _label) {
  		x = _x;
  		y = _y;
  		label = _label;
- 		applet = _applet;
 		
 		graphConfig = JSONObject.parse("{ " + 
 		    "\"resolutionX\": 1.00, \"resolutionY\": 400.00, " +
@@ -44,8 +40,6 @@
 
 		graph = new Grapher(0, 30, 390, 200);
 		graph.setConfiguration(graphConfig);
-
-		video = new VideoWrapper((guiRight - 10), 10, applet);
 
 		cube = new ColorCube(100.0, 50.0, 10.0, cubeGrey, cubeGrey, cubeGrey);
 		cube.setPosition(500.0, 130.0, 50.0);
@@ -71,11 +65,6 @@
 
  		graph.plot();
  		cube.render();
-
- 		// update movie, if it's playing
-	    if (video.moviePlaying == true) {
-	        video.drawMovie();
-	    }
 
  		popMatrix();
  	}
