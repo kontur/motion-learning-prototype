@@ -12,11 +12,12 @@ class Similarity {
 
 	float compare(double[][] d1, double[][] d2) {
 
-		for (int a = 0; a < d1.length; a++) {
-			for (int b = 0; b < d1[a].length; b++) {
-				println("a", a, "b", b, d1[a][b]);
-			}
-		}
+		// debug print to check all the values handed in
+		// for (int a = 0; a < d1.length; a++) {
+		// 	for (int b = 0; b < d1[a].length; b++) {
+		// 		println("a", a, "b", b, d1[a][b]);
+		// 	}
+		// }
 
         // get the principal components of the multidimensional array of values (i.e. 9 dof x time)
         // for both sets of data to compare

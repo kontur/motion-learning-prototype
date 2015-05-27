@@ -100,7 +100,7 @@ void setup() {
     pattern = new Track(guiLeft, guiTop, "Live movement");
     match = new Track(guiLeft, guiMiddle, "Matching movement");
 
-    frameRate(24);
+    //frameRate(24);
 }
 
 
@@ -125,13 +125,15 @@ void draw() {
         data.setFloat("roll", roll);
 
         if (pattern.hasRecording == false) {
-            pattern.updateCube(pitch, roll, deviceRGB.getRGB());            
-            pattern.graph.addData(data);
+            pattern.updateCube(pitch, roll, deviceRGB.getRGB());
+            pattern.addToGraph(data);
+            //pattern.graph.addData(data);
         }
 
         if (match.hasRecording == false) {
             match.updateCube(pitch, roll, deviceRGB.getRGB());
             match.graph.addData(data);
+            match.addToGraph(data);
         }
     }
 
@@ -209,6 +211,7 @@ void draw() {
         if (match.record(values)) {
             pattern.playbackAt(match.recordingIndex - 1);
 
+            /*
             println("finishedComparison", finishedComparison);
             if (finishedComparison) {            
                 try {
@@ -220,6 +223,7 @@ void draw() {
             } else {
                 println("Similarity calculating still in progress, skip");
             }
+            */
             
         } else {
             stopRecording();
@@ -259,7 +263,7 @@ void serialEvent(Serial port) {
         String serialMessage = connection.readString();
         serialMessage = serialMessage.substring(0, serialMessage.length() - 1);
         
-        //println("serialEvent: ", serialMessage);
+        println("serialEvent: ", serialMessage);
 
         // if the serial string read contains a json opening { parse info from arduino
         if (serialMessage.indexOf("{") > -1) {
@@ -353,6 +357,16 @@ void stopRecording() {
         pattern.stopRecording();
     } else if (recordingWhat == "match") {
         match.stopRecording();
+
+        float sim = similarity();
+        if (sim < 0.5) {        
+            sendBluetoothCommand("feedbackFail");
+        } else if (sim >= 0.5 && sim < 0.8) {
+            sendBluetoothCommand("feedbackGood");
+        } else {
+            sendBluetoothCommand("feedbackPerfect");
+        }
+
         /*
         int missingFrames = recordingPattern.size() - recordingMatch.size();
         if (missingFrames > 0) {
@@ -387,7 +401,7 @@ void stopRecording() {
 /**
  * Button click handler to start calculating matches
  */
-float similarity(int val) {
+float similarity() {
     finishedComparison = false;
 
     JSONArray recordingPattern = pattern.getRecording();
@@ -464,15 +478,6 @@ float similarity(int val) {
     log("Calucalted similarity from 0 - 1: " + sim);
     
     finishedComparison = true;
-
-    // TODO fix :O
-    if (sim < 0.5) {        
-        sendBluetoothCommand("feedbackFail");
-    } else if (sim >= 0.5 && sim < 0.8) {
-        sendBluetoothCommand("feedbackGood");
-    } else {
-        sendBluetoothCommand("feedbackPerfect");
-    }
 
     return sim;
 }
