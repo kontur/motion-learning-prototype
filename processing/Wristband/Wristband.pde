@@ -338,6 +338,7 @@ void recordPattern(int val) {
     if (record == false) {
         recordingWhat = "pattern";
         record = true;
+        match.clearRecording();
         pattern.startRecording();
     } else {
         stopRecording();
