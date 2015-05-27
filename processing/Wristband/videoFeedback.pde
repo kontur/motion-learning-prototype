@@ -4,15 +4,21 @@ Movie feedbackMovie;
 boolean moviePlaying = false;
 
 
+/**
+ * Play a feedback movie of given file name
+ * @param String movieName: full file name of the .mov video inside the /data folder
+ * Note: This will also stop playing any movie currently playing
+ */
 void playFeedback(String movieName) {
-  if (moviePlaying == false) {    
-    feedbackMovie = new Movie(this, movieName);
-    feedbackMovie.play();
-    moviePlaying = true;
-  }
+  feedbackMovie = new Movie(this, movieName);
+  feedbackMovie.play();
+  moviePlaying = true;
 }
 
 
+/**
+ * Helper function to actually draw the current movie frame to the sketch
+ */
 void drawMovie() {
   if (moviePlaying) {
     pushMatrix();
@@ -30,7 +36,10 @@ void drawMovie() {
 }
 
 
-// Called every time a new frame is available to read
+/**
+ * Called every time a new frame is available to read
+ * This essentially updates what image(movie,...) will draw
+ */
 void movieEvent(Movie m) {
     m.read();
 }

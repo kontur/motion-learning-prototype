@@ -38,7 +38,7 @@ float rotationMax = 360;
 
 
 // TODO fullscreen?
-int winW = 1440;
+int winW = 1024;
 int winH = 768;
 
 int guiLeft = 10;
@@ -575,7 +575,7 @@ void clearMatch(int val) {
 
 
 void pos(int val) {
-    sendBluetoothCommand("feedbackPositive");
+    sendBluetoothCommand("feedbackPerfect");
     playFeedback("perfect.mov");
 }
 
