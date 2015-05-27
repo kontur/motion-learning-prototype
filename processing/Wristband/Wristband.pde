@@ -38,12 +38,12 @@ float rotationMax = 360;
 
 
 // TODO fullscreen?
-int winW = 1024;
+int winW = 1440;
 int winH = 768;
 
 int guiLeft = 10;
 int guiCenter = 400;
-int guiRight = 700;
+int guiRight = 610;
 
 int guiHeader = 100;
 int guiTop = 150;
@@ -89,6 +89,8 @@ int doubleClickThreshold = 500;
 
 boolean finishedComparison = true;
 
+PImage logo;
+
 
 Track pattern;
 Track match;
@@ -101,12 +103,16 @@ void setup() {
     match = new Track(guiLeft, guiMiddle, "Matching movement");
 
     //frameRate(24);
+
+    logo = loadImage("kinemata.png");
 }
 
 
 void draw() {
     background(150);
     stroke(0);   
+
+    image(logo, 10, 10);
 
     checkClicks();
 
@@ -246,12 +252,12 @@ void draw() {
         tryingToConnect = false;
     }
 
+    pattern.draw();
+    match.draw();
+
     if (moviePlaying == true) {
         drawMovie();
     }
-
-    pattern.draw();
-    match.draw();
 }
 
 
@@ -565,6 +571,24 @@ void clearPattern(int val) {
  */
 void clearMatch(int val) {
     match.clearRecording();
+}
+
+
+void pos(int val) {
+    sendBluetoothCommand("feedbackPositive");
+    playFeedback("perfect.mov");
+}
+
+
+void neu(int val) {
+    sendBluetoothCommand("feedbackGood");
+    playFeedback("good.mov");
+}
+
+
+void neg(int val) {
+    sendBluetoothCommand("feedbackFail");
+    playFeedback("fail.mov");
 }
 
 

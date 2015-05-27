@@ -30,17 +30,17 @@ void setupUI() {
 
 	// manual rotation for cube visualisation
 	cp5.addSlider("rotationX")
-	.setPosition(guiRight + 10, guiHeader)
+	.setPosition(guiRight + 150, guiHeader)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(255, 0, 0));
 
 	cp5.addSlider("rotationY")
-	.setPosition(guiRight + 10, guiHeader + 20)
+	.setPosition(guiRight + 150, guiHeader + 20)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 255, 0));
 
 	cp5.addSlider("rotationZ")
-	.setPosition(guiRight + 10, guiHeader + 40)
+	.setPosition(guiRight + 150, guiHeader + 40)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 0, 255));
 
@@ -76,5 +76,17 @@ void setupUI() {
 	cp5.addButton("playback")
 	.setPosition(guiLeft, guiHeader)
 	.setSize(100, 20);
+
+
+
+	cp5.addButton("pos")
+	.setPosition(winW - 50, winH - 100)
+	.setSize(40, 20);
+	cp5.addButton("neu")
+	.setPosition(winW - 50, winH - 70)
+	.setSize(40, 20);
+	cp5.addButton("neg")
+	.setPosition(winW - 50, winH - 40)
+	.setSize(40, 20);
 
 }

@@ -4,9 +4,9 @@ Movie feedbackMovie;
 boolean moviePlaying = false;
 
 
-void playFeedback() {
+void playFeedback(String movieName) {
   if (moviePlaying == false) {    
-    feedbackMovie = new Movie(this, "amazing.mov");
+    feedbackMovie = new Movie(this, movieName);
     feedbackMovie.play();
     moviePlaying = true;
   }
@@ -16,9 +16,11 @@ void playFeedback() {
 void drawMovie() {
   if (moviePlaying) {
     pushMatrix();
-    scale(0.25);
-    image(feedbackMovie, guiRight, guiTop, 1920, 1080);
+    translate(guiRight - 10, guiTop + 10);
+    scale(0.4);
+    image(feedbackMovie, 0, 0, 600, 600);
     popMatrix();
+
     if (feedbackMovie.time() >= feedbackMovie.duration()) {
       println("rewind");
       moviePlaying = false;
