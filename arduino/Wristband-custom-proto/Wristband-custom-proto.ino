@@ -171,14 +171,15 @@ void loop () {
   readBluetooth();
 
 
+  /*
   Serial.print("Actual frame delay since last frame: ");
   float actualFps = now - lastFrame;
   Serial.println(actualFps);
-
+  */
 
   // this last value is arbitrary and just low enough so that we can read often
   if (lastSensorRead == 0 || (now - lastSensorRead > 100 && framesSinceSensorRead > 3)) {
-    Serial.println("SENSORS**********************");
+    //Serial.println("SENSORS**********************");
     readSensors();
     lastSensorRead = now;
     framesSinceSensorRead = 0;
@@ -201,15 +202,17 @@ void loop () {
     
   // this 250 is arbitrary
   if (vibrationStart != 0 && now - vibrationStart > 250) {
-    Serial.println("VIBRATION STOP~~~~");
+    //Serial.println("VIBRATION STOP~~~~");
     analogWrite(vibrationPin, 0);
     vibrationStart = 0;
   }
 
   // compensate to achieve a delay between frames as close as possible to the actual desired framerate
   float delayUntilNextFrame = min(max(0, msPerFrame - ((now - lastFrame) - msPerFrame)), msPerFrame);
+  /*
   Serial.print("Delay until next frame to reach target fps: ");
   Serial.println(delayUntilNextFrame);
+  */
 
   lastFrame = now;
 
@@ -222,8 +225,10 @@ void loop () {
 
 void readSensors () {
 
+  /*
   Serial.print("0 ");
   Serial.println(millis() - now);
+  */
 
   getAccel(&accel[0]);
   getGyro(&gyro[0]);
@@ -238,8 +243,10 @@ void readSensors () {
   pitch = orientation[0];
   roll = orientation[1];
 
+  /*
   Serial.print("1 ");
   Serial.println(millis() - now);
+  */
   /*
   // ease the readings for pitch, roll and heading to make them more smooth
   heading = lastHeading * easing + (1 - heading * easing);
@@ -286,8 +293,10 @@ void readSensors () {
       maxMag[i] = mag[i] > 0 ? mag[i] : -mag[i];
     }
 
+    /*
     Serial.print("2 ");
     Serial.println(millis() - now);
+    */
     /*
     Serial.print("maxAccel ");
     Serial.println(maxAccel[i]);
@@ -349,24 +358,32 @@ void readSensors () {
   //Serial.println(absCombinedRotationChange);
 
   */
+  /*
   Serial.println("Combined percentual change: ");
   Serial.println(combinedChange);
+  */
   
+  /*
   Serial.print("3 ");
   Serial.println(millis() - now);
+  */
 }
 
 void setVibration() {
   // provide vibraiton feedback
   // **************************
+  /*
   Serial.print("3.5 ");
   Serial.println(millis() - now);
+  */
 
   if (combinedChange > threshold) {
     int vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 254);
 
+    /*
     Serial.print("vibration ");
     Serial.println(vibration);
+    */
 
     analogWrite(vibrationPin, vibration);
     vibrationStart = now;
@@ -374,9 +391,11 @@ void setVibration() {
     analogWrite(vibrationPin, 0);
     vibrationStart = 0;
   }
-
+  
+  /*
   Serial.print("4 ");
   Serial.println(millis() - now);
+  */
 }
 
 void setLeds() {
@@ -427,8 +446,10 @@ void setLeds() {
 
 
 void sendJson() {
+  /*
   Serial.print("5 ");
   Serial.println(millis() - now);
+  */
   String json = "{ \"pitch\": " + String(pitch) +
                 ", \"roll\": " + String(roll) +
                 ", \"aX\": " + String(accel[0]) +
@@ -442,15 +463,19 @@ void sendJson() {
 
   // print to bluetooth connection and debug monitor
 
+  /*
   Serial.print("6 ");
   Serial.println(millis() - now);
+  */
   // note that I made the observation that if the json wasn't printed to the Serial, it didn't
   // print it to mySerial either... reasons?
   Serial.println(json);
   mySerial.println(json);
   
+  /*
   Serial.print("7 ");
   Serial.println(millis() - now);
+  */
 }
 
 
@@ -469,6 +494,8 @@ void readBluetooth() {
 
   // code for reading IN information from bluetooth
   // read in strings as one until the last ";", then split by colon ":"
+
+  Serial.println(mySerial.available());
 
   if (mySerial.available() > -1) {
     String bluetoothString = "";
