@@ -22,7 +22,7 @@ void setupUI() {
 	.hide();
 
 	bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
-	.setPosition(guiCenter + 120, guiHeader + 20)
+	.setPosition(guiCenter + 120, guiHeader + 10)
 	.setSize(150, 200);
 
 	getBluetoothDeviceList(bluetoothDeviceList);        
@@ -30,17 +30,17 @@ void setupUI() {
 
 	// manual rotation for cube visualisation
 	cp5.addSlider("rotationX")
-	.setPosition(guiRight + 150, guiHeader)
+	.setPosition(guiRight + 90, guiHeader)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(255, 0, 0));
 
 	cp5.addSlider("rotationY")
-	.setPosition(guiRight + 150, guiHeader + 20)
+	.setPosition(guiRight + 90, guiHeader + 20)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 255, 0));
 
 	cp5.addSlider("rotationZ")
-	.setPosition(guiRight + 150, guiHeader + 40)
+	.setPosition(guiRight + 90, guiHeader + 40)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 0, 255));
 
@@ -57,7 +57,8 @@ void setupUI() {
 	// buttons for recording from the GUI instead of the device
 	cp5.addButton("recordPattern")
 	.setPosition(guiLeft, guiTop)
-	.setSize(100, 20);
+	.setSize(100, 20)
+	.setColorBackground(color(205, 50, 20));
 
 	cp5.addButton("clearPattern")
 	.setPosition(guiLeft + 110, guiTop)
@@ -66,7 +67,8 @@ void setupUI() {
 
 	cp5.addButton("recordMatch")
 	.setPosition(guiLeft, guiMiddle)
-	.setSize(100, 20);
+	.setSize(100, 20)
+	.setColorBackground(color(205, 50, 20));
 
 	cp5.addButton("clearMatch")
 	.setPosition(guiLeft + 110, guiMiddle)
@@ -80,13 +82,16 @@ void setupUI() {
 
 
 	cp5.addButton("pos")
-	.setPosition(winW - 50, winH - 100)
-	.setSize(40, 20);
+	.setPosition(winW - 50, guiHeader)
+	.setSize(40, 15)
+	.setColorBackground(color(190));
 	cp5.addButton("neu")
-	.setPosition(winW - 50, winH - 70)
-	.setSize(40, 20);
+	.setPosition(winW - 50, guiHeader + 20)
+	.setSize(40, 15)
+	.setColorBackground(color(190));
 	cp5.addButton("neg")
-	.setPosition(winW - 50, winH - 40)
-	.setSize(40, 20);
+	.setPosition(winW - 50, guiHeader + 40)
+	.setSize(40, 15)
+	.setColorBackground(color(190));
 
 }

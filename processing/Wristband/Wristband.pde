@@ -45,7 +45,7 @@ int guiLeft = 10;
 int guiCenter = 400;
 int guiRight = 610;
 
-int guiHeader = 100;
+int guiHeader = 120;
 int guiTop = 150;
 int guiMiddle = 400;
 int guiBottom = 640;
@@ -111,7 +111,7 @@ void setup() {
     pattern = new Track(guiLeft, guiTop, "Live movement");
     match = new Track(guiLeft, guiMiddle, "Matching movement");
 
-    //frameRate(24);
+    frameRate(24);
 
     logo = loadImage("kinemata.png");
 }
@@ -367,10 +367,19 @@ void recordMatch(int val) {
 
 
 void stopRecording() {
+    log("Stop recording");
     record = false;
     if (recordingWhat == "pattern") {
         pattern.stopRecording();
     } else if (recordingWhat == "match") {
+
+        /*
+        if (pattern.getRecordingSize() > match.getRecordingSize()) {
+            log("Stop recording command ignored; recording match to be same length as pattern");
+            return;
+        }
+        */
+
         match.stopRecording();
 
         float sim = similarity();
