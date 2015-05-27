@@ -48,7 +48,7 @@ int guiRight = 700;
 int guiHeader = 100;
 int guiTop = 150;
 int guiMiddle = 400;
-int guiBottom = 600;
+int guiBottom = 640;
 
 
 // bluetooth connection
@@ -93,19 +93,20 @@ boolean finishedComparison = true;
 Track pattern;
 Track match;
 
-
 void setup() {
     size(winW, winH, OPENGL);
     setupUI();
 
-    pattern = new Track(guiLeft, guiTop);
-    match = new Track(guiLeft, guiMiddle);
+    pattern = new Track(guiLeft, guiTop, "Live movement");
+    match = new Track(guiLeft, guiMiddle, "Matching movement");
+
+    frameRate(24);
 }
 
 
 void draw() {
-    background(225);
-    stroke(0);    
+    background(150);
+    stroke(0);   
 
     checkClicks();
 
@@ -142,11 +143,13 @@ void draw() {
     // mode 2 is bluetooth connected
     else if (mode == 2) {
         JSONObject data = new JSONObject();
-        data.setFloat("roll", roll);
-        data.setFloat("pitch", pitch);
+        if (pattern.hasRecording == false) {
+            data.setFloat("roll", roll);
+            data.setFloat("pitch", pitch);
 
-        pattern.graph.addData(data);
-        pattern.updateCube(roll, pitch, deviceRGB.getRGB());
+            pattern.graph.addData(data);
+            pattern.updateCube(roll, pitch, deviceRGB.getRGB());
+        }
     }
 
     // mode 3 is playback
@@ -177,7 +180,6 @@ void draw() {
     if (record && recordingWhat == "pattern") {
         JSONObject values = new JSONObject();
         values.setFloat("roll", roll);
-        //values.setFloat("heading", rotationY);
         values.setFloat("pitch", pitch);
         values.setFloat("accelX", accel[0]);
         values.setFloat("accelY", accel[1]);
@@ -193,7 +195,6 @@ void draw() {
     if (record && recordingWhat == "match") {
         JSONObject values = new JSONObject();
         values.setFloat("roll", roll);
-        //values.setFloat("heading", rotationY);
         values.setFloat("pitch", pitch);
         values.setFloat("accelX", accel[0]);
         values.setFloat("accelY", accel[1]);
@@ -203,18 +204,11 @@ void draw() {
         values.setFloat("gyroZ", gyro[2]);
         values.setInt("rgb", deviceRGB.getRGB());
         
+        // for all frames but the last, play the pattern at the same spot
+        // as the match is recording at the momemnt
         if (match.record(values)) {
-            pattern.playbackAt(match.recordingIndex);
-        } else {
-            stopRecording();
-        }
+            pattern.playbackAt(match.recordingIndex - 1);
 
-    }
-
-        /*
-    if (record) {
-
-        if (recordingWhat == "match") {
             println("finishedComparison", finishedComparison);
             if (finishedComparison) {            
                 try {
@@ -227,14 +221,22 @@ void draw() {
                 println("Similarity calculating still in progress, skip");
             }
             
+        } else {
+            stopRecording();
+        }
+
+    }
+
+    /*
+    if (record) {
+        if (recordingWhat == "match") {
         }
 
         if (recordingWhat == "match" && recordingIndex >= recordingPattern.size()) {
             stopRecording();
         }
     }
-        */
-
+    */
 
     if (connection != null) {
         tryingToConnect = false;
@@ -257,7 +259,7 @@ void serialEvent(Serial port) {
         String serialMessage = connection.readString();
         serialMessage = serialMessage.substring(0, serialMessage.length() - 1);
         
-        println("serialEvent: ", serialMessage);
+        //println("serialEvent: ", serialMessage);
 
         // if the serial string read contains a json opening { parse info from arduino
         if (serialMessage.indexOf("{") > -1) {
@@ -324,7 +326,10 @@ void recordPattern(int val) {
  */
 void recordMatch(int val) {
     if (record == false) {
+        // reset the comparison in progress flag
+        finishedComparison = true;
 
+        // record no longer than the pattern itself
         int limit = pattern.getRecordingSize();
 
         if (limit <= 0) {
@@ -384,12 +389,16 @@ void stopRecording() {
  */
 float similarity(int val) {
     finishedComparison = false;
-/*
-    if (recordingPattern == null || recordingMatch == null || recordingPattern.size() == 0 || recordingMatch.size() == 0) {
+
+    JSONArray recordingPattern = pattern.getRecording();
+    JSONArray recordingMatch = match.getRecording();
+
+    if (recordingPattern == null || recordingMatch == null) {
         log("Can't calculate similarity, missing pattern or match to test against");
+        finishedComparison = true;
         throw new RuntimeException("Similarity calculation impossible, missing pattern or match data");
     }
-    */
+    
 
     /*
     if (recordingPattern.size() != recordingMatch.size()) {
@@ -397,14 +406,15 @@ float similarity(int val) {
         throw new RuntimeException("Similarity calculation impossible, non equal pattern and match");
     }
     */
+    
 
-/*
     println(recordingPattern.size(), recordingMatch.size());
 
-    int commonLength = min(recordingPattern.size(), recordingMatch.size());
-    println(commonLength);
 
-    if (commonLength < 20) {
+    int commonLength = min(recordingPattern.size(), recordingMatch.size());
+    println("common length", commonLength);
+
+    if (commonLength < 10) {
         finishedComparison = true;
         return 0.0;
     }
@@ -416,18 +426,21 @@ float similarity(int val) {
     try {
 
         for (int i = 0; i < commonLength; i++) {
+            println("I", i);
 
-            JSONObject recordingAtI = recordingPattern.getJSONObject(i);
-            patternValues[0][i] = (double)recordingAtI.getFloat("roll");
-            patternValues[1][i] = (double)recordingAtI.getFloat("pitch");
-            patternValues[2][i] = (double)recordingAtI.getFloat("accelX");
-            patternValues[3][i] = (double)recordingAtI.getFloat("accelY");
-            patternValues[4][i] = (double)recordingAtI.getFloat("accelZ");
-            patternValues[5][i] = (double)recordingAtI.getFloat("gyroX");
-            patternValues[6][i] = (double)recordingAtI.getFloat("gyroY");
-            patternValues[7][i] = (double)recordingAtI.getFloat("gyroZ");
+            JSONObject patternAtI = recordingPattern.getJSONObject(i);
+            println("pattern", patternAtI);
+            patternValues[0][i] = (double)patternAtI.getFloat("roll");
+            patternValues[1][i] = (double)patternAtI.getFloat("pitch");
+            patternValues[2][i] = (double)patternAtI.getFloat("accelX");
+            patternValues[3][i] = (double)patternAtI.getFloat("accelY");
+            patternValues[4][i] = (double)patternAtI.getFloat("accelZ");
+            patternValues[5][i] = (double)patternAtI.getFloat("gyroX");
+            patternValues[6][i] = (double)patternAtI.getFloat("gyroY");
+            patternValues[7][i] = (double)patternAtI.getFloat("gyroZ");
 
             JSONObject matchAtI = recordingMatch.getJSONObject(i);
+            println("match", matchAtI);
             matchValues[0][i] = (double)matchAtI.getFloat("roll");
             matchValues[1][i] = (double)matchAtI.getFloat("pitch");
             matchValues[2][i] = (double)matchAtI.getFloat("accelX");
@@ -441,6 +454,7 @@ float similarity(int val) {
         log(e.getMessage());
         log("Exiting similarity()");
         connection.stop();
+        finishedComparison = true;
         return 0.0;
     }
 
@@ -451,6 +465,7 @@ float similarity(int val) {
     
     finishedComparison = true;
 
+    // TODO fix :O
     if (sim < 0.5) {        
         sendBluetoothCommand("feedbackFail");
     } else if (sim >= 0.5 && sim < 0.8) {
@@ -460,8 +475,6 @@ float similarity(int val) {
     }
 
     return sim;
-    */
-    return 0.0;
 }
 
 

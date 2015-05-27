@@ -13,16 +13,16 @@ void setupUI() {
 
 	// bluetooth connect UI
 	buttonConnectBluetooth = cp5.addButton("connectBluetooth")
-	.setPosition(guiLeft, 20)
+	.setPosition(guiCenter + 10, guiHeader)
 	.setSize(100, 20);
 
 	buttonCloseBluetooth = cp5.addButton("closeBluetooth")
-	.setPosition(guiLeft, 20)
+	.setPosition(guiCenter + 10, guiHeader)
 	.setSize(100, 20)
 	.hide();
 
 	bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
-	.setPosition(170, 30)
+	.setPosition(guiCenter + 120, guiHeader + 20)
 	.setSize(150, 200);
 
 	getBluetoothDeviceList(bluetoothDeviceList);        
@@ -30,17 +30,17 @@ void setupUI() {
 
 	// manual rotation for cube visualisation
 	cp5.addSlider("rotationX")
-	.setPosition(guiRight, guiHeader)
+	.setPosition(guiRight + 10, guiHeader)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(255, 0, 0));
 
 	cp5.addSlider("rotationY")
-	.setPosition(guiRight, guiHeader + 20)
+	.setPosition(guiRight + 10, guiHeader + 20)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 255, 0));
 
 	cp5.addSlider("rotationZ")
-	.setPosition(guiRight, guiHeader + 40)
+	.setPosition(guiRight + 10, guiHeader + 40)
 	.setRange(rotationMin, rotationMax)
 	.setColorCaptionLabel(color(0, 0, 255));
 
@@ -52,7 +52,6 @@ void setupUI() {
 	.setFont(createFont("arial", 10))
 	.setColor(0);
 	//.setColorBackground(color(255, 100));
-
 
 
 	// buttons for recording from the GUI instead of the device

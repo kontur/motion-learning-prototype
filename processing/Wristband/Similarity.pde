@@ -12,42 +12,55 @@ class Similarity {
 
 	float compare(double[][] d1, double[][] d2) {
 
-		// for (int a = 0; a < d1.length; a++) {
-		// 	for (int b = 0; b < d1[a].length; b++) {
-		// 		println("a", a, "b", b, d1[a][b]);
-		// 	}
-		// }
+		for (int a = 0; a < d1.length; a++) {
+			for (int b = 0; b < d1[a].length; b++) {
+				println("a", a, "b", b, d1[a][b]);
+			}
+		}
 
         // get the principal components of the multidimensional array of values (i.e. 9 dof x time)
         // for both sets of data to compare
-		double[][] pcaA = getPCA(d1);
-		println(pcaA.length, pcaA[0].length);
 
-		double[][] pcaB = getPCA(d2);
-		println(pcaB.length, pcaB[0].length);
+        try {
+	        println("test 1 ", d1);
+			double[][] pcaA = getPCA(d1);
+			println("pcaA", pcaA);
+			println(pcaA.length, pcaA[0].length);
+
+	        println("test 2");
+			double[][] pcaB = getPCA(d2);
+			println(pcaB.length, pcaB[0].length);
 		
-		// create ArrayList multidimensional vectors and store as many principal components as found
-		// from the two data sets both
-		ArrayList<Float> vA = new ArrayList<Float>();
-		ArrayList<Float> vB = new ArrayList<Float>();
+	        println("test 3");
+			// create ArrayList multidimensional vectors and store as many principal components as found
+			// from the two data sets both
+			ArrayList<Float> vA = new ArrayList<Float>();
+			ArrayList<Float> vB = new ArrayList<Float>();
 
-		for (int i = 0; i < min(pcaA[0].length, pcaB[0].length); i++) {
-			println("adding similarity principal component dimension " + i + " for comparison");
-			try {
-				float a = new Double(pcaA[0][i]).floatValue();
-				float b = new Double(pcaB[0][i]).floatValue();
-				if (a != 0.0 && b != 0.0) {
-					vA.add(a);
-					vB.add(b);	
+			for (int i = 0; i < min(pcaA[0].length, pcaB[0].length); i++) {
+				println("adding similarity principal component dimension " + i + " for comparison");
+				try {
+					float a = new Double(pcaA[0][i]).floatValue();
+					float b = new Double(pcaB[0][i]).floatValue();
+					if (a != 0.0 && b != 0.0) {
+						vA.add(a);
+						vB.add(b);	
+					}
+				} catch (RuntimeException e) {
+					println(e);
 				}
-			} catch (RuntimeException e) {
-				println(e);
 			}
-		}
-		println("similarity between", vA, vB, vA.size(), vB.size());
+			println("similarity between", vA, vB, vA.size(), vB.size());
 
-		float similarity = getCosineSimilarity(vA, vB);
-		return similarity;
+			float similarity = getCosineSimilarity(vA, vB);
+			return similarity;
+
+
+		} catch (RuntimeException e) {
+			log("Failed to retrieve PCA's from samples " + e.getMessage());
+
+			return 0.0;
+		}
 	}
 
 
@@ -99,9 +112,12 @@ class Similarity {
 	 */
 	double[][] getPCA(double values[][]) {
 		// Non-null constructor 
+		println(values);
+
 		PCA pca = new PCA(0.95, "covariance", values); 
+		println("pca", pca);
 		double [] firstComponent = pca.principalComponents[0]; 
-		//println("principalComponents.length " + pca.principalComponents.length);
+		println("principalComponents.length " + pca.principalComponents.length);
 		for (double d : firstComponent) {
 			println("Component", d);
 		}
