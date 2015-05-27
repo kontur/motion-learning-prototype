@@ -85,7 +85,7 @@ Color deviceRGB = new Color(100, 100, 100);
 
 int lastClick = 0;
 int numClicks = 0;
-int doubleClickThreshold = 500;
+int doubleClickThreshold = 1000;
 
 boolean finishedComparison = true;
 
@@ -513,36 +513,29 @@ void checkClicks() {
         println("--------");
         println(numClicks + " detected");
 
-/*
+        // if we're currently recording, stop the recording
+        // don't care about single or double click at this point, because we just want
+        // to stop the current recording process
+        if (record == true) {
+            stopRecording();
+            return;
+        }
+
         switch (numClicks) {
             case 1:
-                if (recordingPattern.size() == 0) {
-                    println("start recording");
-                    recordPattern(1);
-                } else if (record) {
-                    if (recordingWhat == "pattern") {
-                        println("stop recording");
-                        stopRecording();
-                    } else if (recordingWhat == "match") {                        
-                        println("stop recording match");
-                        stopRecording();
-                    }
-                } else if (recordingPattern.size() != 0 && !record) {
-                    println("start recording match");
-                    recordMatch(1);
-                }
+                log("Single physical click");
+                recordMatch(1);
                 break;
 
             case 2:
-                println("delete recording");
-                recordingPattern = new JSONArray();
-                recordingMatch = new JSONArray();
+                log("Double physical click");
+                recordPattern(1);
                 break;
 
             default: 
+                log("Several physical clicks " + numClicks);
                 break;
         }
-        */
         numClicks = 0;
         lastClick = 0;
     }
