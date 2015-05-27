@@ -95,6 +95,15 @@ PImage logo;
 Track pattern;
 Track match;
 
+
+/**
+ * automatically run in fullscreen mode
+ */
+boolean sketchFullScreen() {
+  return true;
+}
+
+
 void setup() {
     size(winW, winH, OPENGL);
     setupUI();
@@ -109,7 +118,7 @@ void setup() {
 
 
 void draw() {
-    background(150);
+    background(221);
     stroke(0);   
 
     image(logo, 10, 10);

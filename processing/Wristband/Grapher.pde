@@ -101,7 +101,8 @@ class Grapher {
         }
 
         fill(225);
-        noStroke();
+        //noStroke();
+        stroke(190);
         rect(x, y, w, h);
 
         float resX = config.getFloat("resolutionX");
