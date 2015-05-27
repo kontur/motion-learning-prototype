@@ -144,12 +144,10 @@ void draw() {
         if (pattern.hasRecording == false) {
             pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
             pattern.addToGraph(data);
-            log(pattern.graph.data.size());
         }
 
         if (match.hasRecording == false) {
             match.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
-            //match.graph.addData(data);
             match.addToGraph(data);
         }
     }
@@ -162,11 +160,16 @@ void draw() {
     // mode 2 is bluetooth connected
     else if (mode == 2) {
         JSONObject data = new JSONObject();
-        if (pattern.hasRecording == false) {
-            data.setFloat("roll", roll);
-            data.setFloat("pitch", pitch);
+        data.setFloat("roll", roll);
+        data.setFloat("pitch", pitch);
 
-            pattern.graph.addData(data);
+        if (pattern.hasRecording == false || (record == true && recordingWhat == "pattern")) {
+            pattern.addToGraph(data);
+            pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
+        }
+
+        if (match.hasRecording == false || (record == true && recordingWhat == "match")) {
+            pattern.addToGraph(data);
             pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
         }
     }
