@@ -29,10 +29,8 @@ void playFeedback(String movieName, int _x, int _y, boolean _loopPlayback) {
     y = _y;
 
     if (loopPlayback == true) {
-        log("loop movie");
         feedbackMovie.loop();
     } else {
-        log("play movie");
         feedbackMovie.play();
     }
     moviePlaying = true;

@@ -179,8 +179,8 @@ void draw() {
         }
 
         if (match.hasRecording == false || (record == true && recordingWhat == "match")) {
-            pattern.addToGraph(data);
-            pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
+            match.addToGraph(data);
+            match.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
         }
     }
 
@@ -349,8 +349,12 @@ void recordPattern(int val) {
         recordingWhat = "pattern";
         record = true;
         match.clearRecording();
+        
+        sendBluetoothCommand("recordingStart");
+        delay(2000);
+
         pattern.startRecording();
-        playFeedback("processing.mov", (guiRight + 5), (guiTop + 5), true);
+        playFeedback("processing.mov", (guiRight + 5), (guiTop + 20), true);
     } else {
         stopRecording();
         stopMovie();
@@ -376,9 +380,14 @@ void recordMatch(int val) {
 
         recordingWhat = "match";
         record = true;
+        
+        sendBluetoothCommand("recordingStart");
+        delay(2000);
+
+        
         match.setRecordingLimit(limit);
         match.startRecording();
-        playFeedback("processing.mov", (guiRight + 5), (guiMiddle + 5), true);
+        playFeedback("processing.mov", (guiRight + 5), (guiMiddle + 20), true);
     } else {
         stopRecording();
         stopMovie();
@@ -391,6 +400,8 @@ void stopRecording() {
     record = false;
     if (recordingWhat == "pattern") {
         pattern.stopRecording();
+        sendBluetoothCommand("recordingEnd");
+        delay(1000);
     } else if (recordingWhat == "match") {
 
         /*
@@ -401,6 +412,8 @@ void stopRecording() {
         */
 
         match.stopRecording();
+        sendBluetoothCommand("recordingEnd");
+        delay(1000);
 
         float sim = similarity();
         if (sim < 0.5) {
@@ -615,19 +628,19 @@ void clearMatch(int val) {
  */
 void pos(int val) {
     registerDelayedCommand("feedbackPerfect", 2000);
-    playFeedback("perfect.mov", (guiRight + 5), (guiTop + 5), false);
+    playFeedback("perfect.mov", (guiRight + 5), (guiTop + 20), false);
 }
 
 
 void neu(int val) {
     registerDelayedCommand("feedbackGood", 2000);
-    playFeedback("good.mov", (guiRight + 5), (guiTop + 5), false);
+    playFeedback("good.mov", (guiRight + 5), (guiTop + 20), false);
 }
 
 
 void neg(int val) {
     registerDelayedCommand("feedbackFail", 2000);
-    playFeedback("fail.mov", (guiRight + 5), (guiTop + 5), false);
+    playFeedback("fail.mov", (guiRight + 5), (guiTop + 20), false);
 }
 
 
