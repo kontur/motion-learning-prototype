@@ -33,8 +33,8 @@ float rotationX = 0;
 float rotationY = 0;
 float rotationZ = 0;
 
-float rotationMin = 0;
-float rotationMax = 360;
+float rotationMin = -90;
+float rotationMax = 90;
 
 
 // TODO fullscreen?
@@ -81,7 +81,9 @@ float[] gyro = new float[3];
 float[] mag = new float[3];
 float pitch = 0;
 float roll = 0;
-Color deviceRGB = new Color(100, 100, 100);
+Color deviceRGB = new Color(200, 200, 200);
+
+int cubeGrey = 125;
 
 int lastClick = 0;
 int numClicks = 0;
@@ -140,13 +142,13 @@ void draw() {
         data.setFloat("roll", roll);
 
         if (pattern.hasRecording == false) {
-            pattern.updateCube(pitch, roll, deviceRGB.getRGB());
+            pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
             pattern.addToGraph(data);
             //pattern.graph.addData(data);
         }
 
         if (match.hasRecording == false) {
-            match.updateCube(pitch, roll, deviceRGB.getRGB());
+            match.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
             match.graph.addData(data);
             match.addToGraph(data);
         }
@@ -165,7 +167,7 @@ void draw() {
             data.setFloat("pitch", pitch);
 
             pattern.graph.addData(data);
-            pattern.updateCube(roll, pitch, deviceRGB.getRGB());
+            pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
         }
     }
 
@@ -289,9 +291,9 @@ void serialEvent(Serial port) {
                     println("BUTTON DOWN");
                     onButtonDown();
                 } else {
+                    cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
                     cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
                     //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-                    cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
                     
                     roll = obj.getFloat("roll");
                     pitch = obj.getFloat("pitch");
@@ -510,13 +512,17 @@ float similarity() {
 /**
  * Helper for drawing the animation of non connected devices
  */
-void idleAnimation () {    
-    rotationX += 0.5;
-    //rotationY += 1;
-    rotationZ += 2;
-    if (rotationX > 360) rotationX = 0;
-    //if (rotationY > 360) rotationY = 0;
-    if (rotationZ > 360) rotationZ = 0;
+void idleAnimation () {
+
+    rotationX += random(-2.0, 2.0);// * (abs(rotationX) / 100 + 0.25);
+    rotationZ += random(-2.0, 2.0);// * (abs(rotationZ) / 100 + 0.25);
+
+    if (rotationX > 90) rotationX = -90;
+    if (rotationX < -90) rotationX = 90;
+
+    if (rotationZ > 90) rotationZ = -90;
+    if (rotationZ < -90) rotationZ = 90;
+
     cp5.getController("rotationX").setValue(rotationX);
     cp5.getController("rotationY").setValue(rotationY);
     cp5.getController("rotationZ").setValue(rotationZ);

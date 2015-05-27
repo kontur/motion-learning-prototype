@@ -22,9 +22,12 @@ class ColorCube {
     }
 
     void setRotation(float _rotationX, float _rotationY, float _rotationZ) {
-        rotationX = rotationX * rotationEasing + (1 - _rotationX * rotationEasing);
-        rotationY = rotationY * rotationEasing + (1 - _rotationY * rotationEasing);
-        rotationZ = rotationZ * rotationEasing + (1 - _rotationZ * rotationEasing);
+        // rotationX = rotationX * rotationEasing + (1 - _rotationX * rotationEasing);
+        // rotationY = rotationY * rotationEasing + (1 - _rotationY * rotationEasing);
+        // rotationZ = rotationZ * rotationEasing + (1 - _rotationZ * rotationEasing);
+        rotationX = _rotationX;
+        rotationY = _rotationY;
+        rotationZ = _rotationZ;
     }
 
     void applyColor(color _colorFront, color _colorSide, color _colorTop) {
@@ -38,8 +41,8 @@ class ColorCube {
         pushMatrix();
         translate(x, y, z);
         rotateX(radians(rotationX));
-        rotateZ(radians(rotationZ));
         rotateY(radians(rotationY));
+        rotateZ(radians(rotationZ));
         //box(w, d, h);
 
         float w2, d2, h2;
