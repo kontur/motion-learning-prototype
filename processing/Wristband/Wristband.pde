@@ -293,7 +293,7 @@ void serialEvent(Serial port) {
         String serialMessage = connection.readString();
         serialMessage = serialMessage.substring(0, serialMessage.length() - 1);
         
-        println("serialEvent: ", serialMessage);
+        //println("serialEvent: ", serialMessage);
 
         // if the serial string read contains a json opening { parse info from arduino
         if (serialMessage.indexOf("{") > -1) {
