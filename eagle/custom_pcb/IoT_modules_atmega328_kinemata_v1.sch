@@ -130,34 +130,6 @@
 <libraries>
 <library name="MlabPaja_v3">
 <packages>
-<package name="LIPO_BATTERY_110MAH">
-<wire x1="-15.24" y1="-6.35" x2="12.76" y2="-6.35" width="0.127" layer="21"/>
-<wire x1="12.76" y1="-6.35" x2="12.76" y2="5.65" width="0.127" layer="21"/>
-<wire x1="-15.24" y1="-6.35" x2="-15.24" y2="5.65" width="0.127" layer="21"/>
-<wire x1="-15.24" y1="5.65" x2="12.76" y2="5.65" width="0.127" layer="21"/>
-<text x="-13.97" y="-5.08" size="1.27" layer="21">LiPo 110mAh</text>
-</package>
-<package name="LIPO_BATTERY_1000MAH">
-<wire x1="55" y1="0" x2="55" y2="35" width="0.127" layer="21"/>
-<wire x1="55" y1="35" x2="0" y2="35" width="0.127" layer="21"/>
-<wire x1="0" y1="35" x2="0" y2="0" width="0.127" layer="21"/>
-<wire x1="0" y1="0" x2="55" y2="0" width="0.127" layer="21"/>
-<text x="1.27" y="1.27" size="1.27" layer="21">LiPo 1000mAh</text>
-</package>
-<package name="LIPO_BATTERY_400MAH">
-<wire x1="37" y1="0" x2="37" y2="25" width="0.127" layer="21"/>
-<wire x1="37" y1="25" x2="0" y2="25" width="0.127" layer="21"/>
-<wire x1="0" y1="25" x2="0" y2="0" width="0.127" layer="21"/>
-<wire x1="0" y1="0" x2="37" y2="0" width="0.127" layer="21"/>
-<text x="1.27" y="1.27" size="1.27" layer="21">LiPo 400mAh</text>
-</package>
-<package name="LIPO_BATTERY_900MAH">
-<wire x1="55" y1="0" x2="55" y2="32" width="0.127" layer="21"/>
-<wire x1="55" y1="32" x2="0" y2="32" width="0.127" layer="21"/>
-<wire x1="0" y1="32" x2="0" y2="0" width="0.127" layer="21"/>
-<wire x1="0" y1="0" x2="55" y2="0" width="0.127" layer="21"/>
-<text x="1.27" y="1.27" size="1.27" layer="21">LiPo 900mAh</text>
-</package>
 <package name="VIBRATION_MOTOR_SHAPE">
 <wire x1="4.6854" y1="-2.229046875" x2="-3.31463125" y2="-2.229046875" width="0" layer="21"/>
 <wire x1="-3.31463125" y1="-2.229046875" x2="-3.31463125" y2="-0.8789125" width="0" layer="21"/>
@@ -840,13 +812,6 @@ Source: http://www.onsemi.com/pub_link/Collateral/MC14093B-D.PDF</description>
 <text x="309.88" y="19.558" size="2.54" layer="94">Title:</text>
 <text x="310.134" y="14.478" size="2.54" layer="94">Version:</text>
 </symbol>
-<symbol name="LIPO_BATTERY">
-<wire x1="-5.588" y1="1.524" x2="5.588" y2="1.524" width="0.254" layer="94"/>
-<wire x1="5.588" y1="1.524" x2="5.588" y2="-1.778" width="0.254" layer="94"/>
-<wire x1="5.588" y1="-1.778" x2="-5.588" y2="-1.778" width="0.254" layer="94"/>
-<wire x1="-5.588" y1="-1.778" x2="-5.588" y2="1.524" width="0.254" layer="94"/>
-<text x="-4.826" y="-0.762" size="1.27" layer="94">LiPo Battery</text>
-</symbol>
 <symbol name="VIBRATION_MOTOR_SHAPE">
 <wire x1="-7.62" y1="2.54" x2="7.62" y2="2.54" width="0.254" layer="94"/>
 <wire x1="7.62" y1="2.54" x2="7.62" y2="-2.54" width="0.254" layer="94"/>
@@ -1087,33 +1052,6 @@ A3 Larger Frame</description>
 </gates>
 <devices>
 <device name="">
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="LIPO_BATTERY">
-<gates>
-<gate name="G$1" symbol="LIPO_BATTERY" x="0" y="0"/>
-</gates>
-<devices>
-<device name="110MAH" package="LIPO_BATTERY_110MAH">
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="1000MAH" package="LIPO_BATTERY_1000MAH">
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="400MAH" package="LIPO_BATTERY_400MAH">
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="900MAH" package="LIPO_BATTERY_900MAH">
 <technologies>
 <technology name=""/>
 </technologies>
@@ -4279,7 +4217,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <part name="SUPPLY10" library="SparkFun-Aesthetics" deviceset="3.3V" device=""/>
 <part name="D4" library="SparkFun-LED" deviceset="LED" device="1206" value="Green"/>
 <part name="D5" library="SparkFun-LED" deviceset="LED" device="1206" value="Orange"/>
-<part name="U$2" library="MlabPaja_v3" deviceset="LIPO_BATTERY" device="400MAH" value="LIPO_BATTERY400MAH"/>
 <part name="U$5" library="MlabPaja_v3" deviceset="VIBRATION_MOTOR" device="" value="VIBRATION_MOTOR"/>
 <part name="GND8" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
 <part name="U$3" library="MlabPaja_v2" deviceset="BUZZER_4PINS" device=""/>
@@ -4287,12 +4224,10 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <part name="U$4" library="MlabPaja_v3" deviceset="VIBRATION_MOTOR_SHAPE" device=""/>
 <part name="BAT+2" library="MlabPaja_v3" deviceset="LIPO_PAD" device=""/>
 <part name="BAT-1" library="MlabPaja_v3" deviceset="LIPO_PAD" device=""/>
-<part name="INT_INT1X_ACCEL" library="MlabPaja_v3" deviceset="HEADER_1PIN_MALE" device=""/>
 <part name="GND_SIDE" library="MlabPaja_v3" deviceset="HEADER_1PIN_MALE" device=""/>
 <part name="SDA_SIDE" library="MlabPaja_v3" deviceset="HEADER_1PIN_MALE" device=""/>
 <part name="SCL_SIDE" library="MlabPaja_v3" deviceset="HEADER_1PIN_MALE" device=""/>
 <part name="3V3_SIDE" library="MlabPaja_v3" deviceset="HEADER_1PIN_MALE" device=""/>
-<part name="INT_DRDYG_GYRO" library="MlabPaja_v3" deviceset="HEADER_1PIN_MALE" device=""/>
 <part name="GND3" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
 <part name="SUPPLY8" library="SparkFun-Aesthetics" deviceset="3.3V" device=""/>
 <part name="GND9" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
@@ -4355,7 +4290,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <part name="GND2" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
 <part name="GND6" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
 <part name="GND11" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
-<part name="INT_INT2X_MAG" library="MlabPaja_v3" deviceset="HEADER_1PIN_MALE" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4410,7 +4344,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <instance part="SUPPLY10" gate="G$1" x="190.5" y="63.5"/>
 <instance part="D4" gate="G$1" x="101.6" y="154.94"/>
 <instance part="D5" gate="G$1" x="111.76" y="147.32"/>
-<instance part="U$2" gate="G$1" x="101.6" y="218.44"/>
 <instance part="U$5" gate="G$1" x="248.92" y="104.14"/>
 <instance part="GND8" gate="1" x="264.16" y="93.98"/>
 <instance part="U$3" gate="G$1" x="203.2" y="101.6"/>
@@ -4418,12 +4351,10 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <instance part="U$4" gate="G$1" x="238.76" y="93.98"/>
 <instance part="BAT+2" gate="G$1" x="81.28" y="233.68" rot="R90"/>
 <instance part="BAT-1" gate="G$1" x="88.9" y="233.68" rot="R90"/>
-<instance part="INT_INT1X_ACCEL" gate="G$1" x="355.6" y="35.56"/>
 <instance part="GND_SIDE" gate="G$1" x="355.6" y="60.96"/>
 <instance part="SDA_SIDE" gate="G$1" x="355.6" y="50.8"/>
 <instance part="SCL_SIDE" gate="G$1" x="355.6" y="55.88"/>
 <instance part="3V3_SIDE" gate="G$1" x="355.6" y="45.72"/>
-<instance part="INT_DRDYG_GYRO" gate="G$1" x="355.6" y="40.64"/>
 <instance part="GND3" gate="1" x="325.12" y="33.02"/>
 <instance part="SUPPLY8" gate="G$1" x="172.72" y="137.16"/>
 <instance part="GND9" gate="1" x="208.28" y="124.46"/>
@@ -4486,7 +4417,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <instance part="GND2" gate="1" x="251.46" y="15.24"/>
 <instance part="GND6" gate="1" x="243.84" y="15.24"/>
 <instance part="GND11" gate="1" x="236.22" y="15.24"/>
-<instance part="INT_INT2X_MAG" gate="G$1" x="355.6" y="30.48"/>
 </instances>
 <busses>
 </busses>
@@ -5007,18 +4937,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <label x="116.84" y="30.48" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="INT1" class="0">
-<segment>
-<pinref part="INT_DRDYG_GYRO" gate="G$1" pin="1"/>
-<wire x1="353.06" y1="40.64" x2="337.82" y2="40.64" width="0.1524" layer="91"/>
-<label x="337.82" y="40.64" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="U2" gate="G$1" pin="PD4(XCK/T0)-D4"/>
-<wire x1="101.6" y1="53.34" x2="127" y2="53.34" width="0.1524" layer="91"/>
-<label x="121.92" y="53.34" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="VCC" class="0">
 <segment>
 <pinref part="IC2" gate="G$1" pin="14"/>
@@ -5298,18 +5216,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <label x="243.84" y="63.5" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="INT0" class="0">
-<segment>
-<pinref part="U2" gate="G$1" pin="PB5(SCK)-D13"/>
-<wire x1="101.6" y1="27.94" x2="127" y2="27.94" width="0.1524" layer="91"/>
-<label x="121.92" y="27.94" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="INT_INT1X_ACCEL" gate="G$1" pin="1"/>
-<wire x1="353.06" y1="35.56" x2="337.82" y2="35.56" width="0.1524" layer="91"/>
-<label x="337.82" y="35.56" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="N$1" class="0">
 <segment>
 <pinref part="U$1" gate="G$1" pin="BA"/>
@@ -5343,11 +5249,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <pinref part="U2" gate="G$1" pin="ADC7"/>
 <wire x1="101.6" y1="68.58" x2="127" y2="68.58" width="0.1524" layer="91"/>
 <label x="121.92" y="68.58" size="1.778" layer="95"/>
-</segment>
-<segment>
-<pinref part="INT_INT2X_MAG" gate="G$1" pin="1"/>
-<wire x1="353.06" y1="30.48" x2="337.82" y2="30.48" width="0.1524" layer="91"/>
-<label x="337.82" y="30.48" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
