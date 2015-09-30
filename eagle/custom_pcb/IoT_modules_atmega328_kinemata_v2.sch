@@ -5604,13 +5604,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <wire x1="81.28" y1="231.14" x2="81.28" y2="226.06" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="RGB_B" class="0">
-<segment>
-<pinref part="U2" gate="G$1" pin="PD3(INT1)-D3~"/>
-<wire x1="101.6" y1="55.88" x2="127" y2="55.88" width="0.1524" layer="91"/>
-<label x="121.92" y="55.88" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="D-USB" class="0">
 <segment>
 <pinref part="U3" gate="G$1" pin="USBDM"/>
@@ -5857,12 +5850,10 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <wire x1="251.46" y1="53.34" x2="251.46" y2="60.96" width="0.1524" layer="91"/>
 <label x="251.46" y="60.96" size="1.778" layer="95"/>
 </segment>
-</net>
-<net name="INT2" class="0">
 <segment>
-<pinref part="U2" gate="G$1" pin="ADC7"/>
-<wire x1="101.6" y1="68.58" x2="127" y2="68.58" width="0.1524" layer="91"/>
-<label x="121.92" y="68.58" size="1.778" layer="95"/>
+<pinref part="U2" gate="G$1" pin="PD3(INT1)-D3~"/>
+<wire x1="101.6" y1="55.88" x2="127" y2="55.88" width="0.1524" layer="91"/>
+<label x="121.92" y="55.88" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
