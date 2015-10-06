@@ -4945,10 +4945,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <part name="GND11" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
 <part name="JP1" library="SparkFun-Connectors" deviceset="M04" device="LONGPADS"/>
 <part name="U$2" library="MlabPaja_v3" deviceset="LIPO_BATTERY" device="110MAH"/>
-<part name="U$6" library="MlabPaja_v3" deviceset="LIPO_BATTERY" device="300MAH"/>
-<part name="U$7" library="MlabPaja_v3" deviceset="LIPO_BATTERY" device="400MAH"/>
-<part name="U$8" library="MlabPaja_v3" deviceset="LIPO_BATTERY" device="600MAH"/>
-<part name="U$9" library="MlabPaja_v3" deviceset="LIPO_BATTERY" device="900MAH"/>
 </parts>
 <sheets>
 <sheet>
@@ -5069,10 +5065,6 @@ This is the simplified version of the FT232RL unit. Only what you need, nothing 
 <instance part="GND11" gate="1" x="236.22" y="15.24"/>
 <instance part="JP1" gate="G$1" x="355.6" y="55.88" rot="R180"/>
 <instance part="U$2" gate="G$1" x="292.1" y="99.06"/>
-<instance part="U$6" gate="G$1" x="309.88" y="99.06"/>
-<instance part="U$7" gate="G$1" x="332.74" y="91.44"/>
-<instance part="U$8" gate="G$1" x="350.52" y="93.98"/>
-<instance part="U$9" gate="G$1" x="307.34" y="83.82"/>
 </instances>
 <busses>
 </busses>
