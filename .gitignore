@@ -6,3 +6,4 @@ processing/Wristband/build-tmp/
 processing/Wristband/application.*
 processing/VisualizationTest/build-tmp/
 *.mov
+*.stl
