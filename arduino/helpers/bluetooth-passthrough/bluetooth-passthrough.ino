@@ -11,8 +11,8 @@
  */
 #include <SoftwareSerial.h>  
 
-int bluetoothTx = 2;  // TX-O pin of bluetooth mate, Arduino D2
-int bluetoothRx = 3;  // RX-I pin of bluetooth mate, Arduino D3
+int bluetoothTx = 7;  // TX-O pin of bluetooth mate, Arduino D2
+int bluetoothRx = 8;  // RX-I pin of bluetooth mate, Arduino D3
 
 SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 
@@ -35,13 +35,14 @@ void loop()
   if(bluetooth.available())  // If the bluetooth sent any characters
   {
     // Send any characters the bluetooth prints to the serial monitor
-    Serial.print((char)bluetooth.read());  
+    Serial.print((char)bluetooth.read());
   }
   if(Serial.available())  // If stuff was typed in the serial monitor
   {
     // Send any characters the Serial monitor prints to the bluetooth
     bluetooth.print((char)Serial.read());
   }
+  bluetooth.print(millis());
   // and loop forever and ever!
 }
 

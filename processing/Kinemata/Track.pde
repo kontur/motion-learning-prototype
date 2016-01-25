@@ -1,199 +1,331 @@
 /**
  * Class wrapper for a single track with recording, graphing and visualization capabilities
+ 
+ Track GUI has:
+ - BT connection buttons
+ - 3D mock animation
+ - UI for showing and toggling read values
+ - graph
+ - record, filename and save & reset buttons
+ 
+ Track can:
+ - handle BT connection
+ - save and reset recordings
+ - save files
+ 
  */
- class Track {
 
- 	ColorCube cube;
- 	Grapher graph;
- 	JSONObject graphConfig;
- 	JSONArray recording;
+import controlP5.*;
+import processing.serial.*;
 
- 	int x;
- 	int y;
+class Track {
 
- 	boolean isRecording = false;
- 	boolean hasRecording = false;
+  PApplet parent;
 
- 	int recordingIndex = 0;
- 	int playbackIndex = 0;
+  ColorCube cube;
+  Grapher graph;
+  JSONObject graphConfig;
+  JSONArray recording;
 
- 	int recordingLimit = 0;
+  int x;
+  int y;
 
- 	String label = "";
+  boolean isRecording = false;
+  boolean hasRecording = false;
 
+  int recordingIndex = 0;
+  int playbackIndex = 0;
 
- 	/**
- 	 * @param int _x: Position offset on x axis
- 	 * @param int _y: Position offset on y axis
- 	 * @param String label: TODO Text label
- 	 */
- 	Track(int _x, int _y, String _label) {
- 		x = _x;
- 		y = _y;
- 		label = _label;
-		
-		graphConfig = JSONObject.parse("{ " + 
-		    "\"resolutionX\": 1.00, \"resolutionY\": 400.00, " +
-		    "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
-		    "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, "
-		    + "}");
+  int recordingLimit = 0;
 
-		graph = new Grapher(0, 30, 390, 200);
-		graph.setConfiguration(graphConfig);
-
-		cube = new ColorCube(100.0, 50.0, 10.0, cubeGrey, cubeGrey, cubeGrey);
-		cube.setPosition(500.0, 130.0, 50.0);
- 	}
+  String label = "";
 
 
- 	void draw() {
- 		pushMatrix();
- 		translate(x, y);
+  /* UI */
+  ControlP5 cp5;
+  controlP5.Group uiBluetooth;
+  DropdownList bluetoothDeviceList;
+  Button buttonConnectBluetooth;
+  Button buttonCloseBluetooth;
 
- 		fill(225);
-
- 		if (isRecording == true) {
-			stroke(205, 50, 20);
- 		} else { 		
- 			stroke(190);
- 		} 		
- 		rect(guiCenter, 30, 200, 200);	
-
-		fill(25);
-		stroke(190);
- 		rect(guiRight, 30, 200, 200);
-
- 		graph.plot();
- 		cube.render();
-
- 		popMatrix();
- 	}
+  /* Bluetooth connection */
+  char[] inBuffer = new char[12];
+  int inBufferIndex = 0;
+  boolean isConnected = false;
+  boolean tryingToConnect = false;
+  int baudRate = 9600;
+  Serial connection;
 
 
- 	void startRecording() {
- 		if (isRecording == false) {
- 			println("startRecording");
- 			recordingIndex = 0;
- 			isRecording = true;
- 			hasRecording = false;
- 			graph.clear();
- 			recording = new JSONArray();
- 		}
- 	}
+  /**
+   	 * @param int _x: Position offset on x axis
+   	 * @param int _y: Position offset on y axis
+   	 * @param String label: TODO Text label
+   	 */
+  Track(PApplet window, int _x, int _y, String _label) {
+    x = _x;
+    y = _y;
+    label = _label;
+    parent = window;
+
+    graphConfig = JSONObject.parse("{ " + 
+      "\"resolutionX\": 1.00, \"resolutionY\": 400.00, " +
+      "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
+      "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, "
+      + "}");
+
+    graph = new Grapher(0, 30, 390, 200);
+    graph.setConfiguration(graphConfig);
+
+    cube = new ColorCube(100.0, 50.0, 10.0, cubeGrey, cubeGrey, cubeGrey);
+    cube.setPosition(500.0, 130.0, 50.0);
+
+    createUI(window);
+  }
 
 
- 	/**
- 	 * Recording the current frame into the internal store for later use
- 	 *
- 	 * @param JSONObject values: Json object containing all the values except id that
- 	 *		will get recorded
- 	 * @return boolean: Indicating if a new frame was recorded or not
- 	 */
- 	boolean record (JSONObject values) {
- 		if (isRecording == true && (recordingLimit == 0 || recordingIndex < recordingLimit)) {
- 			//println("record", recordingIndex, values);
-        	values.setInt("id", recordingIndex);
-        	recording.setJSONObject(recordingIndex, values);
-	        recordingIndex++;
-	        return true;
-	    } else {
-	    	return false;
-	    }
- 	}
+  void createUI(PApplet window) {
+
+    cp5 = new ControlP5(window);
+    // bluetooth connect UI
+    controlP5.Group uiBluetooth = cp5.addGroup("uiBluetooth")
+      .hideBar()
+      .setPosition(x, y);
+
+    cp5.addButton("connectBluetooth")
+      .setPosition(0, 0)
+      .setSize(100, 20)
+      .setGroup(uiBluetooth)
+      .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction()==ControlP5.ACTION_RELEASED) {
+          println("pressed");
+          println(this);
+          println(bluetoothDeviceList.getValue());
 
 
- 	void stopRecording() {
- 		println("stopRecording");
- 		isRecording = false;
- 		hasRecording = true;
- 		graph.clear();
+          println("connectBluetooth");
+          mode = 1;
+          String[] ports = Serial.list();
+          //buttonConnectBluetooth.hide();
+          String port = defaultSerial;      
 
- 		// after the recording add it to the graph, but filter to include only
- 		// those values we are wanting to displayed, not all that we recorded
- 		JSONArray graphData = new JSONArray();
- 		for (int i = 0; i < recording.size(); i++) {
- 			JSONObject record = recording.getJSONObject(i);
- 			JSONObject data = new JSONObject();
- 			data.setFloat("pitch", record.getFloat("pitch"));
- 			data.setFloat("roll", record.getFloat("roll"));
-			graphData.setJSONObject(i, data);
- 		}
- 		graph.addDataArray(graphData);
- 	}
+          if (bluetoothDeviceList.getValue() != 0) {
+            port = ports[int(bluetoothDeviceList.getValue()) - 1];
+          }
+          log("Attempting to open serial port: " + port);
+          println(port);
+          println(parent);
 
+          try {
+            tryingToConnect = true;
+            connection = new Serial(parent, port, 9600);
 
- 	void playRecording() {
- 		if (hasRecording == true) {
- 			playbackIndex = 0;
- 		}
- 	}
+            // set a character that limits transactions and initiates reading the buffer
+            char c = ';';
+            connection.bufferUntil(byte(c));
+            //buttonConnectBluetooth.hide();
+            //buttonCloseBluetooth.show();
+            //mode = 2;
+            //sendBluetoothCommand("bluetoothConnected");
+            print("Bluetooth connected to " + port);
+            isConnected = true;
+          } 
+          catch (RuntimeException e) {
+            print("Error opening serial port " + port + ": \n" + e.getMessage());
+            //buttonConnectBluetooth.show();
+            //buttonCloseBluetooth.hide();
+            //tryingToConnect = false;
+            //mode = 0;
+          }
+        }
+      }
+    }
+    );
 
+    cp5.addButton("closeBluetooth")
+      .setPosition(0, 0)
+      .setSize(100, 20)
+      .setGroup(uiBluetooth)
+      .hide();
 
- 	void clearRecording() {
- 		hasRecording = false;
- 		recordingLimit = 0;
- 		recording = null;
- 		graph.clear();
- 	}
+    bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
+      .setPosition(0, 40)
+      .setSize(150, 200)
+      .setGroup(uiBluetooth);
 
+    getBluetoothDeviceList(bluetoothDeviceList);        
 
- 	JSONArray getRecording() {
- 		if (recording == null || recording.size() <= 0) {
- 			return null;
- 		}
- 		return recording;
- 	}
+    /*
+    DropdownList bluetoothDeviceList;
+     Button buttonConnectBluetooth;
+     Button buttonCloseBluetooth;
+     */
+  }
 
-
- 	void playbackAt(int f) {
- 		if (recording == null || recording.size() < f) {
- 			log("Track.playbackAt(), not enough frames (recording.size(): " + recording.size() + ")");
- 			return;
- 		}
-
- 		try {
-	 		JSONObject frame = recording.getJSONObject(f);
-	 		//println("playbackAt", frame);
-	 		updateCube(map(frame.getFloat("pitch"), -90, 90, 0, 360), map(frame.getFloat("roll"), -90, 90, 0, 360), frame.getInt("rgb"), cubeGrey, cubeGrey);
-	 	} catch (RuntimeException e) {
-	 		log("Track.playbackAt(" + f + ") of " + label + " encountered error: " + e.getMessage());
-	 	}
- 	}
-
-
- 	void updateCube(float rotationX, float rotationZ, int cFront, int cSide, int cTop) {
-        cube.setRotation(rotationX, 0.0, rotationZ);
-        cube.applyColor(cFront, cSide, cTop);
- 	}
-
-
- 	void addToGraph(JSONObject data) {
- 		JSONObject d = new JSONObject();
- 		d.setFloat("pitch", data.getFloat("pitch"));
- 		d.setFloat("roll", data.getFloat("roll"));
- 		graph.addData(d);
- 	}
+  void connectBluetooth() {
+    println("hello BT");
+  }
 
 
- 	/**
- 	 * Helper for getting the length (in frames) of the recording
- 	 */
- 	int getRecordingSize() {
- 		if (hasRecording == false || recording == null) {
- 			return -1;
- 		}
- 		return recording.size();
- 	}
+  void draw() {
+    pushMatrix();
+    translate(x, y);
+
+    fill(225);
+
+    if (isRecording == true) {
+      stroke(205, 50, 20);
+    } else { 		
+      stroke(190);
+    } 		
+    rect(guiCenter, 30, 200, 200);	
+
+    fill(25);
+    stroke(190);
+    rect(guiRight, 30, 200, 200);
+
+    graph.plot();
+    cube.render();
+
+    popMatrix();
+    while (isConnected && connection.available() > 0) {
+      //int inByte = connection.read();
+      //println(inByte);
+      
+      String serialMessage = connection.readString();
+      serialMessage = serialMessage.substring(0, serialMessage.length() - 1);
+      println(serialMessage);
+    }
+     
+  }
 
 
- 	/**
- 	 * Helper to automatically stop recording after x frames
- 	 */
- 	void setRecordingLimit(int limit) {
- 		if (limit >= 0) {
-	 		recordingLimit = limit;
-	 	} else {
-	 		recordingLimit = 0;
-	 	}
- 	}
+  void startRecording() {
+    if (isRecording == false) {
+      println("startRecording");
+      recordingIndex = 0;
+      isRecording = true;
+      hasRecording = false;
+      graph.clear();
+      recording = new JSONArray();
+    }
+  }
+
+
+  /**
+   	 * Recording the current frame into the internal store for later use
+   	 *
+   	 * @param JSONObject values: Json object containing all the values except id that
+   	 *		will get recorded
+   	 * @return boolean: Indicating if a new frame was recorded or not
+   	 */
+  boolean record (JSONObject values) {
+    if (isRecording == true && (recordingLimit == 0 || recordingIndex < recordingLimit)) {
+      //println("record", recordingIndex, values);
+      values.setInt("id", recordingIndex);
+      recording.setJSONObject(recordingIndex, values);
+      recordingIndex++;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+
+  void stopRecording() {
+    println("stopRecording");
+    isRecording = false;
+    hasRecording = true;
+    graph.clear();
+
+    // after the recording add it to the graph, but filter to include only
+    // those values we are wanting to displayed, not all that we recorded
+    JSONArray graphData = new JSONArray();
+    for (int i = 0; i < recording.size(); i++) {
+      JSONObject record = recording.getJSONObject(i);
+      JSONObject data = new JSONObject();
+      data.setFloat("pitch", record.getFloat("pitch"));
+      data.setFloat("roll", record.getFloat("roll"));
+      graphData.setJSONObject(i, data);
+    }
+    graph.addDataArray(graphData);
+  }
+
+
+  void playRecording() {
+    if (hasRecording == true) {
+      playbackIndex = 0;
+    }
+  }
+
+
+  void clearRecording() {
+    hasRecording = false;
+    recordingLimit = 0;
+    recording = null;
+    graph.clear();
+  }
+
+
+  JSONArray getRecording() {
+    if (recording == null || recording.size() <= 0) {
+      return null;
+    }
+    return recording;
+  }
+
+
+  void playbackAt(int f) {
+    if (recording == null || recording.size() < f) {
+      log("Track.playbackAt(), not enough frames (recording.size(): " + recording.size() + ")");
+      return;
+    }
+
+    try {
+      JSONObject frame = recording.getJSONObject(f);
+      //println("playbackAt", frame);
+      updateCube(map(frame.getFloat("pitch"), -90, 90, 0, 360), map(frame.getFloat("roll"), -90, 90, 0, 360), frame.getInt("rgb"), cubeGrey, cubeGrey);
+    } 
+    catch (RuntimeException e) {
+      log("Track.playbackAt(" + f + ") of " + label + " encountered error: " + e.getMessage());
+    }
+  }
+
+
+  void updateCube(float rotationX, float rotationZ, int cFront, int cSide, int cTop) {
+    cube.setRotation(rotationX, 0.0, rotationZ);
+    cube.applyColor(cFront, cSide, cTop);
+  }
+
+
+  void addToGraph(JSONObject data) {
+    JSONObject d = new JSONObject();
+    d.setFloat("pitch", data.getFloat("pitch"));
+    d.setFloat("roll", data.getFloat("roll"));
+    graph.addData(d);
+  }
+
+
+  /**
+   	 * Helper for getting the length (in frames) of the recording
+   	 */
+  int getRecordingSize() {
+    if (hasRecording == false || recording == null) {
+      return -1;
+    }
+    return recording.size();
+  }
+
+
+  /**
+   	 * Helper to automatically stop recording after x frames
+   	 */
+  void setRecordingLimit(int limit) {
+    if (limit >= 0) {
+      recordingLimit = limit;
+    } else {
+      recordingLimit = 0;
+    }
+  }
 }

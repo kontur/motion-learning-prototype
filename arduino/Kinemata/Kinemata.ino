@@ -16,7 +16,7 @@
 #include <SparkFunLSM9DS1.h>
 
 // defined shortcuts for notes with common musical names
-#include "pitches.h"
+//#include "pitches.h"
 
 // 9 DOF setup
 LSM9DS1 dof;
@@ -43,8 +43,8 @@ const int greenPin = 6;
 const int bluePin = 3;
 
 // Bluetooth connection pins and serial
-const int rx = 0;
-const int tx = 1;
+const int rx = 7;
+const int tx = 8;
 SoftwareSerial mySerial(rx, tx);
 
 // tracking button pressed stated
@@ -122,9 +122,20 @@ float threshold = 2.5;
 
 
 void setup () {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("hello serial");
-  mySerial.begin(baudrate);
+
+
+  //mySerial.begin(baudrate);
+  
+  mySerial.begin(115200);  // The mySerial Mate defaults to 115200bps
+  mySerial.print("$");  // Print three times individually
+  mySerial.print("$");
+  mySerial.print("$");  // Enter command mode
+  delay(100);  // Short delay, wait for the Mate to send back CMD
+  mySerial.println("U,9600,N");  // Temporarily Change the baudrate to 9600, no parity
+  // 115200 can be too fast at times for NewSoftSerial to relay the data reliably
+  mySerial.begin(9600);  // Start bluetooth serial at 9600
 
 
   // Before initializing the IMU, there are a few settings
@@ -151,12 +162,12 @@ void setup () {
   setRGB(250, 120, 0);
 
   // startup sound
-  playSound(5);
+  //playSound(5);
 }
 
 
 void loop () {
-  Serial.println("---");
+//  Serial.println("---");
 
   now = millis();
 
@@ -164,15 +175,15 @@ void loop () {
   // make sure not to register button clicks to "eagerly" so that a single press of the button
   // won't be registered as a double click
 
-  button = digitalRead(buttonPin);
-  if (button == 1 && lastButton == 0) {
-    sendButtonDown();
-  }
-  lastButton = button;
+//  button = digitalRead(buttonPin);
+//  if (button == 1 && lastButton == 0) {
+//    sendButtonDown();
+//  }
+//  lastButton = button;
 
 
   // read bluetooth commands from processing in
-  readBluetooth();
+//  readBluetooth();
 
 
   /*
@@ -198,6 +209,7 @@ void loop () {
   }
 
   if (framesSinceSensorRead == 3) {
+    Serial.println("send");
     sendJson();
   }
 
@@ -213,15 +225,15 @@ void loop () {
 
   // compensate to achieve a delay between frames as close as possible to the actual desired framerate
   float delayUntilNextFrame = min(max(0, msPerFrame - ((now - lastFrame) - msPerFrame)), msPerFrame);
-  /*
+  
   Serial.print("Delay until next frame to reach target fps: ");
   Serial.println(delayUntilNextFrame);
-  */
-
+  
   lastFrame = now;
 
   // always increment, it will start form 0 on sensor read and then be +1 for every frame after
   framesSinceSensorRead++;
+  
   
   delay(delayUntilNextFrame);
 }
@@ -263,14 +275,14 @@ void readSensors () {
   lastPitch = pitch;
   lastRoll = roll;
 
-  /*
+  
   Serial.print("heading ");
   Serial.println(heading);
   Serial.print("pitch ");
   Serial.println(pitch);
   Serial.print("roll ");
   Serial.println(roll);
-  */
+  
 
   for (int i = 0; i < 3; i++) {
     // ease the new values to contain a portion of the previous value, thus making them less
@@ -371,6 +383,12 @@ void readSensors () {
   Serial.print("3 ");
   Serial.println(millis() - now);
   */
+  
+  if (mySerial) {
+    mySerial.write("a");
+  } else {
+    Serial.println("no serial");
+  }
 }
 
 void setVibration() {
@@ -469,7 +487,7 @@ void sendJson() {
                 ", \"gX\": " + String(gyro[0]) +
                 ", \"gY\": " + String(gyro[1]) +
                 ", \"gZ\": " + String(gyro[2]) +
-                ", \"rgb\": \"" + rgbColor[0] + "," + rgbColor[1] + "," + rgbColor[2] + "\"" +
+                //", \"rgb\": \"" + rgbColor[0] + "," + rgbColor[1] + "," + rgbColor[2] + "\"" +
                 " };";
 
   // print to bluetooth connection and debug monitor
@@ -480,6 +498,7 @@ void sendJson() {
   */
   // note that I made the observation that if the json wasn't printed to the Serial, it didn't
   // print it to mySerial either... reasons?
+  Serial.println("json");
   Serial.println(json);
   mySerial.println(json);
   
@@ -497,10 +516,10 @@ void sendButtonDown() {
   setRGB(255, 0, 0);
   mySerial.println(json);
   Serial.println(json);
-  playSound(6);
+  //playSound(6);
 }
 
-
+/*
 void readBluetooth() {
 
   // code for reading IN information from bluetooth
@@ -527,7 +546,7 @@ void readBluetooth() {
     String roll = test.substring(0, test.indexOf(":"));
     String heading = test.substring(test.indexOf(":") + 1, test.indexOf("pitch") - 2);
     String pitch = test.substring(test.lastIndexOf(":" + 1));
-    */
+    *
 
     String command = bluetoothString.substring(bluetoothString.indexOf(":") + 1, bluetoothString.indexOf(";") - 1);
 
@@ -550,3 +569,4 @@ void readBluetooth() {
     }
   }
 }
+*/
