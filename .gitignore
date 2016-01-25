@@ -5,8 +5,8 @@ processing/Wristband/data/
 processing/Wristband/build-tmp/
 processing/Wristband/application.*
 processing/VisualizationTest/build-tmp/
-processing/Wristbandv2/build-tmp/
-processing/Wristbandv2/code/
-processing/Wristbandv2/data/
+processing/Kinemata/build-tmp/
+processing/Kinemata/code/
+processing/Kinemata/data/
 *.mov
 *.stl
