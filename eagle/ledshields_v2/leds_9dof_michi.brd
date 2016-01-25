@@ -547,7 +547,6 @@ Change: Clearance &gt; Pad &gt; Pad 1mm -&gt; 0.5mm, Restring &gt; Pads &gt; Bot
 <element name="R3" library="SparkFun-Resistors" package="1206" value="10K" x="17" y="37.35" rot="R180"/>
 <element name="R4" library="SparkFun-Resistors" package="1206" value="10K" x="17" y="34.95" rot="R180"/>
 <element name="R5" library="SparkFun-Resistors" package="1206" value="10K" x="17" y="32.55" rot="R180"/>
-<element name="R6" library="SparkFun-Resistors" package="1206" value="10K" x="16.205" y="7.8" rot="R270"/>
 <element name="R8" library="SparkFun-Resistors" package="1206" value="10K" x="8.31" y="12.265" rot="R270"/>
 <element name="C1" library="SparkFun-Passives" package="EIA3216" value="10uF" x="13.37" y="10.745" rot="R90"/>
 <element name="LED1" library="Mlab_ProEx2015" package="LED_RGB_6PINS" value="LED_RGB_6PINS" x="9.9" y="21" rot="R90"/>
@@ -562,7 +561,6 @@ Change: Clearance &gt; Pad &gt; Pad 1mm -&gt; 0.5mm, Restring &gt; Pads &gt; Bot
 <contactref element="U3" pad="25"/>
 <contactref element="C1" pad="C"/>
 <contactref element="R1" pad="1"/>
-<contactref element="R6" pad="1"/>
 <contactref element="R8" pad="2"/>
 <wire x1="13.37" y1="9.345" x2="13.225" y2="9.2" width="0.3" layer="1"/>
 <wire x1="13.225" y1="9.2" x2="11.1" y2="9.2" width="0.3" layer="1"/>
@@ -573,7 +571,6 @@ Change: Clearance &gt; Pad &gt; Pad 1mm -&gt; 0.5mm, Restring &gt; Pads &gt; Bot
 <wire x1="13.37" y1="9.345" x2="13.515" y2="9.2" width="0.3" layer="1"/>
 <wire x1="13.515" y1="9.2" x2="16.2" y2="9.2" width="0.3" layer="1"/>
 <wire x1="16.2" y1="14.6" x2="16.2" y2="9.2" width="0.3" layer="1"/>
-<wire x1="16.2" y1="9.2" x2="16.205" y2="9.2" width="0.3" layer="1"/>
 <wire x1="16.2" y1="14.6" x2="15" y2="15.9" width="0.3" layer="1"/>
 <wire x1="10.675" y1="26.2372" x2="10.7" y2="26.2122" width="0.3" layer="1"/>
 <wire x1="10.7" y1="26.2122" x2="10.7" y2="27.2" width="0.3" layer="1"/>
@@ -611,8 +608,6 @@ Change: Clearance &gt; Pad &gt; Pad 1mm -&gt; 0.5mm, Restring &gt; Pads &gt; Bot
 </signal>
 <signal name="A0">
 <contactref element="U3" pad="1"/>
-<contactref element="R6" pad="2"/>
-<wire x1="16.205" y1="6.4" x2="16.305" y2="6.3" width="0.3" layer="1"/>
 <wire x1="16.305" y1="6.3" x2="17.4" y2="6.3" width="0.3" layer="1"/>
 <wire x1="17.8" y1="6.8" x2="17.8" y2="27.5" width="0.3" layer="1"/>
 <wire x1="17.8" y1="27.5" x2="14.6" y2="30.7" width="0.3" layer="1"/>
