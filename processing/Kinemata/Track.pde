@@ -197,7 +197,6 @@ class Track {
       serialMessage = serialMessage.substring(0, serialMessage.length() - 1);
       println(serialMessage);
     }
-     
   }
 
 
