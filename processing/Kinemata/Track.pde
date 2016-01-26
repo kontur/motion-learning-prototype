@@ -40,14 +40,14 @@ class Track {
   //positioning
   int guiX1 = 10; // + 200 + 10
   int guiX2 = 220; // + 200 + 10
-  int guiX3 = 430; // + 400 + 10
-  int guiX4 = 840;
+  int guiX3 = 430; // + 200 + 10
+  int guiX4 = 640; // + 400 + 10
+  int guiX5 = 1050;
   int guiW = 200;
   int guiH = 200;
 
   //controls
   ControlP5 cp5;
-  controlP5.Group uiBluetooth;
   DropdownList bluetoothDeviceList;
   Button buttonConnectBluetooth;
   Button buttonCloseBluetooth;
@@ -57,6 +57,7 @@ class Track {
   Button buttonStopRecord;
   Button buttonSave;
   Textfield inputFilename;
+  CheckBox checkboxGraph;
 
   int buttonInactive = color(200);
 
@@ -86,7 +87,7 @@ class Track {
       "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, "
       + "}");
 
-    graph = new Grapher(guiX3, 0, guiW * 2, guiH);
+    graph = new Grapher(guiX4, 0, guiW * 2, guiH);
     graph.setConfiguration(graphConfig);
 
     cube = new ColorCube(100.0, 50.0, 10.0, cubeGrey, cubeGrey, cubeGrey);
@@ -136,16 +137,15 @@ class Track {
             connection.bufferUntil(byte(c));
             print("Bluetooth connected to " + port);
             isConnected = true;
-            
+
             hideButton(buttonConnectBluetooth);
             hideButton(buttonRefreshBluetooth);
             bluetoothDeviceList.hide();
-            
+
             showButton(buttonCloseBluetooth);
             lockButton(buttonSave);
             lockButton(buttonClear);
             unlockButton(buttonRecord);
-            
           } 
           catch (RuntimeException e) {
             print("Error opening serial port " + port + ": \n" + e.getMessage());
@@ -159,26 +159,27 @@ class Track {
     );
 
     buttonCloseBluetooth = cp5.addButton("closeBluetooth")
-      .setPosition(0, 30)
+      .setPosition(0, 0)
       .setSize(100, 20)
       .setGroup(uiBluetooth)
       .hide()
       .addCallback(new CallbackListener() {
-        public void controlEvent(CallbackEvent theEvent) {
-          if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-            
-            // TODO cap bluetooth
-            
-            showButton(buttonConnectBluetooth);
-            showButton(buttonRefreshBluetooth);
-            bluetoothDeviceList.show();
-            hideButton(buttonCloseBluetooth);
-            unlockButton(buttonSave);
-            unlockButton(buttonClear);
-            lockButton(buttonRecord);
-          }
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
+
+          // TODO cap bluetooth
+
+          showButton(buttonConnectBluetooth);
+          showButton(buttonRefreshBluetooth);
+          bluetoothDeviceList.show();
+          hideButton(buttonCloseBluetooth);
+          unlockButton(buttonSave);
+          unlockButton(buttonClear);
+          lockButton(buttonRecord);
         }
-      });
+      }
+    }
+    );
 
     bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
       .setPosition(0, 0)
@@ -219,10 +220,40 @@ class Track {
     getBluetoothDeviceList(bluetoothDeviceList);
 
 
+    // sliders showing the sensor values
+    controlP5.Group uiSliders = cp5.addGroup("uiSliders")
+      .hideBar()
+      .setPosition(guiX3, y);
+
+    checkboxGraph = cp5.addCheckBox("checkboxGraph")
+      .setPosition(190, 0)
+      .setSize(10, 100)
+      .setItemsPerRow(1)
+      .setSpacingColumn(0)
+      .setSpacingRow(5)
+      .setItemHeight(10) 
+      .setItemWidth(10)
+      .hideLabels()
+      .setGroup(uiSliders);
+
+    String[] sliders = { "pitch", "heading", "gyro X", "gyro y", "gyro z", "accel x", "accel y", "accel z" };  
+
+    for (int i = 0; i < sliders.length; i++) {
+      String item = sliders[i];      
+      cp5.addSlider(item)
+        .setPosition(0, i * 15)
+        .setSize(150, 10)
+        .setRange(rotationMin, rotationMax)
+        .setGroup(uiSliders);
+      checkboxGraph.addItem(item + "Checkbox", i).hideLabels();
+    }
+
+
+
     //recording and saving buttons
     controlP5.Group uiFile = cp5.addGroup("uiFile")
       .hideBar()
-      .setPosition(guiX4, y);
+      .setPosition(guiX5, y);
 
     buttonRecord = cp5.addButton("recordButton")
       .setPosition(0, 0)
@@ -308,12 +339,12 @@ class Track {
   void unlockButton(Button button) {
     button.unlock().setColorBackground(controlP5.ControlP5Constants.THEME_CP5BLUE.getBackground());
   }
-  
+
   void showButton(Button button) {
     unlockButton(button);
     button.show();
   }
-  
+
   void hideButton(Button button) {
     lockButton(button);
     button.hide();
