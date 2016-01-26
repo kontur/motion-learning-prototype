@@ -51,7 +51,14 @@ class Track {
   DropdownList bluetoothDeviceList;
   Button buttonConnectBluetooth;
   Button buttonCloseBluetooth;
+  Button buttonRefreshBluetooth;
+  Button buttonClear;
+  Button buttonRecord;
+  Button buttonStopRecord;
+  Button buttonSave;
+  Textfield inputFilename;
 
+  int buttonInactive = color(200);
 
   /* Bluetooth connection */
   char[] inBuffer = new char[12];
@@ -64,9 +71,9 @@ class Track {
 
   /*
  	 * @param int _x: Position offset on x axis
- 	 * @param int _y: Position offset on y axis
- 	 * @param String label: TODO Text label
- 	 */
+   	 * @param int _y: Position offset on y axis
+   	 * @param String label: TODO Text label
+   	 */
   Track(PApplet window, int _x, int _y, String _label) {
     x = _x;
     y = _y;
@@ -86,6 +93,11 @@ class Track {
     cube.setPosition(200.0, 130.0, 50.0);
 
     createUI(window);
+
+    lockButton(buttonConnectBluetooth);
+    lockButton(buttonSave);
+    lockButton(buttonClear);
+    lockButton(buttonRecord);
   }
 
 
@@ -97,23 +109,23 @@ class Track {
       .hideBar()
       .setPosition(guiX1, y);
 
-    cp5.addButton("connectBluetooth")
-      .setPosition(0, 0)
+    buttonConnectBluetooth = cp5.addButton("connectBluetooth")
+      .setPosition(0, 30)
       .setSize(100, 20)
       .setGroup(uiBluetooth)
+      .setLabel("Connect bluetooth")
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
-        if (theEvent.getAction()==ControlP5.ACTION_RELEASED) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
           String[] ports = Serial.list();
           //buttonConnectBluetooth.hide();
-          String port = "";      
+          String port = "";
 
           if (bluetoothDeviceList.getValue() != 0) {
             port = ports[int(bluetoothDeviceList.getValue()) - 1];
           }
           log("Attempting to open serial port: " + port);
           println(port);
-          println(parent);
 
           try {
             tryingToConnect = true;
@@ -122,81 +134,126 @@ class Track {
             // set a character that limits transactions and initiates reading the buffer
             char c = ';';
             connection.bufferUntil(byte(c));
-            //buttonConnectBluetooth.hide();
-            //buttonCloseBluetooth.show();
-            //mode = 2;
-            //sendBluetoothCommand("bluetoothConnected");
             print("Bluetooth connected to " + port);
             isConnected = true;
+            
+            hideButton(buttonConnectBluetooth);
+            hideButton(buttonRefreshBluetooth);
+            bluetoothDeviceList.hide();
+            
+            showButton(buttonCloseBluetooth);
+            lockButton(buttonSave);
+            lockButton(buttonClear);
+            unlockButton(buttonRecord);
+            
           } 
           catch (RuntimeException e) {
             print("Error opening serial port " + port + ": \n" + e.getMessage());
             //buttonConnectBluetooth.show();
             //buttonCloseBluetooth.hide();
             //tryingToConnect = false;
-            //mode = 0;
           }
         }
       }
     }
     );
 
-    cp5.addButton("closeBluetooth")
-      .setPosition(0, 0)
+    buttonCloseBluetooth = cp5.addButton("closeBluetooth")
+      .setPosition(0, 30)
       .setSize(100, 20)
       .setGroup(uiBluetooth)
-      .hide();
+      .hide()
+      .addCallback(new CallbackListener() {
+        public void controlEvent(CallbackEvent theEvent) {
+          if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
+            
+            // TODO cap bluetooth
+            
+            showButton(buttonConnectBluetooth);
+            showButton(buttonRefreshBluetooth);
+            bluetoothDeviceList.show();
+            hideButton(buttonCloseBluetooth);
+            unlockButton(buttonSave);
+            unlockButton(buttonClear);
+            lockButton(buttonRecord);
+          }
+        }
+      });
 
     bluetoothDeviceList = cp5.addDropdownList("btDeviceList")
-      .setPosition(0, 40)
-      .setSize(200, 200)
-      .setGroup(uiBluetooth);
+      .setPosition(0, 0)
+      .setSize(170, 200)
+      .setItemHeight(20)
+      .setBarHeight(20) 
+      .setLabel("Select bluetooth device")
+      .setGroup(uiBluetooth)
+      .close()
+      .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        // set the connect button active only if something sensible is 
+        // selected from the dropdown
+        if (theEvent.getAction() == ControlP5.ACTION_BROADCAST) {
+          if (bluetoothDeviceList.getValue() != 0) {
+            unlockButton(buttonConnectBluetooth);
+          } else {
+            lockButton(buttonConnectBluetooth);
+          }
+        }
+      }
+    }
+    );
 
-    getBluetoothDeviceList(bluetoothDeviceList);        
+    buttonRefreshBluetooth = cp5.addButton("refreshBluetooth")
+      .setPosition(180, 0)
+      .setSize(20, 20)
+      .setGroup(uiBluetooth)
+      .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          getBluetoothDeviceList(bluetoothDeviceList);
+        }
+      }
+    }
+    );
 
-    /*
-    DropdownList bluetoothDeviceList;
-     Button buttonConnectBluetooth;
-     Button buttonCloseBluetooth;
-     */
+    getBluetoothDeviceList(bluetoothDeviceList);
+
 
     //recording and saving buttons
     controlP5.Group uiFile = cp5.addGroup("uiFile")
       .hideBar()
       .setPosition(guiX4, y);
 
-    cp5.addButton("recordButton")
+    buttonRecord = cp5.addButton("recordButton")
       .setPosition(0, 0)
       .setSize(50, 50)
       .setGroup(uiFile);
 
-    cp5.addButton("stopRecordButton")
+    buttonStopRecord = cp5.addButton("stopRecordButton")
       .setPosition(0, 0)
       .setSize(50, 50)
       .hide()
       .setGroup(uiFile);
 
-    cp5.addButton("saveButton")
-      .setPosition(0, 50)
-      .setSize(200, 20)
-      .setGroup(uiFile);
+    buttonSave = cp5.addButton("saveButton")
+      .setPosition(60, 40)
+      .setSize(140, 20)
+      .setGroup(uiFile)
+      .setLabel("Save recording");
 
-    cp5.addButton("clearButton")
-      .setPosition(0, 100)
-      .setSize(200, 20)
-      .setGroup(uiFile);
+    buttonClear = cp5.addButton("clearButton")
+      .setPosition(120, 180)
+      .setSize(80, 20)
+      .setGroup(uiFile)
+      .setColorBackground(color(155))
+      .setLabel("Clear recording");
 
-    cp5.addTextfield("input")
-      .setPosition(0, 150)
-      .setSize(200, 20)
-      //.setFont(font)
+    inputFilename = cp5.addTextfield("input")
+      .setPosition(60, 0)
+      .setSize(140, 20)
       .setFocus(true)
-      .setColor(color(255, 0, 0))
-      .setGroup(uiFile);
-  }
-
-  void connectBluetooth() {
-    println("hello BT");
+      .setGroup(uiFile)
+      .setLabel("File name:");
   }
 
 
@@ -240,5 +297,25 @@ class Track {
     d.setFloat("pitch", data.getFloat("pitch"));
     d.setFloat("roll", data.getFloat("roll"));
     graph.addData(d);
+  }
+
+
+  // TODO maybe separate these to ui helpers
+  void lockButton(Button button) {
+    button.lock().setColorBackground(buttonInactive);
+  }
+
+  void unlockButton(Button button) {
+    button.unlock().setColorBackground(controlP5.ControlP5Constants.THEME_CP5BLUE.getBackground());
+  }
+  
+  void showButton(Button button) {
+    unlockButton(button);
+    button.show();
+  }
+  
+  void hideButton(Button button) {
+    lockButton(button);
+    button.hide();
   }
 }

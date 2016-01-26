@@ -1,12 +1,15 @@
 
 // helper to dump a list of available serial ports into the passed in DropdownList
 void getBluetoothDeviceList(DropdownList list) {
+  println("Fetching available bluetooth device");
   String[] ports = Serial.list();
+  list.clear();  
   list.addItem("---", 0);
   for (int p = 0; p < ports.length; p++) {
     String port = ports[p];
-    // filter out "tty" bluetooth ports
-    if (port.indexOf("tty") == -1) {
+    // filter out "tty" ports
+    // filter out ports with "usb"
+    if (port.indexOf("tty") == -1 && port.indexOf("usb") == -1) {
       // add whatever port found to the dropdown
       list.addItem(port, p  + 1);
     }
