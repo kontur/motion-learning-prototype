@@ -48,7 +48,7 @@ void setupUI() {
   // file I/O check textarea
   debugText = cp5.addTextarea("txt")
     .setPosition(guiLeft, guiBottom)
-    .setSize((winW), (winH - guiBottom))
+    .setSize(200, 200)
     .setFont(createFont("arial", 10))
     .setColor(0);
   //.setColorBackground(color(255, 100));

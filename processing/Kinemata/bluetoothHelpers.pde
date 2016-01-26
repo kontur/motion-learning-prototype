@@ -21,7 +21,7 @@ void connectBluetoothOLD(int val) {
   String[] ports = Serial.list();
   println(ports);
   //buttonConnectBluetooth.hide();
-  String port = defaultSerial;
+  String port = "";
 
   println(Serial.list());
 

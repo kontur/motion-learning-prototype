@@ -19,11 +19,6 @@ import javax.swing.*;
 
 import toxi.geom.*;
 
-
-//String defaultSerial = "/dev/tty.wristbandproto-SPP";
-//String defaultSerial = "/dev/tty.RNBT-C094-RNI-SPP";
-String defaultSerial = "/dev/cu.RNBT-BF5D-RNI-SPP";
-
 float rotationX = 0;
 float rotationY = 0;
 float rotationZ = 0;
@@ -32,9 +27,6 @@ float rotationMin = -90;
 float rotationMax = 90;
 
 
-// TODO fullscreen?
-int winW = 1024;
-int winH = 768;
 
 int guiLeft = 10;
 int guiCenter = 400;
@@ -100,7 +92,7 @@ int delayedCommandDelay = 0;
 
 void setup() {
   //size(winW, winH, OPENGL);
-  size(800, 600, OPENGL);
+  size(1280, 600, OPENGL);
   setupUI();
 
   pattern = new Track(this, guiLeft, guiTop, "Live movement");
@@ -170,25 +162,6 @@ void draw() {
     }
   }
 
-  // mode 3 is playback
-  else if (mode == 3) {
-    println("playbackIndex", playbackIndex);
-    if (pattern.hasRecording == true) {
-      pattern.playbackAt(playbackIndex);
-    }
-    if (match.hasRecording == true) {
-      match.playbackAt(playbackIndex);
-    }
-    playbackIndex++;
-    if (playbackIndex >= pattern.getRecordingSize() || (pattern.hasRecording == false && match.hasRecording == false)) {
-      if (connection != null) {
-        mode = 2;
-      } else {
-        mode = 0;
-      }
-      playbackIndex = 0;
-    }
-  }
 
 
 
@@ -207,7 +180,6 @@ void draw() {
     values.setFloat("gyroZ", gyro[2]);
     values.setInt("rgb", deviceRGB.getRGB());
 
-    pattern.record(values);
   }
 
   if (record && recordingWhat == "match") {
@@ -221,40 +193,8 @@ void draw() {
     values.setFloat("gyroY", gyro[1]);
     values.setFloat("gyroZ", gyro[2]);
     values.setInt("rgb", deviceRGB.getRGB());
-
-    // for all frames but the last, play the pattern at the same spot
-    // as the match is recording at the momemnt
-    if (match.record(values)) {
-      pattern.playbackAt(match.recordingIndex - 1);
-
-      /*
-            println("finishedComparison", finishedComparison);
-       if (finishedComparison) {            
-       try {
-       println("try to calc similarity");
-       log(similarity(1));
-       } catch (RuntimeException e) {
-       log (e.getMessage());
-       }
-       } else {
-       println("Similarity calculating still in progress, skip");
-       }
-       */
-    } else {
-      stopRecording();
-    }
   }
 
-  /*
-    if (record) {
-   if (recordingWhat == "match") {
-   }
-   
-   if (recordingWhat == "match" && recordingIndex >= recordingPattern.size()) {
-   stopRecording();
-   }
-   }
-   */
 
   if (connection != null) {
     tryingToConnect = false;
@@ -327,75 +267,6 @@ void onButtonDown() {
 }
 
 
-/**
- * Button handler for starting a recording
- */
-void recordPattern(int val) {
-  if (record == false) {
-    recordingWhat = "pattern";
-    record = true;
-    match.clearRecording();
-
-    sendBluetoothCommand("recordingStart");
-    delay(2000);
-
-    pattern.startRecording();
-    //playFeedback("processing.mov", (guiRight + 5), (guiTop + 20), true);
-  } else {
-    stopRecording();
-    //stopMovie();
-  }
-}
-
-
-/**
- * Button handler for starting a recording
- */
-void recordMatch(int val) {
-  if (record == false) {
-    // reset the comparison in progress flag
-    finishedComparison = true;
-
-    // record no longer than the pattern itself
-    int limit = pattern.getRecordingSize();
-
-    if (limit <= 0) {
-      log("Record a pattern first");
-      return;
-    }
-
-    recordingWhat = "match";
-    record = true;
-
-    sendBluetoothCommand("recordingStart");
-    delay(2000);
-
-
-    match.setRecordingLimit(limit);
-    match.startRecording();
-    //playFeedback("processing.mov", (guiRight + 5), (guiMiddle + 20), true);
-  } else {
-    stopRecording();
-    //stopMovie();
-  }
-}
-
-
-void stopRecording() {
-  log("Stop recording");
-  record = false;
-  if (recordingWhat == "pattern") {
-    pattern.stopRecording();
-    sendBluetoothCommand("recordingEnd");
-    delay(1000);
-  } else if (recordingWhat == "match") {
-    match.stopRecording();
-    sendBluetoothCommand("recordingEnd");
-    delay(1000);
-  }
-  recordingWhat = "";
-}
-
 
 
 /**
@@ -430,19 +301,16 @@ void checkClicks() {
     // don't care about single or double click at this point, because we just want
     // to stop the current recording process
     if (record == true) {
-      stopRecording();
       return;
     }
 
     switch (numClicks) {
     case 1:
       log("Single physical click");
-      recordMatch(1);
       break;
 
     case 2:
       log("Double physical click");
-      recordPattern(1);
       break;
 
     default: 
@@ -464,20 +332,6 @@ void playback(int val) {
 }
 
 
-/**
- * Helper for clearning recordings
- */
-void clearPattern(int val) {
-  pattern.clearRecording();
-}
-
-
-/**
- * Helper for clearning recordings
- */
-void clearMatch(int val) {
-  match.clearRecording();
-}
 
 
 /**
