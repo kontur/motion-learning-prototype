@@ -74,12 +74,13 @@ class Track {
 
   /* Bluetooth connection */
   char[] inBuffer = new char[12];
-  int inBufferIndex = 0;
   boolean isConnected = false;
   boolean tryingToConnect = false;
   int baudRate = 9600;
   Serial connection;
-  int lastTransmission = 0;
+  int lastTransmission = 0;  
+  float transmissionSpeed = 0;
+
 
 
   /*
@@ -94,7 +95,7 @@ class Track {
     parent = window;
 
     graphConfig = JSONObject.parse("{ " + 
-      "\"resolutionX\": 1.00, \"resolutionY\": 400.00, " +
+      "\"resolutionX\": 1.00, \"resolutionY\": 200.00, " +
       "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
       "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, "
       + "}");
@@ -321,26 +322,21 @@ class Track {
     cube.render();
 
     popMatrix();
+    
+    addToGraph();
   }
 
-
-  float transmissionSpeed = 0;
 
   void process(JSONObject obj) {
     //cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
     //cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
     //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
     
-    println("Millis since last transmission: ", millis() - lastTransmission);
-    
+    // debugging bluetooth send intervals
+    println("Millis since last transmission: ", millis() - lastTransmission);    
     float factor = 0.9;
-    // 120 * 0.5 + (1 - 100 * 0.5)
-    // 60 + (-50) / 0.5
-    // v1 = filter * v1 + (1 - filter) * total1;
-    transmissionSpeed = factor * transmissionSpeed + (1 - factor) * (millis() - lastTransmission); 
-    //lastTransmission * factor + (1 - transmissionSpeed * factor);
-    println("Average transmission time: ", transmissionSpeed);
-    
+    transmissionSpeed = factor * transmissionSpeed + (1 - factor) * (millis() - lastTransmission);
+    println("Average transmission time: ", transmissionSpeed);    
     lastTransmission = millis();
 
     roll = obj.getFloat("r");
@@ -360,6 +356,8 @@ class Track {
 
     cp5.getController("roll").setValue(roll);
     cp5.getController("pitch").setValue(pitch);
+    
+    cube.setRotation(roll, 0.0, pitch);
   }
 
 
@@ -369,10 +367,12 @@ class Track {
   }
 
 
-  void addToGraph(JSONObject data) {
+  void addToGraph() {
     JSONObject d = new JSONObject();
-    d.setFloat("pitch", data.getFloat("pitch"));
-    d.setFloat("roll", data.getFloat("roll"));
+    //d.setFloat("pitch", data.getFloat("p"));
+    //d.setFloat("roll", data.getFloat("r"));
+    d.setFloat("pitch", pitch);
+    d.setFloat("roll", roll);
     graph.addData(d);
   }
 

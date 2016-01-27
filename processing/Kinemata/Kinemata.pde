@@ -109,59 +109,7 @@ void draw() {
   image(logo, 10, 10);
 
   checkClicks();
-
   executeDelayedCommand();
-
-  // show spinny animation until connected
-  if (mode == 0) {        
-    idleAnimation();
-
-    JSONObject data = new JSONObject();
-
-    // as there is no sensor readings from bluetooth take the current
-    // animation positions
-    pitch = rotationZ;
-    roll = rotationX;
-
-    data.setFloat("pitch", pitch);
-    data.setFloat("roll", roll);
-
-    if (pattern.hasRecording == false) {
-      pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
-      pattern.addToGraph(data);
-    }
-
-    if (match.hasRecording == false) {
-      match.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
-      match.addToGraph(data);
-    }
-  }
-
-  // mode 1 is connecting
-  else if (mode == 1) {
-    log("Connecting...");
-  }
-
-  // mode 2 is bluetooth connected
-  else if (mode == 2) {
-
-    JSONObject data = new JSONObject();
-    data.setFloat("roll", roll);
-    data.setFloat("pitch", pitch);
-
-    if (pattern.hasRecording == false || (record == true && recordingWhat == "pattern")) {
-      pattern.addToGraph(data);
-      pattern.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
-    }
-
-    if (match.hasRecording == false || (record == true && recordingWhat == "match")) {
-      match.addToGraph(data);
-      match.updateCube(pitch, roll, deviceRGB.getRGB(), cubeGrey, cubeGrey);
-    }
-  }
-
-
-
 
   // handle recording separately
   // ***************************
@@ -199,10 +147,6 @@ void draw() {
 
   pattern.draw();
   match.draw();
-
-  //if (moviePlaying == true) {
-  //  drawMovie();
-  //}
 }
 
 
@@ -210,12 +154,10 @@ void draw() {
  * Catch all serial communication and parse what came in
  */
 void serialEvent(Serial connection) {
-  println("serialEvent");
   try {
     //read bluetooth when available
     while (connection.available() > 0) {
       String serialMessage = connection.readString();
-      println("serialMessage", serialMessage);
       
       // remove any beginning or ending whitespace and semicolons
       serialMessage = serialMessage.replaceAll("^[\\s]*", "").replaceAll(";[\\s]*$", "");
@@ -226,7 +168,7 @@ void serialEvent(Serial connection) {
       // to:
       // "{p13.7,r3.9,aX3.7,aY3.9,aZ5.6,gX6.5,gY17.6,gZ4.0};"
       // reduces send intervals from ~80ms to ~55ms
-      // the second string is a sample of what indeed incomming
+      // the second string is a sample of what indeed incomming, so remodel it to json
       serialMessage = serialMessage.replaceAll("([a-zA-Z]{1,2})", "\"$1\":");
       
       println("serialMessage", serialMessage);
@@ -242,7 +184,7 @@ void serialEvent(Serial connection) {
           match.process(obj);
         }
       } else {
-        println("received bluetooth string with ; ending, but not looking like JSON");
+        println("Error reading bluetooth: Received bluetooth string with ; ending, but not looking like JSON");
       }
     }
   }
@@ -300,19 +242,19 @@ void checkClicks() {
       return;
     }
 
-    switch (numClicks) {
-    case 1:
-      log("Single physical click");
-      break;
+    //switch (numClicks) {
+    //case 1:
+    //  log("Single physical click");
+    //  break;
 
-    case 2:
-      log("Double physical click");
-      break;
+    //case 2:
+    //  log("Double physical click");
+    //  break;
 
-    default: 
-      log("Several physical clicks " + numClicks);
-      break;
-    }
+    //default: 
+    //  log("Several physical clicks " + numClicks);
+    //  break;
+    //}
     numClicks = 0;
     lastClick = 0;
   }

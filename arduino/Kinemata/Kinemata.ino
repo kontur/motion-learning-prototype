@@ -474,6 +474,7 @@ void sendJson() {
   Serial.print("5 ");
   Serial.println(millis() - now);
   */
+  
   // TODO further limit decimals on sent data to reduce data footprint for each send
   String json = "{p" + String(pitch) +
                 ",r" + String(roll) +
