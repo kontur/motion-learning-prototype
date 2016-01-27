@@ -1,11 +1,11 @@
 /*
 Main entry point
-
-What this handles:
-- setting up window
-- adding and updating tracks
- */
  
+ What this handles:
+ - setting up window
+ - adding and updating tracks
+ */
+
 import processing.serial.*;
 import processing.opengl.*;
 
@@ -23,8 +23,6 @@ float rotationX = 0;
 float rotationY = 0;
 float rotationZ = 0;
 
-float rotationMin = -90;
-float rotationMax = 90;
 
 
 
@@ -53,7 +51,7 @@ Textarea debugText;
 DropdownList bluetoothDeviceList;
 int mode = 0;
 Button buttonConnectBluetooth;
-Button buttonCloseBluetooth;
+
 
 
 // playback and recording
@@ -98,7 +96,7 @@ void setup() {
   pattern = new Track(this, guiLeft, guiTop, "Live movement");
   match = new Track(this, guiLeft, guiMiddle, "Matching movement");
 
-  frameRate(24);
+  frameRate(60);
 
   logo = loadImage("kinemata.png");
 }
@@ -179,7 +177,6 @@ void draw() {
     values.setFloat("gyroY", gyro[1]);
     values.setFloat("gyroZ", gyro[2]);
     values.setInt("rgb", deviceRGB.getRGB());
-
   }
 
   if (record && recordingWhat == "match") {
@@ -212,44 +209,43 @@ void draw() {
 /**
  * Catch all serial communication and parse what came in
  */
-void serialEvent(Serial port) {
+void serialEvent(Serial connection) {
   println("serialEvent");
-  try {   
-    String serialMessage = connection.readString();
-    serialMessage = serialMessage.substring(0, serialMessage.length() - 1);
+  try {
+    //read bluetooth when available
+    while (connection.available() > 0) {
+      String serialMessage = connection.readString();
+      println("serialMessage", serialMessage);
+      
+      // remove any beginning or ending whitespace and semicolons
+      serialMessage = serialMessage.replaceAll("^[\\s]*", "").replaceAll(";[\\s]*$", "");
+      
+      // do some extra formatting to make the incoming string valid json;
+      // the abbreviation from:
+      // "{\"p\":13.7,\"r\":3.9,\"aX\":3.7,\"aY\":3.9,\"aZ\":5.6,\"gX\":6.5,\"gY\":17.6,\"gZ\":4.0};"
+      // to:
+      // "{p13.7,r3.9,aX3.7,aY3.9,aZ5.6,gX6.5,gY17.6,gZ4.0};"
+      // reduces send intervals from ~80ms to ~55ms
+      // the second string is a sample of what indeed incomming
+      serialMessage = serialMessage.replaceAll("([a-zA-Z]{1,2})", "\"$1\":");
+      
+      println("serialMessage", serialMessage);
 
-    println("serialEvent: ", serialMessage);
+      // make sure we are actually getting a full json-ish string
+      if (serialMessage.startsWith("{") && serialMessage.endsWith("}")) {
+        JSONObject obj = JSONObject.parse(serialMessage);
 
-    // if the serial string read contains a json opening { parse info from arduino
-    if (serialMessage.indexOf("{") > -1) {
-      JSONObject obj = JSONObject.parse(serialMessage);
-
-      if (serialMessage.indexOf("buttonDown") > -1) {
-        obj.getInt("buttonDown");
-        println("BUTTON DOWN");
-        onButtonDown();
+        // check which track the incoming serialEvent belongs to and forward the parsed data
+        if (connection == pattern.connection) {
+          pattern.process(obj);
+        } else if (connection == match.connection) {
+          match.process(obj);
+        }
       } else {
-        //cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
-        //cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
-        //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-
-        roll = obj.getFloat("roll");
-        pitch = obj.getFloat("pitch");
-
-        accel[0] = obj.getFloat("aX");
-        accel[1] = obj.getFloat("aY");
-        accel[2] = obj.getFloat("aZ");
-
-        gyro[0] = obj.getFloat("gX");
-        gyro[1] = obj.getFloat("gY");
-        gyro[2] = obj.getFloat("gZ");
-
-        String rgb = obj.getString("rgb");
-        String colorComponents[] = rgb.split(",");
-        deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
+        println("received bluetooth string with ; ending, but not looking like JSON");
       }
     }
-  } 
+  }
   catch (RuntimeException e) {
     log("Error reading bluetooth: " + e.getMessage());
   }
@@ -274,18 +270,18 @@ void onButtonDown() {
  */
 void idleAnimation () {
 
-//  rotationX += random(-2.0, 2.0);// * (abs(rotationX) / 100 + 0.25);
-//  rotationZ += random(-2.0, 2.0);// * (abs(rotationZ) / 100 + 0.25);
+  //  rotationX += random(-2.0, 2.0);// * (abs(rotationX) / 100 + 0.25);
+  //  rotationZ += random(-2.0, 2.0);// * (abs(rotationZ) / 100 + 0.25);
 
-//  if (rotationX > 90) rotationX = -90;
-//  if (rotationX < -90) rotationX = 90;
+  //  if (rotationX > 90) rotationX = -90;
+  //  if (rotationX < -90) rotationX = 90;
 
-//  if (rotationZ > 90) rotationZ = -90;
-//  if (rotationZ < -90) rotationZ = 90;
+  //  if (rotationZ > 90) rotationZ = -90;
+  //  if (rotationZ < -90) rotationZ = 90;
 
-//  cp5.getController("rotationX").setValue(rotationX);
-//  cp5.getController("rotationY").setValue(rotationY);
-//  cp5.getController("rotationZ").setValue(rotationZ);
+  //  cp5.getController("rotationX").setValue(rotationX);
+  //  cp5.getController("rotationY").setValue(rotationY);
+  //  cp5.getController("rotationZ").setValue(rotationZ);
 }
 
 

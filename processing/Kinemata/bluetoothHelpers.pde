@@ -58,18 +58,16 @@ void connectBluetoothOLD(int val) {
 
 // helper function to close the bluetooth connection
 void closeBluetooth(int val) {
-  mode = 0;
-  try {
-    sendBluetoothCommand("bluetoothDisconnected");
-    connection.stop();
-    connection = null;
-  }
-  catch (RuntimeException e) {
-    println("error: " + e.getMessage());
-    // TODO UI feedback
-  }
-  buttonConnectBluetooth.show();
-  buttonCloseBluetooth.hide();
+  //mode = 0;
+  //try {
+  //  sendBluetoothCommand("bluetoothDisconnected");
+  //  connection.stop();
+  //  connection = null;
+  //}
+  //catch (RuntimeException e) {
+  //  println("error: " + e.getMessage());
+  //  // TODO UI feedback
+  //}
 }
 
 

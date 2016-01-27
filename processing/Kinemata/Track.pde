@@ -35,6 +35,17 @@ class Track {
 
   String label = "";
 
+  /* sensor data tmp variables for last frame */
+  float[] accel = new float[3];
+  float[] gyro = new float[3];
+  float[] mag = new float[3];
+  float pitch = 0;
+  float roll = 0;
+  
+  // slider values min max
+  float rotationMin = -90.0;
+  float rotationMax = 90.0;
+
 
   /* UI */
   //positioning
@@ -68,6 +79,7 @@ class Track {
   boolean tryingToConnect = false;
   int baudRate = 9600;
   Serial connection;
+  int lastTransmission = 0;
 
 
   /*
@@ -133,6 +145,8 @@ class Track {
             connection = new Serial(parent, port, 9600);
 
             // set a character that limits transactions and initiates reading the buffer
+            // this prevents premature reads, when the frame loop of processing runs
+            // faster than the string is fully transmitted
             char c = ';';
             connection.bufferUntil(byte(c));
             print("Bluetooth connected to " + port);
@@ -167,7 +181,9 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
 
-          // TODO cap bluetooth
+          isConnected = false;
+          connection.stop();
+          connection = null;
 
           showButton(buttonConnectBluetooth);
           showButton(buttonRefreshBluetooth);
@@ -236,7 +252,7 @@ class Track {
       .hideLabels()
       .setGroup(uiSliders);
 
-    String[] sliders = { "pitch", "heading", "gyro X", "gyro y", "gyro z", "accel x", "accel y", "accel z" };  
+    String[] sliders = { "pitch", "roll", "heading", "gyro_x", "gyro_y", "gyro_z", "accel_x", "accel_y", "accel_z" };  
 
     for (int i = 0; i < sliders.length; i++) {
       String item = sliders[i];      
@@ -299,22 +315,52 @@ class Track {
     } else { 		
       stroke(190);
     } 		
-    rect(guiX2, 0, guiW, guiH);	
+    rect(guiX2, 0, guiW, guiH);
 
     graph.plot();
     cube.render();
 
     popMatrix();
-    while (isConnected && connection.available() > 0) {
-      //int inByte = connection.read();
-      //println(inByte);
-
-      String serialMessage = connection.readString();
-      serialMessage = serialMessage.substring(0, serialMessage.length() - 1);
-      println(serialMessage);
-    }
   }
 
+
+  float transmissionSpeed = 0;
+
+  void process(JSONObject obj) {
+    //cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
+    //cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
+    //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
+    
+    println("Millis since last transmission: ", millis() - lastTransmission);
+    
+    float factor = 0.9;
+    // 120 * 0.5 + (1 - 100 * 0.5)
+    // 60 + (-50) / 0.5
+    // v1 = filter * v1 + (1 - filter) * total1;
+    transmissionSpeed = factor * transmissionSpeed + (1 - factor) * (millis() - lastTransmission); 
+    //lastTransmission * factor + (1 - transmissionSpeed * factor);
+    println("Average transmission time: ", transmissionSpeed);
+    
+    lastTransmission = millis();
+
+    roll = obj.getFloat("r");
+    pitch = obj.getFloat("p");
+
+    accel[0] = obj.getFloat("aX");
+    accel[1] = obj.getFloat("aY");
+    accel[2] = obj.getFloat("aZ");
+
+    gyro[0] = obj.getFloat("gX");
+    gyro[1] = obj.getFloat("gY");
+    gyro[2] = obj.getFloat("gZ");
+
+    //          String rgb = obj.getString("rgb");
+    //          String colorComponents[] = rgb.split(",");
+    //deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
+
+    cp5.getController("roll").setValue(roll);
+    cp5.getController("pitch").setValue(pitch);
+  }
 
 
   void updateCube(float rotationX, float rotationZ, int cFront, int cSide, int cTop) {

@@ -53,7 +53,7 @@ int lastButton = 0;
 
 // desired fps rate between loops
 // NOTE that this is in reality MUCH lower, ~4 fps
-float fps = 12;
+float fps = 24;
 float msPerFrame = 1000 / fps; // ~83
 
 
@@ -383,12 +383,7 @@ void readSensors () {
   Serial.print("3 ");
   Serial.println(millis() - now);
   */
-  
-  if (mySerial) {
-    mySerial.write("a");
-  } else {
-    Serial.println("no serial");
-  }
+
 }
 
 void setVibration() {
@@ -479,14 +474,15 @@ void sendJson() {
   Serial.print("5 ");
   Serial.println(millis() - now);
   */
-  String json = "{ \"pitch\": " + String(pitch) +
-                ", \"roll\": " + String(roll) +
-                ", \"aX\": " + String(accel[0]) +
-                ", \"aY\": " + String(accel[1]) +
-                ", \"aZ\": " + String(accel[2]) +
-                ", \"gX\": " + String(gyro[0]) +
-                ", \"gY\": " + String(gyro[1]) +
-                ", \"gZ\": " + String(gyro[2]) +
+  // TODO further limit decimals on sent data to reduce data footprint for each send
+  String json = "{p" + String(pitch) +
+                ",r" + String(roll) +
+                ",aX" + String(accel[0]) +
+                ",aY" + String(accel[1]) +
+                ",aZ" + String(accel[2]) +
+                ",gX" + String(gyro[0]) +
+                ",gY" + String(gyro[1]) +
+                ",gZ" + String(gyro[2]) +
                 //", \"rgb\": \"" + rgbColor[0] + "," + rgbColor[1] + "," + rgbColor[2] + "\"" +
                 " };";
 
@@ -511,7 +507,7 @@ void sendJson() {
 
 // relay button pressed status to client
 void sendButtonDown() {
-  String json = "{ buttonDown: 1 }";
+  String json = "{ buttonDown: 1 };";
   // print to bluetooth connection and debug monitor
   setRGB(255, 0, 0);
   mySerial.println(json);
