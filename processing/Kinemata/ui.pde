@@ -10,6 +10,18 @@ void setupUI() {
 
   cp5 = new ControlP5(this);
 
+  radioMode = cp5.addRadioButton("radioMode")
+    .setPosition(1000, 100)
+    .setSize(40, 20)
+    .setColorForeground(color(120))
+    .setColorActive(color(255))
+    .setColorLabel(color(255))
+    .setItemsPerRow(1)
+    .addItem("Single recording", 0)
+    .addItem("Separate recordings", 1)
+    .setNoneSelectedAllowed(false)
+    .activate(0);
+
 
   // bluetooth connect UI
   //buttonConnectBluetooth = cp5.addButton("connectBluetooth")
@@ -93,5 +105,4 @@ void setupUI() {
   //  .setPosition(winW - 50, guiHeader + 40)
   //  .setSize(40, 15)
   //  .setColorBackground(color(190));
-    
 }

@@ -31,7 +31,6 @@ class Track {
   int y;
 
   boolean isRecording = false;
-  boolean hasRecording = false;
 
   String label = "";
 
@@ -41,7 +40,7 @@ class Track {
   float[] mag = new float[3];
   float pitch = 0;
   float roll = 0;
-  
+
   // slider values min max
   float rotationMin = -90.0;
   float rotationMax = 90.0;
@@ -88,11 +87,13 @@ class Track {
    	 * @param int _y: Position offset on y axis
    	 * @param String label: TODO Text label
    	 */
-  Track(PApplet window, int _x, int _y, String _label) {
+  Track(Kinemata window, int _x, int _y, String _label) {
     x = _x;
     y = _y;
     label = _label;
     parent = window;
+    
+    recording = new Recording();
 
     graphConfig = JSONObject.parse("{ " + 
       "\"resolutionX\": 1.00, \"resolutionY\": 200.00, " +
@@ -104,14 +105,10 @@ class Track {
     graph.setConfiguration(graphConfig);
 
     cube = new ColorCube(100.0, 50.0, 10.0, cubeGrey, cubeGrey, cubeGrey);
-    cube.setPosition(200.0, 130.0, 50.0);
+    cube.setPosition(350.0, 130.0, 50.0);
 
-    createUI(window);
-
-    lockButton(buttonConnectBluetooth);
-    lockButton(buttonSave);
-    lockButton(buttonClear);
-    lockButton(buttonRecord);
+    createUI(parent);
+    setButtonsDisconnected();
   }
 
 
@@ -152,15 +149,7 @@ class Track {
             connection.bufferUntil(byte(c));
             print("Bluetooth connected to " + port);
             isConnected = true;
-
-            hideButton(buttonConnectBluetooth);
-            hideButton(buttonRefreshBluetooth);
-            bluetoothDeviceList.hide();
-
-            showButton(buttonCloseBluetooth);
-            lockButton(buttonSave);
-            lockButton(buttonClear);
-            unlockButton(buttonRecord);
+            setButtonsConnected();
           } 
           catch (RuntimeException e) {
             print("Error opening serial port " + port + ": \n" + e.getMessage());
@@ -185,14 +174,7 @@ class Track {
           isConnected = false;
           connection.stop();
           connection = null;
-
-          showButton(buttonConnectBluetooth);
-          showButton(buttonRefreshBluetooth);
-          bluetoothDeviceList.show();
-          hideButton(buttonCloseBluetooth);
-          unlockButton(buttonSave);
-          unlockButton(buttonClear);
-          lockButton(buttonRecord);
+          setButtonsDisconnected();
         }
       }
     }
@@ -275,26 +257,59 @@ class Track {
     buttonRecord = cp5.addButton("recordButton")
       .setPosition(0, 0)
       .setSize(50, 50)
-      .setGroup(uiFile);
+      .setGroup(uiFile)
+      .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          println("record!");
+          //parent.startRecording();
+        }
+      }
+      });
 
     buttonStopRecord = cp5.addButton("stopRecordButton")
       .setPosition(0, 0)
       .setSize(50, 50)
       .hide()
-      .setGroup(uiFile);
+      .setGroup(uiFile)
+      .setLabel("Stop recording")
+      .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          println("stop recording!");
+          //parent.stopRecording();
+        }
+      }
+      });;
 
     buttonSave = cp5.addButton("saveButton")
       .setPosition(60, 40)
       .setSize(140, 20)
       .setGroup(uiFile)
-      .setLabel("Save recording");
+      .setLabel("Save recording")
+      .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          println("save!");
+          //parent.saveRecording();
+        }
+      }
+      });
 
     buttonClear = cp5.addButton("clearButton")
       .setPosition(120, 180)
       .setSize(80, 20)
       .setGroup(uiFile)
       .setColorBackground(color(155))
-      .setLabel("Clear recording");
+      .setLabel("Clear recording")
+      .addCallback(new CallbackListener() {
+      public void controlEvent(CallbackEvent theEvent) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          println("clear!");
+          recording.clear();
+        }
+      }
+      });
 
     inputFilename = cp5.addTextfield("input")
       .setPosition(60, 0)
@@ -322,8 +337,19 @@ class Track {
     cube.render();
 
     popMatrix();
-    
-    addToGraph();
+
+    if (isConnected) {
+      JSONObject d = new JSONObject();
+      //d.setFloat("pitch", data.getFloat("p"));
+      //d.setFloat("roll", data.getFloat("r"));
+      d.setFloat("pitch", pitch);
+      d.setFloat("roll", roll);
+      graph.addData(d);
+      
+      if (isRecording) {
+        recording.addData(d);
+      }
+    }
   }
 
 
@@ -331,7 +357,7 @@ class Track {
     //cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
     //cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
     //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-    
+
     // debugging bluetooth send intervals
     println("Millis since last transmission: ", millis() - lastTransmission);    
     float factor = 0.9;
@@ -356,7 +382,7 @@ class Track {
 
     cp5.getController("roll").setValue(roll);
     cp5.getController("pitch").setValue(pitch);
-    
+
     cube.setRotation(roll, 0.0, pitch);
   }
 
@@ -364,16 +390,6 @@ class Track {
   void updateCube(float rotationX, float rotationZ, int cFront, int cSide, int cTop) {
     cube.setRotation(rotationX, 0.0, rotationZ);
     cube.applyColor(cFront, cSide, cTop);
-  }
-
-
-  void addToGraph() {
-    JSONObject d = new JSONObject();
-    //d.setFloat("pitch", data.getFloat("p"));
-    //d.setFloat("roll", data.getFloat("r"));
-    d.setFloat("pitch", pitch);
-    d.setFloat("roll", roll);
-    graph.addData(d);
   }
 
 
@@ -395,4 +411,75 @@ class Track {
     lockButton(button);
     button.hide();
   }
+
+
+  void setButtonsConnected() {
+    hideButton(buttonConnectBluetooth);
+    hideButton(buttonRefreshBluetooth);
+    bluetoothDeviceList.hide();
+
+    showButton(buttonCloseBluetooth);
+    lockButton(buttonSave);
+    lockButton(buttonClear);
+    unlockButton(buttonRecord);
+  }
+
+  void setButtonsDisconnected() {
+    showButton(buttonConnectBluetooth);
+    lockButton(buttonConnectBluetooth);
+    showButton(buttonRefreshBluetooth);
+    bluetoothDeviceList.show();
+    hideButton(buttonCloseBluetooth);
+    unlockButton(buttonSave);
+    unlockButton(buttonClear);
+    lockButton(buttonRecord);
+  }
+
+  void enableRecordingUI() {
+    showButton(buttonSave);
+    showButton(buttonClear);
+    showButton(buttonRecord);
+    inputFilename.unlock();
+    inputFilename.show();
+    
+    if (isConnected) {
+      setButtonsConnected();
+    } else {
+      setButtonsDisconnected();
+    }
+    
+    if (recording.getSize() > 0) {
+      unlockButton(buttonSave);
+      unlockButton(buttonClear);
+    } else {
+      lockButton(buttonSave);
+      lockButton(buttonClear);      
+    }
+  }
+
+  void disableRecordingUI() {
+    hideButton(buttonSave);
+    hideButton(buttonClear);
+    hideButton(buttonRecord);
+    inputFilename.lock();
+    inputFilename.hide();
+  }
+  
+  
+  void startRecording() {
+    if (isConnected) {
+      recording.clear();
+      isRecording = true;      
+    }
+  }
+  
+  void stopRecording() {
+    isRecording = false;
+    if (recording.getSize() > 0) {
+      unlockButton(buttonSave);
+      unlockButton(buttonClear);
+    }
+  }
+  
+  
 }

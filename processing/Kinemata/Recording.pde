@@ -11,7 +11,7 @@ class Recording {
   /**
    * add a new data set point
    */
-  void addValue(JSONObject values) {
+  void addData(JSONObject values) {
     //if (isRecording == true && (recordingLimit == 0 || index < recordingLimit)) {
     //println("record", index, values);
     values.setInt("id", index);
@@ -27,7 +27,7 @@ class Recording {
   /**
    * add a whole set of data points
    */
-  void addValueArray(JSONArray dataArray) {
+  void addDataArray(JSONArray dataArray) {
     // add all items to data
     for (int i = 0; i < dataArray.size(); i++) {
       data.append(dataArray.getJSONObject(i));
@@ -57,6 +57,10 @@ class Recording {
   void getJson() {
   }
   void getCsv() {
+  }
+  
+  void saveData(String fileName) {
+    println("Recording.saveData()", fileName);
   }
 
 }

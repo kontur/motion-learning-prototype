@@ -19,6 +19,7 @@ import javax.swing.*;
 
 import toxi.geom.*;
 
+
 float rotationX = 0;
 float rotationY = 0;
 float rotationZ = 0;
@@ -51,6 +52,7 @@ Textarea debugText;
 DropdownList bluetoothDeviceList;
 int mode = 0;
 Button buttonConnectBluetooth;
+RadioButton radioMode;
 
 
 
@@ -58,6 +60,7 @@ Button buttonConnectBluetooth;
 String recordingWhat = "";
 boolean record = false;
 boolean play = false;
+int recordingMode = 0; // 0 = single, 1 = separate
 
 int playbackIndex = 0;
 
@@ -79,8 +82,8 @@ boolean finishedComparison = true;
 PImage logo;
 
 
-Track pattern;
-Track match;
+Track track1;
+Track track2;
 
 
 // helpers for triggering a delay bluetooth command with millis() instead of delay()
@@ -88,13 +91,20 @@ String delayedCommand = ""; // empty string or/and delayedCommandStart == 0 skip
 int delayedCommandStart = 0;
 int delayedCommandDelay = 0;
 
+
+void Kinemata() {
+}
+
 void setup() {
   //size(winW, winH, OPENGL);
   size(1280, 600, OPENGL);
   setupUI();
 
-  pattern = new Track(this, guiLeft, guiTop, "Live movement");
-  match = new Track(this, guiLeft, guiMiddle, "Matching movement");
+  track1 = new Track(this, guiLeft, guiTop, "Live movement");
+  track2 = new Track(this, guiLeft, guiMiddle, "track2ing movement");
+
+  // set to single recording by default
+  radioMode(0);
 
   frameRate(60);
 
@@ -114,7 +124,7 @@ void draw() {
   // handle recording separately
   // ***************************
 
-  if (record && recordingWhat == "pattern") {
+  if (record && recordingWhat == "track1") {
     JSONObject values = new JSONObject();
     values.setFloat("roll", roll);
     values.setFloat("pitch", pitch);
@@ -127,7 +137,7 @@ void draw() {
     values.setInt("rgb", deviceRGB.getRGB());
   }
 
-  if (record && recordingWhat == "match") {
+  if (record && recordingWhat == "track2") {
     JSONObject values = new JSONObject();
     values.setFloat("roll", roll);
     values.setFloat("pitch", pitch);
@@ -145,8 +155,8 @@ void draw() {
     tryingToConnect = false;
   }
 
-  pattern.draw();
-  match.draw();
+  track1.draw();
+  track2.draw();
 }
 
 
@@ -158,10 +168,10 @@ void serialEvent(Serial connection) {
     //read bluetooth when available
     while (connection.available() > 0) {
       String serialMessage = connection.readString();
-      
+
       // remove any beginning or ending whitespace and semicolons
       serialMessage = serialMessage.replaceAll("^[\\s]*", "").replaceAll(";[\\s]*$", "");
-      
+
       // do some extra formatting to make the incoming string valid json;
       // the abbreviation from:
       // "{\"p\":13.7,\"r\":3.9,\"aX\":3.7,\"aY\":3.9,\"aZ\":5.6,\"gX\":6.5,\"gY\":17.6,\"gZ\":4.0};"
@@ -170,7 +180,7 @@ void serialEvent(Serial connection) {
       // reduces send intervals from ~80ms to ~55ms
       // the second string is a sample of what indeed incomming, so remodel it to json
       serialMessage = serialMessage.replaceAll("([a-zA-Z]{1,2})", "\"$1\":");
-      
+
       println("serialMessage", serialMessage);
 
       // make sure we are actually getting a full json-ish string
@@ -178,10 +188,10 @@ void serialEvent(Serial connection) {
         JSONObject obj = JSONObject.parse(serialMessage);
 
         // check which track the incoming serialEvent belongs to and forward the parsed data
-        if (connection == pattern.connection) {
-          pattern.process(obj);
-        } else if (connection == match.connection) {
-          match.process(obj);
+        if (connection == track1.connection) {
+          track1.process(obj);
+        } else if (connection == track2.connection) {
+          track2.process(obj);
         }
       } else {
         println("Error reading bluetooth: Received bluetooth string with ; ending, but not looking like JSON");
@@ -276,6 +286,7 @@ void playback(int val) {
  * Helpers for the three different outcomes that also double as button even
  * handlers for the three helper buttons in the demo
  */
+
 void pos(int val) {
   registerDelayedCommand("feedbackPerfect", 2000);
   //playFeedback("perfect.mov", (guiRight + 5), (guiTop + 20), false);
@@ -318,6 +329,44 @@ void executeDelayedCommand() {
       delayedCommandStart = 0;
     }
   }
+}
+
+
+void radioMode(int mode) {
+  if (mode == 0) {
+    println("disable second track recording");
+    track1.enableRecordingUI();
+    track2.disableRecordingUI();
+  } else {
+    println("enable second track recording");
+    track1.enableRecordingUI();
+    track2.enableRecordingUI();
+  }
+
+  recordingMode = mode;
+}
+
+
+void startRecording() {
+  track1.startRecording();
+  track2.startRecording();
+}
+
+void stopRecording() {
+  track1.stopRecording();
+  track2.stopRecording();
+}
+
+void saveRecording() {
+  if (mode == 0) {
+    track1.recording.saveData("track1");
+    track2.recording.saveData("track2");
+  } else {
+    //println(caller);
+  }
+}
+
+void resetRecording() {
 }
 
 
