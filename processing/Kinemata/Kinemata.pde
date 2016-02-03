@@ -92,9 +92,6 @@ int delayedCommandStart = 0;
 int delayedCommandDelay = 0;
 
 
-void Kinemata() {
-}
-
 void setup() {
   //size(winW, winH, OPENGL);
   size(1280, 600, OPENGL);
@@ -348,16 +345,19 @@ void radioMode(int mode) {
 
 
 void startRecording() {
+  println("Kinemata.startRecording()");
   track1.startRecording();
   track2.startRecording();
 }
 
 void stopRecording() {
+  println("Kinemata.stopRecording()");
   track1.stopRecording();
   track2.stopRecording();
 }
 
 void saveRecording() {
+  println("Kinemata.saveRecording()");
   if (mode == 0) {
     track1.recording.saveData("track1");
     track2.recording.saveData("track2");
@@ -366,7 +366,8 @@ void saveRecording() {
   }
 }
 
-void resetRecording() {
+void clearRecording() {
+  println("Kinemata.clearRecording()");
 }
 
 

@@ -87,12 +87,12 @@ class Track {
    	 * @param int _y: Position offset on y axis
    	 * @param String label: TODO Text label
    	 */
-  Track(Kinemata window, int _x, int _y, String _label) {
+  Track(PApplet window, int _x, int _y, String _label) {
     x = _x;
     y = _y;
     label = _label;
     parent = window;
-    
+
     recording = new Recording();
 
     graphConfig = JSONObject.parse("{ " + 
@@ -262,10 +262,11 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
           println("record!");
-          //parent.startRecording();
+          parent.method("startRecording");
         }
       }
-      });
+    }
+    );
 
     buttonStopRecord = cp5.addButton("stopRecordButton")
       .setPosition(0, 0)
@@ -277,10 +278,12 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
           println("stop recording!");
-          //parent.stopRecording();
+          parent.method("stopRecording");
         }
       }
-      });;
+    }
+    );
+    ;
 
     buttonSave = cp5.addButton("saveButton")
       .setPosition(60, 40)
@@ -291,10 +294,11 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
           println("save!");
-          //parent.saveRecording();
+          parent.method("saveRecording");
         }
       }
-      });
+    }
+    );
 
     buttonClear = cp5.addButton("clearButton")
       .setPosition(120, 180)
@@ -306,10 +310,11 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
           println("clear!");
-          recording.clear();
+          parent.method("clearRecording");
         }
       }
-      });
+    }
+    );
 
     inputFilename = cp5.addTextfield("input")
       .setPosition(60, 0)
@@ -345,7 +350,7 @@ class Track {
       d.setFloat("pitch", pitch);
       d.setFloat("roll", roll);
       graph.addData(d);
-      
+
       if (isRecording) {
         recording.addData(d);
       }
@@ -359,10 +364,10 @@ class Track {
     //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
 
     // debugging bluetooth send intervals
-    println("Millis since last transmission: ", millis() - lastTransmission);    
+    //println("Millis since last transmission: ", millis() - lastTransmission);    
     float factor = 0.9;
     transmissionSpeed = factor * transmissionSpeed + (1 - factor) * (millis() - lastTransmission);
-    println("Average transmission time: ", transmissionSpeed);    
+    //println("Average transmission time: ", transmissionSpeed);    
     lastTransmission = millis();
 
     roll = obj.getFloat("r");
@@ -441,19 +446,19 @@ class Track {
     showButton(buttonRecord);
     inputFilename.unlock();
     inputFilename.show();
-    
+
     if (isConnected) {
       setButtonsConnected();
     } else {
       setButtonsDisconnected();
     }
-    
+
     if (recording.getSize() > 0) {
       unlockButton(buttonSave);
       unlockButton(buttonClear);
     } else {
       lockButton(buttonSave);
-      lockButton(buttonClear);      
+      lockButton(buttonClear);
     }
   }
 
@@ -464,22 +469,28 @@ class Track {
     inputFilename.lock();
     inputFilename.hide();
   }
-  
-  
+
+
   void startRecording() {
     if (isConnected) {
       recording.clear();
-      isRecording = true;      
+      isRecording = true;
+
+      showButton(buttonStopRecord);
+      unlockButton(buttonStopRecord);
+      hideButton(buttonRecord);
     }
   }
-  
+
   void stopRecording() {
     isRecording = false;
     if (recording.getSize() > 0) {
       unlockButton(buttonSave);
       unlockButton(buttonClear);
     }
+
+    showButton(buttonRecord);
+    unlockButton(buttonRecord);
+    hideButton(buttonStopRecord);
   }
-  
-  
 }
