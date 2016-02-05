@@ -483,6 +483,7 @@ class Track {
   }
 
   void stopRecording() {
+    println("recording size", recording.getSize());
     isRecording = false;
     if (recording.getSize() > 0) {
       unlockButton(buttonSave);
@@ -492,5 +493,24 @@ class Track {
     showButton(buttonRecord);
     unlockButton(buttonRecord);
     hideButton(buttonStopRecord);
+  }
+  
+  
+  void saveData(String filename) {
+    
+    String[] headers = { 
+      "roll",
+      "pitch",
+  
+      "aX",
+      "aY",
+      "aZ",
+  
+      "gX",
+      "gY",
+      "gZ"
+    };
+    
+    recording.saveData(filename, headers);    
   }
 }

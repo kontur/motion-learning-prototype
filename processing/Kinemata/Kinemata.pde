@@ -178,7 +178,7 @@ void serialEvent(Serial connection) {
       // the second string is a sample of what indeed incomming, so remodel it to json
       serialMessage = serialMessage.replaceAll("([a-zA-Z]{1,2})", "\"$1\":");
 
-      println("serialMessage", serialMessage);
+      //println("serialMessage", serialMessage);
 
       // make sure we are actually getting a full json-ish string
       if (serialMessage.startsWith("{") && serialMessage.endsWith("}")) {
@@ -359,8 +359,8 @@ void stopRecording() {
 void saveRecording() {
   println("Kinemata.saveRecording()");
   if (mode == 0) {
-    track1.recording.saveData("track1");
-    track2.recording.saveData("track2");
+    track1.saveData("track1");
+    track2.saveData("track2");
   } else {
     //println(caller);
   }

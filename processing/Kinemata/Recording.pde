@@ -1,3 +1,7 @@
+
+import java.util.Iterator;
+import java.io.FileNotFoundException;
+
 class Recording {
 
   JSONArray data = new JSONArray();
@@ -54,13 +58,34 @@ class Recording {
 
   void reset() {
   }
-  void getJson() {
-  }
-  void getCsv() {
-  }
-  
-  void saveData(String fileName) {
+
+  void saveData(String fileName, String[] headers) {
     println("Recording.saveData()", fileName);
+    int dataLength = data.size();
+    if (dataLength > 0) {
+      PrintWriter file = createWriter("recordings/" + fileName + ".csv");
+      
+      for (int h = 0; h < headers.length; h++) {
+        file.print(headers[h] + ",");        
+      }
+      file.println("");
+
+      for (int i = 0; i < dataLength; i++) {
+        JSONObject row = data.getJSONObject(i);
+        writeRow(file, row);
+      }
+      file.flush();
+      file.close();
+    }
   }
 
+  void writeRow(PrintWriter file, JSONObject row) {
+    for (Object key : row.keys()) {
+      //based on you key types
+      String keyStr = (String)key;
+      Float keyVal = row.getFloat(keyStr);
+      file.print(keyVal + ",");
+    }
+    file.println("");
+  }
 }
