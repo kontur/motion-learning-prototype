@@ -21,6 +21,8 @@ class Grapher {
 
   JSONObject config;
 
+  ArrayList<String> shown = new ArrayList<String>();
+
 
   Grapher(float _x, float _y, float _w, float _h) {
     setPosition(_x, _y);
@@ -134,23 +136,27 @@ class Grapher {
         Iterator it = dataAtPoint.keyIterator();
         while (it.hasNext()) {
           Object k = it.next();
-          try {
-            stroke(config.getJSONObject(k.toString()).getInt("color"));
-          } 
-          catch (Exception e) {
-            stroke(125);
+
+          if (shown.indexOf(k.toString()) > -1) { 
+            try {
+              stroke(config.getJSONObject(k.toString()).getInt("color"));
+            } 
+            catch (Exception e) {
+              stroke(125);
+            }
+            float _y = y + h / 2 - dataAtPoint.getFloat(k.toString()) / resY / 2 * 100;
+            float _x = x + drawingStart + point_x;
+            point(_x, _y);
+          } else {
+            println(k.toString(), " hidden");
           }
-          float _y = y + h / 2 - dataAtPoint.getFloat(k.toString()) / resY / 2 * 100;
-          float _x = x + drawingStart + point_x;
-          point(_x, _y);
         }
       }
     }
   }
 
-  /**
-   * TODO export graph as image file
-   */
-  void export() {
+
+  void showGraphsFor(ArrayList<String> visible) {
+    shown = visible;    
   }
 }

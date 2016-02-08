@@ -45,6 +45,10 @@ class Track {
   float rotationMin = -90.0;
   float rotationMax = 90.0;
 
+  // don't change, as these are also the strings to access the respective values in grapher
+  String[] sliders = { "pitch", "roll", "heading", "gyro_x", "gyro_y", "gyro_z", "accel_x", "accel_y", "accel_z" };
+  ArrayList<String> checkboxes = new ArrayList<String>();
+
 
   /* UI */
   //positioning
@@ -98,7 +102,15 @@ class Track {
     graphConfig = JSONObject.parse("{ " + 
       "\"resolutionX\": 1.00, \"resolutionY\": 200.00, " +
       "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
-      "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, "
+      "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, " +
+
+      "\"mag_x\": { \"color\": " + color(100, 250, 0) + "}, " +
+      "\"mag_y\": { \"color\": " + color(250, 250, 0) + "}, " +
+      "\"mag_z\": { \"color\": " + color(100, 0, 0) + "}, " +
+
+      "\"accel_x\": { \"color\": " + color(255, 255, 0) + "}, " +
+      "\"accel_y\": { \"color\": " + color(255, 0, 255) + "}, " +
+      "\"accel_z\": { \"color\": " + color(255, 150, 0) + "}, "
       + "}");
 
     graph = new Grapher(guiX4, 0, guiW * 2, guiH);
@@ -233,9 +245,7 @@ class Track {
       .setItemHeight(10) 
       .setItemWidth(10)
       .hideLabels()
-      .setGroup(uiSliders);
-
-    String[] sliders = { "pitch", "roll", "heading", "gyro_x", "gyro_y", "gyro_z", "accel_x", "accel_y", "accel_z" };  
+      .setGroup(uiSliders);  
 
     for (int i = 0; i < sliders.length; i++) {
       String item = sliders[i];      
@@ -244,7 +254,8 @@ class Track {
         .setSize(150, 10)
         .setRange(rotationMin, rotationMax)
         .setGroup(uiSliders);
-      checkboxGraph.addItem(item + "Checkbox", i).hideLabels();
+      checkboxGraph.addItem(item + "Checkbox", i).toggle(i).hideLabels();
+      checkboxes[i] = 1;
     }
 
 
@@ -345,11 +356,20 @@ class Track {
 
     if (isConnected) {
       JSONObject d = new JSONObject();
-      //d.setFloat("pitch", data.getFloat("p"));
-      //d.setFloat("roll", data.getFloat("r"));
       d.setFloat("pitch", pitch);
       d.setFloat("roll", roll);
+
+      d.setFloat("gyro_x", gyro[0]);
+      d.setFloat("gyro_y", gyro[1]);
+      d.setFloat("gyro_z", gyro[2]);
+
+      d.setFloat("accel_x", accel[0]);
+      d.setFloat("accel_y", accel[1]);
+      d.setFloat("accel_z", accel[2]);
+      
       graph.addData(d);
+      
+      graph.showGraphsFor(checkboxes);
 
       if (isRecording) {
         recording.addData(d);
@@ -387,6 +407,14 @@ class Track {
 
     cp5.getController("roll").setValue(roll);
     cp5.getController("pitch").setValue(pitch);
+
+    cp5.getController("gyro_x").setValue(gyro[0]);
+    cp5.getController("gyro_y").setValue(gyro[1]);
+    cp5.getController("gyro_z").setValue(gyro[2]);
+
+    cp5.getController("accel_x").setValue(accel[0]);
+    cp5.getController("accel_y").setValue(accel[1]);
+    cp5.getController("accel_z").setValue(accel[2]);
 
     cube.setRotation(roll, 0.0, pitch);
   }
@@ -494,23 +522,36 @@ class Track {
     unlockButton(buttonRecord);
     hideButton(buttonStopRecord);
   }
-  
-  
+
+
   void saveData(String filename) {
-    
+
     String[] headers = { 
-      "roll",
-      "pitch",
-  
-      "aX",
-      "aY",
-      "aZ",
-  
-      "gX",
-      "gY",
+      "roll", 
+      "pitch", 
+
+      "aX", 
+      "aY", 
+      "aZ", 
+
+      "gX", 
+      "gY", 
       "gZ"
     };
-    
-    recording.saveData(filename, headers);    
+
+    recording.saveData(filename, headers);
+  }
+
+  void checkboxEvent() {
+    float[] a = checkboxGraph.getArrayValue();        
+    int col = 0;
+    checkboxes = new ArrayList<String>();
+    for (int i=0; i<a.length; i++) {
+      int n = (int)a[i];
+      if (n == 1) {
+        checkboxes.add(sliders[i]);
+      }
+    }
+    println("checkboxes: ", checkboxes);
   }
 }
