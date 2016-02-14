@@ -157,6 +157,6 @@ class Grapher {
 
 
   void showGraphsFor(ArrayList<String> visible) {
-    shown = visible;    
+    shown = visible;
   }
 }

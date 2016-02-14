@@ -255,8 +255,9 @@ class Track {
         .setRange(rotationMin, rotationMax)
         .setGroup(uiSliders);
       checkboxGraph.addItem(item + "Checkbox", i).toggle(i).hideLabels();
-      checkboxes[i] = 1;
+      checkboxes.add(sliders[i]);
     }
+
 
 
 
@@ -294,7 +295,7 @@ class Track {
       }
     }
     );
-    ;
+
 
     buttonSave = cp5.addButton("saveButton")
       .setPosition(60, 40)
@@ -366,9 +367,9 @@ class Track {
       d.setFloat("accel_x", accel[0]);
       d.setFloat("accel_y", accel[1]);
       d.setFloat("accel_z", accel[2]);
-      
+
       graph.addData(d);
-      
+
       graph.showGraphsFor(checkboxes);
 
       if (isRecording) {
