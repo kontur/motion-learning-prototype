@@ -74,7 +74,7 @@ class Track {
   Textfield inputFilename;
   CheckBox checkboxGraph;
   Textlabel labelTime;
-  
+
 
   int buttonInactive = color(200);
 
@@ -139,7 +139,7 @@ class Track {
       .setPosition(0, 30)
       .setGroup(uiBluetooth)
       .hide();
-      
+
     buttonConnectBluetooth = cp5.addButton("connectBluetooth")
       .setPosition(0, 30)
       .setSize(100, 20)
@@ -170,7 +170,7 @@ class Track {
             print("Bluetooth connected to " + port);
             isConnected = true;
             setButtonsConnected();
-            
+
             labelBluetooth.setText("Connected to " + port);
           } 
           catch (RuntimeException e) {
@@ -354,7 +354,7 @@ class Track {
       .setFocus(true)
       .setGroup(uiFile)
       .setLabel("File name:");
-      
+
     labelTime = cp5.addTextlabel("labelTime")
       .setPosition(0, 60)
       .setGroup(uiFile)
@@ -494,7 +494,7 @@ class Track {
     showButton(buttonRefreshBluetooth);
     bluetoothDeviceList.show();
     labelBluetooth.hide();
-    
+
     hideButton(buttonCloseBluetooth);
     unlockButton(buttonSave);
     unlockButton(buttonClear);
@@ -549,15 +549,18 @@ class Track {
     if (recording.getSize() > 0) {
       unlockButton(buttonSave);
       unlockButton(buttonClear);
+      buttonSave.setColorBackground(color(200, 50, 20));
     }
 
     showButton(buttonRecord);
     unlockButton(buttonRecord);
     hideButton(buttonStopRecord);
   }
-  
+
   void clearRecording() {
-    labelTime.hide();    
+    labelTime.hide();
+    recording.clear();
+    lockButton(buttonSave);
   }
 
 
@@ -577,6 +580,7 @@ class Track {
     };
 
     recording.saveData(filename, headers);
+    buttonSave.setColorBackground(controlP5.ControlP5Constants.THEME_CP5BLUE.getBackground());
   }
 
   void checkboxEvent() {

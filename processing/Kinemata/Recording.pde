@@ -9,6 +9,7 @@ class Recording {
   int recordingLimit = -1;
   int duration = -1;
   int recordingStart = -1;
+  boolean saved = false;
 
   Recording() {
   }
@@ -62,6 +63,9 @@ class Recording {
   void clear() {
     data = new JSONArray();
     index = 0;
+    saved = false;
+    duration = -1;
+    recordingStart = -1;
   }
 
 
@@ -70,9 +74,6 @@ class Recording {
    */
   int getSize() {
     return data.size();
-  }
-
-  void reset() {
   }
 
   void saveData(String fileName, String[] headers) {
@@ -93,6 +94,7 @@ class Recording {
       file.flush();
       file.close();
     }
+    saved = true;
   }
 
   void writeRow(PrintWriter file, JSONObject row) {

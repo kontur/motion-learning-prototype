@@ -24,9 +24,9 @@ class Grapher {
   ArrayList<String> shown = new ArrayList<String>();
 
   // highlight the recording frame?
-  // -1 => no
-  // > -1 => int color
-  int highlight = -1;
+  // 0 => no
+  // != 0 => use highlight
+  int highlight = 0;
 
 
   Grapher(float _x, float _y, float _w, float _h) {
@@ -109,7 +109,7 @@ class Grapher {
 
     fill(225);
     //noStroke();
-    if (highlight > -1) {
+    if (highlight != 0) {
       stroke(highlight);
     } else {
       stroke(190);
@@ -175,6 +175,6 @@ class Grapher {
   }
 
   void setNotRecording() {
-    highlight = -1;
+    highlight = 0;
   }
 }
