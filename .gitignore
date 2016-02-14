@@ -7,7 +7,6 @@ processing/Wristband/application.*
 processing/VisualizationTest/build-tmp/
 processing/Kinemata/build-tmp/
 processing/Kinemata/code/
-processing/Kinemata/data/
 processing/Kinemata/recordings/
 *.mov
 *.stl

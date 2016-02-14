@@ -7,6 +7,8 @@ class Recording {
   JSONArray data = new JSONArray();
   int index = 0;
   int recordingLimit = -1;
+  int duration = -1;
+  int recordingStart = -1;
 
   Recording() {
   }
@@ -18,6 +20,13 @@ class Recording {
   void addData(JSONObject values) {
     //if (isRecording == true && (recordingLimit == 0 || index < recordingLimit)) {
     //println("record", index, values);
+    if (recordingStart == -1) {
+      recordingStart = millis();
+      duration = 0;
+    } else {
+      duration = millis() - recordingStart;      
+    }
+    
     values.setInt("id", index);
     data.setJSONObject(index, values);
     index++;
@@ -32,6 +41,13 @@ class Recording {
    * add a whole set of data points
    */
   void addDataArray(JSONArray dataArray) {
+    if (recordingStart == -1) {
+      recordingStart = millis();
+      duration = 0;
+    } else {
+      duration = millis() - recordingStart;      
+    }
+    
     // add all items to data
     for (int i = 0; i < dataArray.size(); i++) {
       data.append(dataArray.getJSONObject(i));
@@ -87,5 +103,9 @@ class Recording {
       file.print(keyVal + ",");
     }
     file.println("");
+  }
+  
+  int getDuration() {
+    return duration;
   }
 }

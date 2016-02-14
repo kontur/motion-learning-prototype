@@ -66,12 +66,15 @@ class Track {
   Button buttonConnectBluetooth;
   Button buttonCloseBluetooth;
   Button buttonRefreshBluetooth;
+  Textlabel labelBluetooth;
   Button buttonClear;
   Button buttonRecord;
   Button buttonStopRecord;
   Button buttonSave;
   Textfield inputFilename;
   CheckBox checkboxGraph;
+  Textlabel labelTime;
+  
 
   int buttonInactive = color(200);
 
@@ -132,6 +135,11 @@ class Track {
       .hideBar()
       .setPosition(guiX1, y);
 
+    labelBluetooth = cp5.addTextlabel("labelBluetooth")
+      .setPosition(0, 30)
+      .setGroup(uiBluetooth)
+      .hide();
+      
     buttonConnectBluetooth = cp5.addButton("connectBluetooth")
       .setPosition(0, 30)
       .setSize(100, 20)
@@ -162,6 +170,8 @@ class Track {
             print("Bluetooth connected to " + port);
             isConnected = true;
             setButtonsConnected();
+            
+            labelBluetooth.setText("Connected to " + port);
           } 
           catch (RuntimeException e) {
             print("Error opening serial port " + port + ": \n" + e.getMessage());
@@ -215,9 +225,12 @@ class Track {
     }
     );
 
+    PImage refreshImage = loadImage("data/refresh.png");
+    PImage refreshImageHover = loadImage("data/refresh_hover.png");
     buttonRefreshBluetooth = cp5.addButton("refreshBluetooth")
       .setPosition(180, 0)
       .setSize(20, 20)
+      .setImages(refreshImage, refreshImageHover, refreshImage, refreshImage)
       .setGroup(uiBluetooth)
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -266,9 +279,13 @@ class Track {
       .hideBar()
       .setPosition(guiX5, y);
 
+    PImage recordImage = loadImage("data/record.png");
+    PImage recordImageHover = loadImage("data/record_hover.png");
+    PImage recordImageDisabled = loadImage("data/record_disabled.png");
     buttonRecord = cp5.addButton("recordButton")
       .setPosition(0, 0)
       .setSize(50, 50)
+      .setImages(recordImage, recordImageHover, recordImageDisabled, recordImageDisabled)
       .setGroup(uiFile)
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
@@ -280,9 +297,12 @@ class Track {
     }
     );
 
+    PImage recordStopImage = loadImage("data/stop.png");
+    PImage recordStopImageHover = loadImage("data/stop_hover.png");
     buttonStopRecord = cp5.addButton("stopRecordButton")
       .setPosition(0, 0)
       .setSize(50, 50)
+      .setImages(recordStopImage, recordStopImageHover, recordStopImage, recordStopImage)
       .hide()
       .setGroup(uiFile)
       .setLabel("Stop recording")
@@ -298,8 +318,8 @@ class Track {
 
 
     buttonSave = cp5.addButton("saveButton")
-      .setPosition(60, 40)
-      .setSize(140, 20)
+      .setPosition(100, 60)
+      .setSize(100, 20)
       .setGroup(uiFile)
       .setLabel("Save recording")
       .addCallback(new CallbackListener() {
@@ -334,6 +354,11 @@ class Track {
       .setFocus(true)
       .setGroup(uiFile)
       .setLabel("File name:");
+      
+    labelTime = cp5.addTextlabel("labelTime")
+      .setPosition(0, 60)
+      .setGroup(uiFile)
+      .hide();
   }
 
 
@@ -345,8 +370,12 @@ class Track {
     fill(225);
     if (isRecording == true) {
       stroke(205, 50, 20);
+      graph.setRecording(color(205, 50, 20));
+      labelTime.show();
+      labelTime.setText("" + recording.getDuration());
     } else { 		
       stroke(190);
+      graph.setNotRecording();
     } 		
     rect(guiX2, 0, guiW, guiH);
 
@@ -451,6 +480,7 @@ class Track {
     hideButton(buttonConnectBluetooth);
     hideButton(buttonRefreshBluetooth);
     bluetoothDeviceList.hide();
+    labelBluetooth.show();
 
     showButton(buttonCloseBluetooth);
     lockButton(buttonSave);
@@ -463,6 +493,8 @@ class Track {
     lockButton(buttonConnectBluetooth);
     showButton(buttonRefreshBluetooth);
     bluetoothDeviceList.show();
+    labelBluetooth.hide();
+    
     hideButton(buttonCloseBluetooth);
     unlockButton(buttonSave);
     unlockButton(buttonClear);
@@ -522,6 +554,10 @@ class Track {
     showButton(buttonRecord);
     unlockButton(buttonRecord);
     hideButton(buttonStopRecord);
+  }
+  
+  void clearRecording() {
+    labelTime.hide();    
   }
 
 

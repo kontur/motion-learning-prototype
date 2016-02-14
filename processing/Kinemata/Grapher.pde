@@ -23,6 +23,11 @@ class Grapher {
 
   ArrayList<String> shown = new ArrayList<String>();
 
+  // highlight the recording frame?
+  // -1 => no
+  // > -1 => int color
+  int highlight = -1;
+
 
   Grapher(float _x, float _y, float _w, float _h) {
     setPosition(_x, _y);
@@ -104,7 +109,11 @@ class Grapher {
 
     fill(225);
     //noStroke();
-    stroke(190);
+    if (highlight > -1) {
+      stroke(highlight);
+    } else {
+      stroke(190);
+    }
     rect(x, y, w, h);
 
     float resX = config.getFloat("resolutionX");
@@ -158,5 +167,14 @@ class Grapher {
 
   void showGraphsFor(ArrayList<String> visible) {
     shown = visible;
+  }
+
+  void setRecording(int highlightColor) {
+    println("setRecording " + highlightColor);
+    highlight = highlightColor;
+  }
+
+  void setNotRecording() {
+    highlight = -1;
   }
 }

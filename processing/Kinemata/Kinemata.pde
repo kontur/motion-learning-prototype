@@ -165,6 +165,7 @@ void serialEvent(Serial connection) {
     //read bluetooth when available
     while (connection.available() > 0) {
       String serialMessage = connection.readString();
+      //println(serialMessage);
 
       // remove any beginning or ending whitespace and semicolons
       serialMessage = serialMessage.replaceAll("^[\\s]*", "").replaceAll(";[\\s]*$", "");
@@ -211,27 +212,6 @@ void onButtonDown() {
   }
 }
 
-
-
-
-/**
- * Helper for drawing the animation of non connected devices
- */
-void idleAnimation () {
-
-  //  rotationX += random(-2.0, 2.0);// * (abs(rotationX) / 100 + 0.25);
-  //  rotationZ += random(-2.0, 2.0);// * (abs(rotationZ) / 100 + 0.25);
-
-  //  if (rotationX > 90) rotationX = -90;
-  //  if (rotationX < -90) rotationX = 90;
-
-  //  if (rotationZ > 90) rotationZ = -90;
-  //  if (rotationZ < -90) rotationZ = 90;
-
-  //  cp5.getController("rotationX").setValue(rotationX);
-  //  cp5.getController("rotationY").setValue(rotationY);
-  //  cp5.getController("rotationZ").setValue(rotationZ);
-}
 
 
 /**
@@ -368,6 +348,12 @@ void saveRecording() {
 
 void clearRecording() {
   println("Kinemata.clearRecording()");
+  if (mode == 0) {
+    track1.clearRecording();
+    track2.clearRecording();
+  } else {
+    //println(caller);
+  }
 }
 
 
