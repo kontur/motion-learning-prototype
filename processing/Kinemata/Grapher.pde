@@ -136,7 +136,6 @@ class Grapher {
     // get how many points there are to draw
     int pointsTotal = min(points, data.size());
 
-
     for (int i = 0; i < pointsTotal; i++) {
       if (i > 1) {
         float point_x = i * resX;
@@ -156,8 +155,6 @@ class Grapher {
             float _y = y + h / 2 - dataAtPoint.getFloat(k.toString()) / resY / 2 * 100;
             float _x = x + drawingStart + point_x;
             point(_x, _y);
-          } else {
-            println(k.toString(), " hidden");
           }
         }
       }
@@ -170,7 +167,6 @@ class Grapher {
   }
 
   void setRecording(int highlightColor) {
-    println("setRecording " + highlightColor);
     highlight = highlightColor;
   }
 

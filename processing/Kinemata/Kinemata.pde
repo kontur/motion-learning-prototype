@@ -367,7 +367,7 @@ void log(String msg) {
 
 
 void controlEvent(ControlEvent theEvent) {
-  //track1.checkboxEvent();
+  track1.checkboxEvent();
 }
 
 

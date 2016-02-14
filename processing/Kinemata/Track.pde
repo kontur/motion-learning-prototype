@@ -54,9 +54,9 @@ class Track {
   //positioning
   int guiX1 = 10; // + 200 + 10
   int guiX2 = 220; // + 200 + 10
-  int guiX3 = 430; // + 200 + 10
+  int guiX3 = 440; // + 200 + 10
   int guiX4 = 640; // + 400 + 10
-  int guiX5 = 1050;
+  int guiX5 = 1060;
   int guiW = 200;
   int guiH = 200;
 
@@ -107,9 +107,9 @@ class Track {
       "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
       "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, " +
 
-      "\"mag_x\": { \"color\": " + color(100, 250, 0) + "}, " +
-      "\"mag_y\": { \"color\": " + color(250, 250, 0) + "}, " +
-      "\"mag_z\": { \"color\": " + color(100, 0, 0) + "}, " +
+      "\"gyro_x\": { \"color\": " + color(100, 250, 0) + "}, " +
+      "\"gyro_y\": { \"color\": " + color(250, 250, 0) + "}, " +
+      "\"gyro_z\": { \"color\": " + color(100, 0, 0) + "}, " +
 
       "\"accel_x\": { \"color\": " + color(255, 255, 0) + "}, " +
       "\"accel_y\": { \"color\": " + color(255, 0, 255) + "}, " +
@@ -593,6 +593,7 @@ class Track {
         checkboxes.add(sliders[i]);
       }
     }
-    println("checkboxes: ", checkboxes);
+    
+    //println("checkboxes: ", checkboxes);
   }
 }
