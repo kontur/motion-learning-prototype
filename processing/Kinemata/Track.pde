@@ -605,4 +605,10 @@ class Track {
     
     //println("checkboxes: ", checkboxes);
   }
+  
+  
+  String getFilename() {
+    String filename = inputFilename.getText();
+    return filename;
+  }
 }

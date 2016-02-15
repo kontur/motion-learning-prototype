@@ -348,8 +348,10 @@ void stopRecording() {
 void saveRecording() {
   println("Kinemata.saveRecording()");
   if (mode == 0) {
-    track1.saveData("track1");
-    track2.saveData("track2");
+    String filename = track1.getFilename();
+    
+    track1.saveData(filename + "-track-1");
+    track2.saveData(filename + "-track-2");
   } else {
     //println(caller);
   }

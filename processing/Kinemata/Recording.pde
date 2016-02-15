@@ -80,7 +80,9 @@ class Recording {
     println("Recording.saveData()", fileName);
     int dataLength = data.size();
     if (dataLength > 0) {
-      PrintWriter file = createWriter("recordings/" + fileName + ".csv");
+      String datetime = "" + year() + "-" + month() + "-" + day() + "_" + hour() + "-" +
+        minute() + "-" + second();
+      PrintWriter file = createWriter("recordings/kinemata-" + datetime + "-" + fileName + ".csv");
       
       for (int h = 0; h < headers.length; h++) {
         file.print(headers[h] + ",");        
