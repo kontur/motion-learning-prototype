@@ -37,6 +37,7 @@ int guiMiddle = 400;
 int guiBottom = 640;
 
 Overlay overlay;
+boolean uiReady = false;
 
 
 // bluetooth connection
@@ -108,6 +109,8 @@ void setup() {
   frameRate(60);
 
   logo = loadImage("kinemata.png");
+
+  uiReady = true;
 }
 
 
@@ -386,29 +389,14 @@ void showOverlayBluetooth() {
 void hideOverlay() {
   println("HIDE OVERLAY");
   overlay.hide();
-  overlay = null;  
+  overlay = null;
 }
 
 
-void controlEvent(ControlEvent theEvent) {
-  track1.checkboxEvent();
+void checkboxGraph(float[] a) {
+  // this will cause an update check on both tracks but for the life of me
+  // I can't figure out a way to separate the source of the trigger of the
+  // same named general name catch-it-all event handler
+   track1.checkboxEvent();
+   track2.checkboxEvent();
 }
-
-
-//void checkboxGraph(float[] a) {
-//  println("checkbox", a);
-
-//  print("got an event from "+checkbox.getName()+"\t\n");
-//    // checkbox uses arrayValue to store the state of 
-//    // individual checkbox-items. usage:
-//    println(checkbox.getArrayValue());
-//    int col = 0;
-//    for (int i=0;i<checkbox.getArrayValue().length;i++) {
-//      int n = (int)checkbox.getArrayValue()[i];
-//      print(n);
-//      if(n==1) {
-//        myColorBackground += checkbox.getItem(i).internalValue();
-//      }
-//    }
-//  //println(checkboxGraph.getArrayValue());
-//}
