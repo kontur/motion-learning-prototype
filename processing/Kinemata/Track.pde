@@ -120,16 +120,64 @@ class Track {
     graph.setConfiguration(graphConfig);
 
     cube = new ColorCube(100.0, 50.0, 10.0, cubeGrey, cubeGrey, cubeGrey);
-    cube.setPosition(350.0, 130.0, 50.0);
+    cube.setPosition(350.0, 80.0, 50.0);
 
     createUI(parent);
     setButtonsDisconnected();
   }
 
 
+  void draw() {
+    pushMatrix();
+    translate(x, y);
+    
+
+    // move cube background to colorcube class
+    fill(225);
+    if (isRecording == true) {
+      stroke(205, 50, 20);
+      graph.setRecording(color(205, 50, 20));
+      labelTime.show();
+      labelTime.setText("" + recording.getDuration());
+    } else {     
+      stroke(190);
+      graph.setNotRecording();
+    }     
+    rect(guiX2, 0, guiW, guiH);
+
+    graph.plot();
+    cube.render();
+
+    popMatrix();
+
+    if (isConnected) {
+      JSONObject d = new JSONObject();
+      d.setFloat("pitch", pitch);
+      d.setFloat("roll", roll);
+
+      d.setFloat("gyro_x", gyro[0]);
+      d.setFloat("gyro_y", gyro[1]);
+      d.setFloat("gyro_z", gyro[2]);
+
+      d.setFloat("accel_x", accel[0]);
+      d.setFloat("accel_y", accel[1]);
+      d.setFloat("accel_z", accel[2]);
+
+      graph.addData(d);
+
+      graph.showGraphsFor(checkboxes);
+
+      if (isRecording) {
+        recording.addData(d);
+      }
+    }
+  }
+
+
   void createUI(PApplet window) {
 
     cp5 = new ControlP5(window);
+    
     // bluetooth connect UI
     controlP5.Group uiBluetooth = cp5.addGroup("uiBluetooth")
       .hideBar()
@@ -148,6 +196,10 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+          
+          parent.method("showOverlayBluetooth");
+          println("now trying to connect");
+          
           String[] ports = Serial.list();
           //buttonConnectBluetooth.hide();
           String port = "";
@@ -172,12 +224,14 @@ class Track {
             setButtonsConnected();
 
             labelBluetooth.setText("Connected to " + port);
+            parent.method("hideOverlay");
           } 
           catch (RuntimeException e) {
             print("Error opening serial port " + port + ": \n" + e.getMessage());
             //buttonConnectBluetooth.show();
             //buttonCloseBluetooth.hide();
             //tryingToConnect = false;
+            parent.method("hideOverlay");
           }
         }
       }
@@ -361,51 +415,6 @@ class Track {
       .hide();
   }
 
-
-  void draw() {
-    pushMatrix();
-    translate(x, y);
-
-    // move cube background to colorcube class
-    fill(225);
-    if (isRecording == true) {
-      stroke(205, 50, 20);
-      graph.setRecording(color(205, 50, 20));
-      labelTime.show();
-      labelTime.setText("" + recording.getDuration());
-    } else { 		
-      stroke(190);
-      graph.setNotRecording();
-    } 		
-    rect(guiX2, 0, guiW, guiH);
-
-    graph.plot();
-    cube.render();
-
-    popMatrix();
-
-    if (isConnected) {
-      JSONObject d = new JSONObject();
-      d.setFloat("pitch", pitch);
-      d.setFloat("roll", roll);
-
-      d.setFloat("gyro_x", gyro[0]);
-      d.setFloat("gyro_y", gyro[1]);
-      d.setFloat("gyro_z", gyro[2]);
-
-      d.setFloat("accel_x", accel[0]);
-      d.setFloat("accel_y", accel[1]);
-      d.setFloat("accel_z", accel[2]);
-
-      graph.addData(d);
-
-      graph.showGraphsFor(checkboxes);
-
-      if (isRecording) {
-        recording.addData(d);
-      }
-    }
-  }
 
 
   void process(JSONObject obj) {

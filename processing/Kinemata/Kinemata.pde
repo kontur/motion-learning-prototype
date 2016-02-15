@@ -36,6 +36,8 @@ int guiTop = 150;
 int guiMiddle = 400;
 int guiBottom = 640;
 
+Overlay overlay;
+
 
 // bluetooth connection
 char[] inBuffer = new char[12];
@@ -111,7 +113,7 @@ void setup() {
 
 void draw() {
   background(221);
-  stroke(0);   
+  stroke(0);
 
   image(logo, 10, 10);
 
@@ -154,6 +156,10 @@ void draw() {
 
   track1.draw();
   track2.draw();
+
+  if (overlay != null) {
+    overlay.draw();
+  }
 }
 
 
@@ -363,6 +369,24 @@ void clearRecording() {
 void log(String msg) {
   msg = msg + "\n\n" + debugText.getText();
   debugText.setText(msg);
+}
+
+void showOverlayBluetooth() {
+  println("SHOW OVERLAY");
+  ArrayList<ControlP5> cp5s = new ArrayList<ControlP5>();
+  cp5s.add(cp5);
+  cp5s.add(track1.cp5);
+  cp5s.add(track2.cp5);
+  overlay = new Overlay(this, cp5s, "Connecting bluetooth");
+  // immediately draw the overlay, before anything can timeout (i.e. BT connect)
+  overlay.draw();
+  redraw();
+}
+
+void hideOverlay() {
+  println("HIDE OVERLAY");
+  overlay.hide();
+  overlay = null;  
 }
 
 
