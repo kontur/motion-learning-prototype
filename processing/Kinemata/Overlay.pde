@@ -19,10 +19,11 @@ class Overlay {
     for(ControlP5 cp5: cps){
       cp5.hide();
     }
-    fill(125, 200);
+    fill(0, 200);
     rect(0, 0, parent.width, parent.height);
-    color(0);
-    text(message, 100, 100);
+    color(255);
+    textAlign(CENTER);
+    text(message, parent.width, parent.height);
   }  
   
   void hide() {

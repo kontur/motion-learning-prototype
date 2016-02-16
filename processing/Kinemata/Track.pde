@@ -17,6 +17,7 @@
 
 import controlP5.*;
 import processing.serial.*;
+import java.lang.reflect.Method;
 
 class Track {
 
@@ -31,6 +32,7 @@ class Track {
   int y;
 
   boolean isRecording = false;
+  boolean tryToConnect = false;
 
   String label = "";
 
@@ -81,7 +83,6 @@ class Track {
   /* Bluetooth connection */
   char[] inBuffer = new char[12];
   boolean isConnected = false;
-  boolean tryingToConnect = false;
   int baudRate = 9600;
   Serial connection;
   int lastTransmission = 0;  
@@ -131,7 +132,10 @@ class Track {
     pushMatrix();
     translate(x, y);
     
-
+    if (tryToConnect) {
+      connectBluetooth();
+    }
+    
     // move cube background to colorcube class
     fill(225);
     if (isRecording == true) {
@@ -139,7 +143,7 @@ class Track {
       graph.setRecording(color(205, 50, 20));
       labelTime.show();
       labelTime.setText("" + recording.getDuration());
-    } else {     
+    } else {
       stroke(190);
       graph.setNotRecording();
     }     
@@ -177,7 +181,7 @@ class Track {
   void createUI(PApplet window) {
 
     cp5 = new ControlP5(window);
-    
+
     // bluetooth connect UI
     controlP5.Group uiBluetooth = cp5.addGroup("uiBluetooth")
       .hideBar()
@@ -195,44 +199,12 @@ class Track {
       .setLabel("Connect bluetooth")
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
-        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
-          
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           parent.method("showOverlayBluetooth");
+          println("now pausing before trying connect");
+          delay(1000);
           println("now trying to connect");
-          
-          String[] ports = Serial.list();
-          //buttonConnectBluetooth.hide();
-          String port = "";
-
-          if (bluetoothDeviceList.getValue() != 0) {
-            port = ports[int(bluetoothDeviceList.getValue()) - 1];
-          }
-          log("Attempting to open serial port: " + port);
-          println(port);
-
-          try {
-            tryingToConnect = true;
-            connection = new Serial(parent, port, 9600);
-
-            // set a character that limits transactions and initiates reading the buffer
-            // this prevents premature reads, when the frame loop of processing runs
-            // faster than the string is fully transmitted
-            char c = ';';
-            connection.bufferUntil(byte(c));
-            print("Bluetooth connected to " + port);
-            isConnected = true;
-            setButtonsConnected();
-
-            labelBluetooth.setText("Connected to " + port);
-            parent.method("hideOverlay");
-          } 
-          catch (RuntimeException e) {
-            print("Error opening serial port " + port + ": \n" + e.getMessage());
-            //buttonConnectBluetooth.show();
-            //buttonCloseBluetooth.hide();
-            //tryingToConnect = false;
-            parent.method("hideOverlay");
-          }
+          tryToConnect = true;
         }
       }
     }
@@ -288,7 +260,7 @@ class Track {
       .setGroup(uiBluetooth)
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
-        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           getBluetoothDeviceList(bluetoothDeviceList);
         }
       }
@@ -326,8 +298,6 @@ class Track {
     }
 
 
-
-
     //recording and saving buttons
     controlP5.Group uiFile = cp5.addGroup("uiFile")
       .hideBar()
@@ -343,7 +313,7 @@ class Track {
       .setGroup(uiFile)
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
-        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           println("record!");
           parent.method("startRecording");
         }
@@ -362,7 +332,7 @@ class Track {
       .setLabel("Stop recording")
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
-        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           println("stop recording!");
           parent.method("stopRecording");
         }
@@ -378,7 +348,7 @@ class Track {
       .setLabel("Save recording")
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
-        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           println("save!");
           parent.method("saveRecording");
         }
@@ -394,7 +364,7 @@ class Track {
       .setLabel("Clear recording")
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
-        if (theEvent.getAction() == ControlP5.ACTION_RELEASED) {
+        if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           println("clear!");
           parent.method("clearRecording");
         }
@@ -456,6 +426,41 @@ class Track {
     cp5.getController("accel_z").setValue(accel[2]);
 
     cube.setRotation(roll, 0.0, pitch);
+  }
+
+
+  void connectBluetooth() {
+    tryToConnect = false;
+    
+    String[] ports = Serial.list();
+    //buttonConnectBluetooth.hide();
+    String port = "";
+
+    if (bluetoothDeviceList.getValue() != 0) {
+      port = ports[int(bluetoothDeviceList.getValue()) - 1];
+    }
+    log("Attempting to open serial port: " + port);
+    println(port);
+
+    try {
+      connection = new Serial(parent, port, 9600);
+
+      // set a character that limits transactions and initiates reading the buffer
+      // this prevents premature reads, when the frame loop of processing runs
+      // faster than the string is fully transmitted
+      char c = ';';
+      connection.bufferUntil(byte(c));
+      print("Bluetooth connected to " + port);
+      isConnected = true;
+      setButtonsConnected();
+
+      labelBluetooth.setText("Connected to " + port);
+      parent.method("hideOverlay");
+    } 
+    catch (RuntimeException e) {
+      println("Error opening serial port " + port + ": \n" + e.getMessage());
+      parent.method("hideOverlay");
+    }
   }
 
 
@@ -602,11 +607,9 @@ class Track {
         checkboxes.add(sliders[i]);
       }
     }
-    
-    //println("checkboxes: ", checkboxes);
   }
-  
-  
+
+
   String getFilename() {
     String filename = inputFilename.getText();
     return filename;

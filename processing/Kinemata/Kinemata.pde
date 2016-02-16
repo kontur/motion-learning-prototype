@@ -123,36 +123,6 @@ void draw() {
   checkClicks();
   executeDelayedCommand();
 
-  // handle recording separately
-  // ***************************
-
-  if (record && recordingWhat == "track1") {
-    JSONObject values = new JSONObject();
-    values.setFloat("roll", roll);
-    values.setFloat("pitch", pitch);
-    values.setFloat("accelX", accel[0]);
-    values.setFloat("accelY", accel[1]);
-    values.setFloat("accelZ", accel[2]);
-    values.setFloat("gyroX", gyro[0]);
-    values.setFloat("gyroY", gyro[1]);
-    values.setFloat("gyroZ", gyro[2]);
-    values.setInt("rgb", deviceRGB.getRGB());
-  }
-
-  if (record && recordingWhat == "track2") {
-    JSONObject values = new JSONObject();
-    values.setFloat("roll", roll);
-    values.setFloat("pitch", pitch);
-    values.setFloat("accelX", accel[0]);
-    values.setFloat("accelY", accel[1]);
-    values.setFloat("accelZ", accel[2]);
-    values.setFloat("gyroX", gyro[0]);
-    values.setFloat("gyroY", gyro[1]);
-    values.setFloat("gyroZ", gyro[2]);
-    values.setInt("rgb", deviceRGB.getRGB());
-  }
-
-
   if (connection != null) {
     tryingToConnect = false;
   }
@@ -337,23 +307,29 @@ void startRecording() {
   println("Kinemata.startRecording()");
   track1.startRecording();
   track2.startRecording();
+
+  // TODO split by mode
 }
 
 void stopRecording() {
   println("Kinemata.stopRecording()");
   track1.stopRecording();
   track2.stopRecording();
+
+  // TODO split by mode
 }
 
 void saveRecording() {
   println("Kinemata.saveRecording()");
   if (mode == 0) {
     String filename = track1.getFilename();
-    
+
     track1.saveData(filename + "-track-1");
     track2.saveData(filename + "-track-2");
   } else {
     //println(caller);
+
+    // TODO save which
   }
 }
 
@@ -364,6 +340,8 @@ void clearRecording() {
     track2.clearRecording();
   } else {
     //println(caller);
+
+    // TODO save which
   }
 }
 
@@ -399,6 +377,6 @@ void checkboxGraph(float[] a) {
   // this will cause an update check on both tracks but for the life of me
   // I can't figure out a way to separate the source of the trigger of the
   // same named general name catch-it-all event handler
-   track1.checkboxEvent();
-   track2.checkboxEvent();
+  track1.checkboxEvent();
+  track2.checkboxEvent();
 }
