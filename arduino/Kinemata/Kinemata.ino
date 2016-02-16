@@ -234,8 +234,6 @@ void readSensors () {
   Serial.print("2 - after sensor calls: ");
   Serial.println(millis() - lastNow);
   lastNow = millis();
-  
-  Serial.println(heading);
 
   /*
   // ease the readings for pitch, roll and heading to make them more smooth
