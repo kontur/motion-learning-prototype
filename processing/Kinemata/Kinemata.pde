@@ -86,25 +86,39 @@ void serialEvent(Serial connection) {
     //read bluetooth when available
     while (connection.available() > 0) {
       String serialMessage = connection.readString();
-      //println(serialMessage);
+      //log(serialMessage);
 
-      // remove any beginning or ending whitespace and semicolons
+      // remove any beginning or ending whitespace and (the ending) semicolons
       serialMessage = serialMessage.replaceAll("^[\\s]*", "").replaceAll(";[\\s]*$", "");
 
-      // do some extra formatting to make the incoming string valid json;
-      // the abbreviation from:
-      // "{\"p\":13.7,\"r\":3.9,\"aX\":3.7,\"aY\":3.9,\"aZ\":5.6,\"gX\":6.5,\"gY\":17.6,\"gZ\":4.0};"
-      // to:
-      // "{p13.7,r3.9,aX3.7,aY3.9,aZ5.6,gX6.5,gY17.6,gZ4.0};"
-      // reduces send intervals from ~80ms to ~55ms
-      // the second string is a sample of what indeed incomming, so remodel it to json
-      serialMessage = serialMessage.replaceAll("([a-zA-Z]{1,2})", "\"$1\":");
+      //log("serialMessage", serialMessage);
 
-      //println("serialMessage", serialMessage);
+      // make sure we are actually getting a full string (i.e. with enough commas)
+      if (serialMessage.replaceAll("[^,]", "").length() == 8) {
 
-      // make sure we are actually getting a full json-ish string
-      if (serialMessage.startsWith("{") && serialMessage.endsWith("}")) {
-        JSONObject obj = JSONObject.parse(serialMessage);
+        // do some extra formatting to make the incoming string valid json;
+        // the abbreviation from:
+        // "{\"p\":13.7,\"r\":3.9,\"aX\":3.7,\"aY\":3.9,\"aZ\":5.6,\"gX\":6.5,\"gY\":17.6,\"gZ\":4.0};"
+        // to:
+        // "{p13.7,r3.9,aX3.7,aY3.9,aZ5.6,gX6.5,gY17.6,gZ4.0};"
+        // reduces send intervals from ~80ms to ~55ms
+        // the second string is a sample of what indeed incomming, so remodel it to json
+        // further reduce by removing alphanumericals and "{}"
+
+        String[] decodeString = {"p", "r", "v", "aX", "aY", "aZ", "gX", "gY", "gZ"};
+        String[] parts = new String[8];
+        parts = serialMessage.split(",");
+        StringBuilder combined = new StringBuilder();
+        combined.append("{");
+        for (int i = 0; i < parts.length; i++) {
+          combined.append(decodeString[i] + ":" + parts[i]);
+          if (i < parts.length - 1) {
+            combined.append(",");
+          }
+        }
+        combined.append("}");
+
+        JSONObject obj = JSONObject.parse(combined.toString());
 
         // check which track the incoming serialEvent belongs to and forward the parsed data
         if (connection == track1.connection) {
@@ -113,7 +127,7 @@ void serialEvent(Serial connection) {
           track2.process(obj);
         }
       } else {
-        println("Error reading bluetooth: Received bluetooth string with ; ending, but not looking like JSON");
+        log("Error reading bluetooth: Received bluetooth string with ; ending, but not looking like JSON");
       }
     }
   }
@@ -142,8 +156,8 @@ void serialEvent(Serial connection) {
 // */
 //void checkClicks() {    
 //  if (lastClick != 0 && millis() - lastClick  > doubleClickThreshold) {
-//    println("--------");
-//    println(numClicks + " detected");
+//    log("--------");
+//    log(numClicks + " detected");
 
 //    // if we're currently recording, stop the recording
 //    // don't care about single or double click at this point, because we just want
@@ -173,11 +187,11 @@ void serialEvent(Serial connection) {
 
 void radioMode(int mode) {
   if (mode == 0) {
-    println("disable second track recording");
+    log("disable second track recording");
     track1.enableRecordingUI();
     track2.disableRecordingUI();
   } else {
-    println("enable second track recording");
+    log("enable second track recording");
     track1.enableRecordingUI();
     track2.enableRecordingUI();
   }
@@ -187,7 +201,7 @@ void radioMode(int mode) {
 
 
 void startRecording() {
-  println("Kinemata.startRecording()");
+  log("Kinemata.startRecording()");
   track1.startRecording();
   track2.startRecording();
 
@@ -195,7 +209,7 @@ void startRecording() {
 }
 
 void stopRecording() {
-  println("Kinemata.stopRecording()");
+  log("Kinemata.stopRecording()");
   track1.stopRecording();
   track2.stopRecording();
 
@@ -203,26 +217,26 @@ void stopRecording() {
 }
 
 void saveRecording() {
-  println("Kinemata.saveRecording()");
+  log("Kinemata.saveRecording()");
   if (recordingMode == 0) {
     String filename = track1.getFilename();
 
     track1.saveData(filename + "-track-1");
     track2.saveData(filename + "-track-2");
   } else {
-    //println(caller);
+    //log(caller);
 
     // TODO save which
   }
 }
 
 void clearRecording() {
-  println("Kinemata.clearRecording()");
+  log("Kinemata.clearRecording()");
   if (recordingMode == 0) {
     track1.clearRecording();
     track2.clearRecording();
   } else {
-    //println(caller);
+    //log(caller);
 
     // TODO save which
   }
@@ -242,7 +256,6 @@ void log(String msg) {
  * Showing and hiding UI overlays that cover the whole app
  */
 void showOverlayBluetooth() {
-  println("SHOW OVERLAY");
   ArrayList<ControlP5> cp5s = new ArrayList<ControlP5>();
   cp5s.add(cp5);
   cp5s.add(track1.cp5);
@@ -254,7 +267,6 @@ void showOverlayBluetooth() {
 }
 
 void hideOverlay() {
-  println("HIDE OVERLAY");
   overlay.hide();
   overlay = null;
 }
@@ -268,7 +280,7 @@ void setupUI() {
   cp5 = new ControlP5(this);
 
   radioMode = cp5.addRadioButton("radioMode")
-    .setPosition(1060, 100)
+    .setPosition(1060, 70)
     .setSize(40, 20)
     .setColorForeground(color(120))
     .setColorActive(color(255))
@@ -282,12 +294,11 @@ void setupUI() {
 
   // file I/O check textarea
   debugText = cp5.addTextarea("txt")
-    .setPosition(800, 10)
-    .setSize(200, 200)
+    .setPosition(680, 10)
+    .setSize(370, 130)
     .setFont(createFont("arial", 10))
     .setColor(0);
   //.setColorBackground(color(255, 100));
-
 }
 
 // unused reverse communication to device
@@ -318,7 +329,7 @@ void setupUI() {
  * in turn will trigger every tracks routine to check and update their checkboxes
  *
  * Clumsy :/
- */ 
+ */
 void checkboxGraph(float[] a) {
   track1.checkboxEvent();
   track2.checkboxEvent();

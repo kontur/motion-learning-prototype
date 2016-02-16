@@ -42,13 +42,14 @@ class Track {
   float[] mag = new float[3];
   float pitch = 0;
   float roll = 0;
+  float vibration = 0;
 
   // slider values min max
-  float rotationMin = -90.0;
-  float rotationMax = 90.0;
+  float sliderMin = -90;
+  float sliderMax = 90;
 
   // don't change, as these are also the strings to access the respective values in grapher
-  String[] sliders = { "pitch", "roll", "heading", "gyro_x", "gyro_y", "gyro_z", "accel_x", "accel_y", "accel_z" };
+  String[] sliders = { "pitch", "roll", "heading", "vibration", "gyro_x", "gyro_y", "gyro_z", "accel_x", "accel_y", "accel_z" };
   ArrayList<String> checkboxes = new ArrayList<String>();
 
 
@@ -107,6 +108,7 @@ class Track {
       "\"resolutionX\": 1.00, \"resolutionY\": 200.00, " +
       "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
       "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, " +
+      "\"vibration\": { \"color\": " + color(255, 255, 100) + "}, " +
 
       "\"gyro_x\": { \"color\": " + color(100, 250, 0) + "}, " +
       "\"gyro_y\": { \"color\": " + color(250, 250, 0) + "}, " +
@@ -158,6 +160,7 @@ class Track {
       JSONObject d = new JSONObject();
       d.setFloat("pitch", pitch);
       d.setFloat("roll", roll);
+      d.setFloat("vibration", vibration);
 
       d.setFloat("gyro_x", gyro[0]);
       d.setFloat("gyro_y", gyro[1]);
@@ -170,6 +173,9 @@ class Track {
       graph.addData(d);
 
       graph.showGraphsFor(checkboxes);
+      
+      log("" + vibration);
+      log("" + d.getFloat("vibration"));
 
       if (isRecording) {
         recording.addData(d);
@@ -201,9 +207,9 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           parent.method("showOverlayBluetooth");
-          println("now pausing before trying connect");
+          log("now pausing before trying connect");
           delay(1000);
-          println("now trying to connect");
+          log("now trying to connect");
           tryToConnect = true;
         }
       }
@@ -287,12 +293,17 @@ class Track {
       .setGroup(uiSliders);  
 
     for (int i = 0; i < sliders.length; i++) {
-      String item = sliders[i];      
-      cp5.addSlider(item)
+      String item = sliders[i];
+      Slider s = cp5.addSlider(item)
         .setPosition(0, i * 15)
         .setSize(150, 10)
-        .setRange(rotationMin, rotationMax)
         .setGroup(uiSliders);
+        
+      if (item != "vibration") {
+        s.setRange(sliderMin, sliderMax);
+      } else {
+        s.setRange(0, 255);
+      }
       checkboxGraph.addItem(item + "Checkbox", i).toggle(i).hideLabels();
       checkboxes.add(sliders[i]);
     }
@@ -314,7 +325,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          println("record!");
+          log("record!");
           parent.method("startRecording");
         }
       }
@@ -333,7 +344,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          println("stop recording!");
+          log("stop recording!");
           parent.method("stopRecording");
         }
       }
@@ -349,7 +360,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          println("save!");
+          log("save!");
           parent.method("saveRecording");
         }
       }
@@ -365,7 +376,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          println("clear!");
+          log("clear!");
           parent.method("clearRecording");
         }
       }
@@ -393,14 +404,15 @@ class Track {
     //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
 
     // debugging bluetooth send intervals
-    //println("Millis since last transmission: ", millis() - lastTransmission);    
+    //log("Millis since last transmission: ", millis() - lastTransmission);    
     float factor = 0.9;
     transmissionSpeed = factor * transmissionSpeed + (1 - factor) * (millis() - lastTransmission);
-    //println("Average transmission time: ", transmissionSpeed);    
+    //log("Average transmission time: ", transmissionSpeed);    
     lastTransmission = millis();
 
     roll = obj.getFloat("r");
     pitch = obj.getFloat("p");
+    vibration = obj.getFloat("v");
 
     accel[0] = obj.getFloat("aX");
     accel[1] = obj.getFloat("aY");
@@ -416,6 +428,7 @@ class Track {
 
     cp5.getController("roll").setValue(roll);
     cp5.getController("pitch").setValue(pitch);
+    cp5.getController("vibration").setValue(vibration);
 
     cp5.getController("gyro_x").setValue(gyro[0]);
     cp5.getController("gyro_y").setValue(gyro[1]);
@@ -440,7 +453,6 @@ class Track {
       port = ports[int(bluetoothDeviceList.getValue()) - 1];
     }
     log("Attempting to open serial port: " + port);
-    println(port);
 
     try {
       connection = new Serial(parent, port, 9600);
@@ -458,7 +470,7 @@ class Track {
       parent.method("hideOverlay");
     } 
     catch (RuntimeException e) {
-      println("Error opening serial port " + port + ": \n" + e.getMessage());
+      log("Error opening serial port " + port + ": \n" + e.getMessage());
       parent.method("hideOverlay");
     }
   }
@@ -558,7 +570,7 @@ class Track {
   }
 
   void stopRecording() {
-    println("recording size", recording.getSize());
+    log("recording size " + recording.getSize());
     isRecording = false;
     if (recording.getSize() > 0) {
       unlockButton(buttonSave);
@@ -580,17 +592,20 @@ class Track {
 
   void saveData(String filename) {
 
-    String[] headers = { 
+    String[] headers = {
+      "id",
+      
       "roll", 
-      "pitch", 
+      "pitch",
+      "vibration",
 
-      "aX", 
-      "aY", 
-      "aZ", 
+      "accel_x", 
+      "accel_y", 
+      "accel_z", 
 
-      "gX", 
-      "gY", 
-      "gZ"
+      "gyro_x", 
+      "gyro_y", 
+      "gyro_z"
     };
 
     recording.saveData(filename, headers);
@@ -618,7 +633,7 @@ class Track {
   
   // helper to dump a list of available serial ports into the passed in DropdownList
   void getBluetoothDeviceList(DropdownList list) {
-    println("Fetching available bluetooth device");
+    log("Fetching available bluetooth device");
     String[] ports = Serial.list();
     list.clear();  
     list.addItem("---", 0);

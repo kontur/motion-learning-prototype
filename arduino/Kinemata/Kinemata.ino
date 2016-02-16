@@ -119,6 +119,8 @@ float combinedChange;
 
 float threshold = 2.5;
 
+int vibration = 0;
+
 
 
 void setup () {
@@ -395,7 +397,7 @@ void setVibration() {
   */
 
   if (combinedChange > threshold) {
-    int vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 254);
+    vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 254);
 
     /*
     Serial.print("vibration ");
@@ -476,16 +478,20 @@ void sendJson() {
   */
   
   // TODO further limit decimals on sent data to reduce data footprint for each send
-  String json = "{p" + String(pitch) +
-                ",r" + String(roll) +
-                ",aX" + String(accel[0]) +
-                ",aY" + String(accel[1]) +
-                ",aZ" + String(accel[2]) +
-                ",gX" + String(gyro[0]) +
-                ",gY" + String(gyro[1]) +
-                ",gZ" + String(gyro[2]) +
+  
+  // The values are decoded one after the other and follow this pattern, ORDER IS
+  // CRUCIAL
+  String json = "" + String(pitch) +
+                "," + String(roll) +
+                "," + String(vibration) +
+                "," + String(accel[0]) +
+                "," + String(accel[1]) +
+                "," + String(accel[2]) +
+                "," + String(gyro[0]) +
+                "," + String(gyro[1]) +
+                "," + String(gyro[2]) +
                 //", \"rgb\": \"" + rgbColor[0] + "," + rgbColor[1] + "," + rgbColor[2] + "\"" +
-                " };";
+                ";";
 
   // print to bluetooth connection and debug monitor
 
