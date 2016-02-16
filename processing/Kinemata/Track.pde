@@ -120,7 +120,7 @@ class Track {
     graph = new Grapher(guiX4, 0, guiW * 2, guiH);
     graph.setConfiguration(graphConfig);
 
-    cube = new ColorCube(100.0, 50.0, 10.0, cubeGrey, cubeGrey, cubeGrey);
+    cube = new ColorCube(100.0, 50.0, 10.0, 125, 125, 125);
     cube.setPosition(350.0, 80.0, 50.0);
 
     createUI(parent);
@@ -614,4 +614,23 @@ class Track {
     String filename = inputFilename.getText();
     return filename;
   }
+  
+  
+  // helper to dump a list of available serial ports into the passed in DropdownList
+  void getBluetoothDeviceList(DropdownList list) {
+    println("Fetching available bluetooth device");
+    String[] ports = Serial.list();
+    list.clear();  
+    list.addItem("---", 0);
+    for (int p = 0; p < ports.length; p++) {
+      String port = ports[p];
+      // filter out "tty" ports
+      // filter out ports with "usb"
+      if (port.indexOf("tty") == -1 && port.indexOf("usb") == -1) {
+        // add whatever port found to the dropdown
+        list.addItem(port, p  + 1);
+      }
+    }
+  }
+
 }

@@ -1,3 +1,5 @@
+import toxi.geom.*;
+
 /**
  * Simple helper for making a cube with 3 different colored sides
  */

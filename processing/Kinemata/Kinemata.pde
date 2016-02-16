@@ -6,81 +6,33 @@ Main entry point
  - adding and updating tracks
  */
 
-import processing.serial.*;
 import processing.opengl.*;
-
 import controlP5.*;
-
 import java.lang.RuntimeException;
 import java.lang.ArrayIndexOutOfBoundsException;
 import java.awt.Color;
-
 import javax.swing.*; 
 
-import toxi.geom.*;
 
-
-float rotationX = 0;
-float rotationY = 0;
-float rotationZ = 0;
-
-
-
-
-int guiLeft = 10;
-int guiCenter = 400;
-int guiRight = 610;
-
-int guiHeader = 120;
-int guiTop = 150;
-int guiMiddle = 400;
-int guiBottom = 640;
-
+// null Overlay; when instantiated rendered on top
 Overlay overlay;
+
+// wait for uiReady before processing any kind of UI events
+// otherwise there will be mayhem
 boolean uiReady = false;
 
 
-// bluetooth connection
-char[] inBuffer = new char[12];
-int inBufferIndex = 0;
-boolean isConnected = false;
-boolean tryingToConnect = false;
-int baudRate = 9600;
-Serial connection;
-
-
-// UI elements and helpers
+// UI elements and helpers on the top level
+// note each Track() instance has it's own controls
 ControlP5 cp5;
 Textarea debugText;
-DropdownList bluetoothDeviceList;
-int mode = 0;
-Button buttonConnectBluetooth;
+int recordingMode = 0;
 RadioButton radioMode;
 
 
-
-// playback and recording
-String recordingWhat = "";
-boolean record = false;
-boolean play = false;
-int recordingMode = 0; // 0 = single, 1 = separate
-
-int playbackIndex = 0;
-
-float[] accel = new float[3];
-float[] gyro = new float[3];
-float[] mag = new float[3];
-float pitch = 0;
-float roll = 0;
-Color deviceRGB = new Color(200, 200, 200);
-
-int cubeGrey = 125;
-
-int lastClick = 0;
-int numClicks = 0;
-int doubleClickThreshold = 1000;
-
-boolean finishedComparison = true;
+//int lastClick = 0;
+//int numClicks = 0;
+//int doubleClickThreshold = 1000;
 
 PImage logo;
 
@@ -89,19 +41,13 @@ Track track1;
 Track track2;
 
 
-// helpers for triggering a delay bluetooth command with millis() instead of delay()
-String delayedCommand = ""; // empty string or/and delayedCommandStart == 0 skip execution
-int delayedCommandStart = 0;
-int delayedCommandDelay = 0;
-
-
 void setup() {
   //size(winW, winH, OPENGL);
   size(1280, 600, OPENGL);
   setupUI();
 
-  track1 = new Track(this, guiLeft, guiTop, "Live movement");
-  track2 = new Track(this, guiLeft, guiMiddle, "track2ing movement");
+  track1 = new Track(this, 10, 150, "Live movement");
+  track2 = new Track(this, 10, 400, "track2ing movement");
 
   // set to single recording by default
   radioMode(0);
@@ -120,12 +66,8 @@ void draw() {
 
   image(logo, 10, 10);
 
-  checkClicks();
-  executeDelayedCommand();
-
-  if (connection != null) {
-    tryingToConnect = false;
-  }
+  //checkClicks();
+  //executeDelayedCommand();
 
   track1.draw();
   track2.draw();
@@ -181,111 +123,52 @@ void serialEvent(Serial connection) {
 }
 
 
-/** 
- * Handler for when JSON of a button click has been received
- */
-void onButtonDown() {
-  if (numClicks == 0 || millis() - lastClick < doubleClickThreshold) {
-    numClicks++;
-    lastClick = millis();
-  }
-}
+// old code for handling incoming physical button clicks via json
+
+///** 
+// * Handler for when JSON of a button click has been received
+// */
+//void onButtonDown() {
+//  if (numClicks == 0 || millis() - lastClick < doubleClickThreshold) {
+//    numClicks++;
+//    lastClick = millis();
+//  }
+//}
 
 
 
-/**
- * Helper to be called in each draw loop to check and detect clicks and double clicks
- */
-void checkClicks() {    
-  if (lastClick != 0 && millis() - lastClick  > doubleClickThreshold) {
-    println("--------");
-    println(numClicks + " detected");
+///**
+// * Helper to be called in each draw loop to check and detect clicks and double clicks
+// */
+//void checkClicks() {    
+//  if (lastClick != 0 && millis() - lastClick  > doubleClickThreshold) {
+//    println("--------");
+//    println(numClicks + " detected");
 
-    // if we're currently recording, stop the recording
-    // don't care about single or double click at this point, because we just want
-    // to stop the current recording process
-    if (record == true) {
-      return;
-    }
+//    // if we're currently recording, stop the recording
+//    // don't care about single or double click at this point, because we just want
+//    // to stop the current recording process
+//    if (record == true) {
+//      return;
+//    }
 
-    //switch (numClicks) {
-    //case 1:
-    //  log("Single physical click");
-    //  break;
+//    //switch (numClicks) {
+//    //case 1:
+//    //  log("Single physical click");
+//    //  break;
 
-    //case 2:
-    //  log("Double physical click");
-    //  break;
+//    //case 2:
+//    //  log("Double physical click");
+//    //  break;
 
-    //default: 
-    //  log("Several physical clicks " + numClicks);
-    //  break;
-    //}
-    numClicks = 0;
-    lastClick = 0;
-  }
-}
-
-
-/**
- * Click handler of the playback button
- */
-void playback(int val) {
-  mode = 3;
-  playbackIndex = 0;
-}
-
-
-
-
-/**
- * Helpers for the three different outcomes that also double as button even
- * handlers for the three helper buttons in the demo
- */
-
-void pos(int val) {
-  registerDelayedCommand("feedbackPerfect", 2000);
-  //playFeedback("perfect.mov", (guiRight + 5), (guiTop + 20), false);
-}
-
-
-void neu(int val) {
-  registerDelayedCommand("feedbackGood", 2000);
-  //playFeedback("good.mov", (guiRight + 5), (guiTop + 20), false);
-}
-
-
-void neg(int val) {
-  registerDelayedCommand("feedbackFail", 2000);
-  //playFeedback("fail.mov", (guiRight + 5), (guiTop + 20), false);
-}
-
-
-/**
- * Helper to setup a command to be executed after a delay without halting the programm
- */
-void registerDelayedCommand(String _command, int _delay) {
-  delayedCommand = _command;
-  delayedCommandDelay = _delay;
-  delayedCommandStart = millis();
-}
-
-
-/**
- * Helper to check for and exectue a delay command if there is any
- */
-void executeDelayedCommand() {
-  // first check if there is any command set up to be sent
-  if (delayedCommand != "" && delayedCommandStart != 0) {
-    // then only send it if delay has elapsed
-    if (millis() > delayedCommandStart + delayedCommandDelay) {
-      sendBluetoothCommand(delayedCommand);
-      delayedCommand = "";
-      delayedCommandDelay = 0;
-      delayedCommandStart = 0;
-    }
-  }
-}
+//    //default: 
+//    //  log("Several physical clicks " + numClicks);
+//    //  break;
+//    //}
+//    numClicks = 0;
+//    lastClick = 0;
+//  }
+//}
 
 
 void radioMode(int mode) {
@@ -321,7 +204,7 @@ void stopRecording() {
 
 void saveRecording() {
   println("Kinemata.saveRecording()");
-  if (mode == 0) {
+  if (recordingMode == 0) {
     String filename = track1.getFilename();
 
     track1.saveData(filename + "-track-1");
@@ -335,7 +218,7 @@ void saveRecording() {
 
 void clearRecording() {
   println("Kinemata.clearRecording()");
-  if (mode == 0) {
+  if (recordingMode == 0) {
     track1.clearRecording();
     track2.clearRecording();
   } else {
@@ -354,6 +237,10 @@ void log(String msg) {
   debugText.setText(msg);
 }
 
+
+/**
+ * Showing and hiding UI overlays that cover the whole app
+ */
 void showOverlayBluetooth() {
   println("SHOW OVERLAY");
   ArrayList<ControlP5> cp5s = new ArrayList<ControlP5>();
@@ -373,10 +260,66 @@ void hideOverlay() {
 }
 
 
+/**
+ * setup the UI components
+ */
+void setupUI() {
+
+  cp5 = new ControlP5(this);
+
+  radioMode = cp5.addRadioButton("radioMode")
+    .setPosition(1060, 100)
+    .setSize(40, 20)
+    .setColorForeground(color(120))
+    .setColorActive(color(255))
+    .setColorLabel(color(255))
+    .setItemsPerRow(1)
+    .addItem("Single recording", 0)
+    .addItem("Separate recordings", 1)
+    .setNoneSelectedAllowed(false)
+    .activate(0);
+
+
+  // file I/O check textarea
+  debugText = cp5.addTextarea("txt")
+    .setPosition(800, 10)
+    .setSize(200, 200)
+    .setFont(createFont("arial", 10))
+    .setColor(0);
+  //.setColorBackground(color(255, 100));
+
+}
+
+// unused reverse communication to device
+
+//void sendBluetoothCommand(String command) {
+//  if (connection != null) {
+//    try {
+//      //connection.write("roll:" + rotationX + ",heading:" + rotationY + ",pitch:" + rotationZ + ";");
+//      connection.write("command:" + command + ";");
+//      log("Sent bluetooth command to device: " + command);
+//    }
+//    catch (RuntimeException e) {
+//      log("Cannot send command to Arduino; exception: " + e.getMessage());
+//    }
+//  } else {
+//    log("Cannot send command to Arduino; no Bluetooth connection");
+//  }
+//}
+
+
+/**
+ * Helper function for passing updates to the slider checkboxes to the respective track
+ * 
+ * controlP5 pushes events to functions of the main sketch with the same name as the
+ * cp5 element; there seems to be no way of catching this with a listener in the
+ * track where the checkboxes are created, so this is a workaround
+ * where a checkbox change event from any track will trigger this, and this function
+ * in turn will trigger every tracks routine to check and update their checkboxes
+ *
+ * Clumsy :/
+ */ 
 void checkboxGraph(float[] a) {
-  // this will cause an update check on both tracks but for the life of me
-  // I can't figure out a way to separate the source of the trigger of the
-  // same named general name catch-it-all event handler
   track1.checkboxEvent();
   track2.checkboxEvent();
 }
