@@ -70,6 +70,7 @@ class Track {
   Button buttonCloseBluetooth;
   Button buttonRefreshBluetooth;
   Textlabel labelBluetooth;
+  Textlabel bluetoothFPS;
   Button buttonClear;
   Button buttonRecord;
   Button buttonStopRecord;
@@ -224,7 +225,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-
+          bluetoothFPS.setText("");
           isConnected = false;
           connection.stop();
           connection = null;
@@ -272,6 +273,12 @@ class Track {
       }
     }
     );
+    
+    bluetoothFPS = cp5.addTextlabel("bluetoothFPS")
+      .setPosition(0, 180)
+      .setSize(140, 20)
+      .setGroup(uiBluetooth)
+      .setText("");
 
     getBluetoothDeviceList(bluetoothDeviceList);
 
@@ -399,16 +406,18 @@ class Track {
 
 
   void process(JSONObject obj) {
-    //cp5.getController("rotationZ").setValue(map(obj.getFloat("pitch"), -90, 90, 0, 360));
-    //cp5.getController("rotationX").setValue(map(obj.getFloat("roll"), -90, 90, 0, 360));
-    //cp5.getController("rotationY").setValue(map(obj.getFloat("heading"), -180, 180, 0, 360));
-
-    // debugging bluetooth send intervals
-    //log("Millis since last transmission: ", millis() - lastTransmission);    
-    float factor = 0.9;
-    transmissionSpeed = factor * transmissionSpeed + (1 - factor) * (millis() - lastTransmission);
-    //log("Average transmission time: ", transmissionSpeed);    
+    int transmissionElapsed = millis() - lastTransmission;
+    float factor = 0.75;
+    
+    if (transmissionSpeed == 0) {
+      transmissionSpeed = transmissionElapsed;
+    } else {
+      transmissionSpeed = transmissionSpeed * factor + transmissionElapsed * (1 - factor);
+    }
+    bluetoothFPS.setText("Connection: "  + (round(transmissionSpeed / 10) * 100) + " fps / " + (round(transmissionSpeed)) + " ms)");
+    
     lastTransmission = millis();
+    
 
     roll = obj.getFloat("r");
     pitch = obj.getFloat("p");
@@ -446,7 +455,6 @@ class Track {
     tryToConnect = false;
     
     String[] ports = Serial.list();
-    //buttonConnectBluetooth.hide();
     String port = "";
 
     if (bluetoothDeviceList.getValue() != 0) {
@@ -468,6 +476,8 @@ class Track {
 
       labelBluetooth.setText("Connected to " + port);
       parent.method("hideOverlay");
+      
+      lastTransmission = millis();
     } 
     catch (RuntimeException e) {
       log("Error opening serial port " + port + ": \n" + e.getMessage());

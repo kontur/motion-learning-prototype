@@ -100,7 +100,6 @@ class Recording {
   }
 
   void writeRow(PrintWriter file, JSONObject row, String[] headers) {
-    println(row);
     for (int i = 0; i < headers.length; i++) {
       float keyVal = row.getFloat(headers[i]);
       file.print(keyVal + ",");

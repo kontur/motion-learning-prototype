@@ -23,13 +23,15 @@ LSM9DS1 dof;
 #define LSM9DS1_M	0x1E // Would be 0x1C if SDO_M is LOW
 #define LSM9DS1_AG	0x6B // Would be 0x6A if SDO_AG is LOW
 #define PRINT_CALCULATED
-#define PRINT_SPEED 500 // ms between prints?
+#define PRINT_SPEED 50 // ms between prints?
 
-// Earth's magnetic field varies by location. Add or subtract 
-// a declination to get a more accurate heading. Calculate 
+// Earth's magnetic field varies by location. Add or subtract
+// a declination to get a more accurate heading. Calculate
 // your's here:
 // http://www.ngdc.noaa.gov/geomag-web/#declination
-#define DECLINATION -8.58 // Declination (degrees) in Boulder, CO.
+#define DECLINATION 8.38 // E  ± 0° 26'  changing by  0° 9' E per year
+//-8.58 // Declination (degrees) in Boulder, CO.
+
 
 const int baudrate = 9600;
 
@@ -50,11 +52,6 @@ SoftwareSerial mySerial(rx, tx);
 // tracking button pressed stated
 int button = 0;
 int lastButton = 0;
-
-// desired fps rate between loops
-// NOTE that this is in reality MUCH lower, ~4 fps
-float fps = 24;
-float msPerFrame = 1000 / fps; // ~83
 
 
 // variables for saving the previous frame's readings
@@ -88,8 +85,10 @@ float easing = 0.75; // 0 - 1 as factor of "last frame reading" impact on new re
 // rgb color array
 int rgbColor[3];
 
+int shades = 12;
+
 unsigned long now;
-unsigned long lastFrame;
+unsigned long lastNow;
 unsigned long lastButtonUp = 0;
 unsigned long vibrationStart = 0;
 unsigned long lastSensorRead = 0;
@@ -129,7 +128,7 @@ void setup () {
 
 
   //mySerial.begin(baudrate);
-  
+
   mySerial.begin(115200);  // The mySerial Mate defaults to 115200bps
   mySerial.print("$");  // Print three times individually
   mySerial.print("$");
@@ -154,13 +153,13 @@ void setup () {
     Serial.println("Failed to communicate with LSM9DS1.");
     Serial.println("Double-check wiring.");
     Serial.println("Default settings in this sketch will " \
-                  "work for an out of the box LSM9DS1 " \
-                  "Breakout, but may need to be modified " \
-                  "if the board jumpers are.");
+                   "work for an out of the box LSM9DS1 " \
+                   "Breakout, but may need to be modified " \
+                   "if the board jumpers are.");
     while (1)
       ;
   }
-  
+
   setRGB(250, 120, 0);
 
   // startup sound
@@ -169,7 +168,7 @@ void setup () {
 
 
 void loop () {
-//  Serial.println("---");
+  Serial.println("---");
 
   now = millis();
 
@@ -177,15 +176,15 @@ void loop () {
   // make sure not to register button clicks to "eagerly" so that a single press of the button
   // won't be registered as a double click
 
-//  button = digitalRead(buttonPin);
-//  if (button == 1 && lastButton == 0) {
-//    sendButtonDown();
-//  }
-//  lastButton = button;
+  //  button = digitalRead(buttonPin);
+  //  if (button == 1 && lastButton == 0) {
+  //    sendButtonDown();
+  //  }
+  //  lastButton = button;
 
 
   // read bluetooth commands from processing in
-//  readBluetooth();
+  //  readBluetooth();
 
 
   /*
@@ -194,59 +193,29 @@ void loop () {
   Serial.println(actualFps);
   */
 
-  // this last value is arbitrary and just low enough so that we can read often
-  if (lastSensorRead == 0 || (now - lastSensorRead > 100 && framesSinceSensorRead > 3)) {
-    //Serial.println("SENSORS**********************");
-    readSensors();
-    lastSensorRead = now;
-    framesSinceSensorRead = 0;
-  }
+  readSensors();
+  lastSensorRead = now;
+  framesSinceSensorRead = 0;
+  setVibration();
+  setLeds();
+  sendJson();
 
-  if (framesSinceSensorRead == 1) {
-    setVibration();
-  }
-
-  if (framesSinceSensorRead == 2) {
-    setLeds();
-  }
-
-  if (framesSinceSensorRead == 3) {
-    Serial.println("send");
-    sendJson();
-  }
-
-
-  //if (vibrationStart != 0 && now - vibrationStart > 1000 / fps / 2) {
-    
+  // stop vibration again
   // this 250 is arbitrary
   if (vibrationStart != 0 && now - vibrationStart > 250) {
-    //Serial.println("VIBRATION STOP~~~~");
     analogWrite(vibrationPin, 0);
     vibrationStart = 0;
   }
-
-  // compensate to achieve a delay between frames as close as possible to the actual desired framerate
-  float delayUntilNextFrame = min(max(0, msPerFrame - ((now - lastFrame) - msPerFrame)), msPerFrame);
-  
-  Serial.print("Delay until next frame to reach target fps: ");
-  Serial.println(delayUntilNextFrame);
-  
-  lastFrame = now;
-
-  // always increment, it will start form 0 on sensor read and then be +1 for every frame after
-  framesSinceSensorRead++;
-  
-  
-  delay(delayUntilNextFrame);
 }
 
 
 void readSensors () {
 
-  /*
-  Serial.print("0 ");
+  // debug timing
+  Serial.print("1 - before sensor calls: ");
   Serial.println(millis() - now);
-  */
+  lastNow = millis();
+
 
   getAccel(&accel[0]);
   getGyro(&gyro[0]);
@@ -261,10 +230,13 @@ void readSensors () {
   pitch = orientation[0];
   roll = orientation[1];
 
-  /*
-  Serial.print("1 ");
-  Serial.println(millis() - now);
-  */
+  // debug timing
+  Serial.print("2 - after sensor calls: ");
+  Serial.println(millis() - lastNow);
+  lastNow = millis();
+  
+  Serial.println(heading);
+
   /*
   // ease the readings for pitch, roll and heading to make them more smooth
   heading = lastHeading * easing + (1 - heading * easing);
@@ -277,14 +249,12 @@ void readSensors () {
   lastPitch = pitch;
   lastRoll = roll;
 
-  
-  Serial.print("heading ");
-  Serial.println(heading);
-  Serial.print("pitch ");
-  Serial.println(pitch);
-  Serial.print("roll ");
-  Serial.println(roll);
-  
+  //  Serial.print("heading ");
+  //  Serial.println(heading);
+  //  Serial.print("pitch ");
+  //  Serial.println(pitch);
+  //  Serial.print("roll ");
+  //  Serial.println(roll);
 
   for (int i = 0; i < 3; i++) {
     // ease the new values to contain a portion of the previous value, thus making them less
@@ -311,21 +281,6 @@ void readSensors () {
       maxMag[i] = mag[i] > 0 ? mag[i] : -mag[i];
     }
 
-    /*
-    Serial.print("2 ");
-    Serial.println(millis() - now);
-    */
-    /*
-    Serial.print("maxAccel ");
-    Serial.println(maxAccel[i]);
-
-    Serial.print("maxGyro ");
-    Serial.println(maxGyro[i]);
-
-    Serial.print("maxMag ");
-    Serial.println(maxMag[i]);
-    */
-
     // calculate the percentual change of the values to last values in regards to the maximum range
     // for that value
     // note that this can go beyond 100%, as a) the max value can increase, and for example the gyro
@@ -350,51 +305,17 @@ void readSensors () {
 
   combinedChange = absCombinedAccelerationChange + absCombinedRotationChange;
 
-  /*
-  Serial.println("---");
-  Serial.println(changeAccel[0]);
-  Serial.println(changeAccel[1]);
-  Serial.println(changeAccel[2]);
-  Serial.println("---");
-  Serial.println(changeGyro[0]);
-  Serial.println(changeGyro[1]);
-  Serial.println(changeGyro[2]);
-  Serial.println("---");
-  Serial.println(changeMag[0]);
-  Serial.println(changeMag[1]);
-  Serial.println(changeMag[2]);
-  Serial.println("---");
-  */
-
-  /*
-  Serial.println("Combined percentual acceleration change: ");
-  Serial.println(combinedAccelerationChange);
-  //Serial.println(absCombinedAccelerationChange);
-
-  Serial.println("Combined percentual rotation change: ");
-  Serial.println(combinedRotationChange);
-  //Serial.println(absCombinedRotationChange);
-
-  */
-  /*
-  Serial.println("Combined percentual change: ");
-  Serial.println(combinedChange);
-  */
-  
-  /*
-  Serial.print("3 ");
-  Serial.println(millis() - now);
-  */
-
 }
 
 void setVibration() {
   // provide vibraiton feedback
   // **************************
-  /*
-  Serial.print("3.5 ");
-  Serial.println(millis() - now);
-  */
+
+  // debug timing
+  Serial.print("3 - before vibration: ");
+  Serial.println(millis() - lastNow);
+  lastNow = millis();
+
 
   if (combinedChange > threshold) {
     vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 254);
@@ -410,11 +331,12 @@ void setVibration() {
     analogWrite(vibrationPin, 0);
     vibrationStart = 0;
   }
-  
-  /*
-  Serial.print("4 ");
-  Serial.println(millis() - now);
-  */
+
+  // debug timing
+  Serial.print("4 - after vibration: ");
+  Serial.println(millis() - lastNow);
+  lastNow = millis();
+
 }
 
 void setLeds() {
@@ -441,46 +363,28 @@ void setLeds() {
   */
 
   float hue = pitchFactor * (1 - rollFactor) + rollFactor;
-  /*
-  Serial.print("hue: ");
-  Serial.println(hue);
-  */
 
-  hue = round(hue * 6) / 6;
-  /*
-  Serial.print("hue rounded: ");
-  Serial.println(hue);
-  */
+  // round to the same x shades
+  hue = round(hue * shades) / shades;
 
   H2R_HSBtoRGBfloat(hue, 1, 1, &rgbColor[0]);
-  //setRGBs(rgbColor[0], rgbColor[1], rgbColor[2]);
   setRGB(rgbColor[0], rgbColor[1], rgbColor[2]);
-  /*
-  Serial.print(rgbColor[0]);
-  Serial.print(", ");
-  Serial.print(rgbColor[1]);
-  Serial.print(", ");
-  Serial.println(rgbColor[2]);
-  */
 }
 
 void setRGB(int red, int green, int blue) {
-  analogWrite(redPin, map(red, 0, 255, 0, 100));
-  analogWrite(greenPin, map(green, 0, 255, 0, 100));
-  analogWrite(bluePin, map(blue, 0, 255, 0, 100));
+  //  analogWrite(redPin, map(red, 0, 255, 0, 100));
+  //  analogWrite(greenPin, map(green, 0, 255, 0, 100));
+  //  analogWrite(bluePin, map(blue, 0, 255, 0, 100));
+  analogWrite(redPin, red);
+  analogWrite(greenPin, green);
+  analogWrite(bluePin, blue);
 }
 
 
 void sendJson() {
-  /*
-  Serial.print("5 ");
-  Serial.println(millis() - now);
-  */
-  
-  // TODO further limit decimals on sent data to reduce data footprint for each send
-  
-  // The values are decoded one after the other and follow this pattern, ORDER IS
-  // CRUCIAL
+
+  // The values are decoded one after the other and follow this pattern,
+  // ORDER IS CRUCIAL !!!
   String json = "" + String(pitch) +
                 "," + String(roll) +
                 "," + String(vibration) +
@@ -495,20 +399,25 @@ void sendJson() {
 
   // print to bluetooth connection and debug monitor
 
-  /*
-  Serial.print("6 ");
-  Serial.println(millis() - now);
-  */
+  // debug timing
+  Serial.print("6 - before BT send: ");
+  Serial.println(millis() - lastNow);
+  lastNow = millis();
+
   // note that I made the observation that if the json wasn't printed to the Serial, it didn't
   // print it to mySerial either... reasons?
-  Serial.println("json");
-  Serial.println(json);
+  //  Serial.println("json");
+  //  Serial.println(json);
   mySerial.println(json);
-  
-  /*
-  Serial.print("7 ");
+
+
+  Serial.print("7 - after BT send: ");
+  Serial.println(millis() - lastNow);
+  lastNow = millis();
+
+  Serial.print("8 - since start: ");
   Serial.println(millis() - now);
-  */
+
 }
 
 
@@ -563,7 +472,7 @@ void readBluetooth() {
     if (command == "feedbackPerfect") soundNumber = 2;
     if (command == "feedbackGood") soundNumber = 3;
     if (command == "feedbackFail") soundNumber = 4;
-    
+
     if (command == "bluetoothConnected") soundNumber = 7;
     if (command == "bluetoothDisconnected") soundNumber = 8;
 
