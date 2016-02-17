@@ -13,8 +13,6 @@ class Delegator {
   }
   
   public Track getCaller() {
-    Track _caller = caller;
-    caller = null;
-    return _caller;    
+    return caller;    
   }
 }

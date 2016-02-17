@@ -76,27 +76,33 @@ class Recording {
     return data.size();
   }
 
-  void saveData(String fileName, String[] headers) {
-    println("Recording.saveData()", fileName);
-    int dataLength = data.size();
-    if (dataLength > 0) {
-      String datetime = "" + year() + "-" + month() + "-" + day() + "_" + hour() + "-" +
-        minute() + "-" + second();
-      PrintWriter file = createWriter("recordings/kinemata-" + datetime + "-" + fileName + ".csv");
-      
-      for (int h = 0; h < headers.length; h++) {
-        file.print(headers[h] + ",");        
+  boolean saveData(String fileName, String[] headers) {
+    try {
+      int dataLength = data.size();
+      if (dataLength > 0) {
+        String datetime = "" + year() + "-" + month() + "-" + day() + "_" + hour() + "-" +
+          minute() + "-" + second();
+        PrintWriter file = createWriter("recordings/kinemata-" + datetime + "-" + fileName + ".csv");
+        
+        for (int h = 0; h < headers.length; h++) {
+          file.print(headers[h] + ",");        
+        }
+        file.println("");
+  
+        for (int i = 0; i < dataLength; i++) {
+          JSONObject row = data.getJSONObject(i);
+          writeRow(file, row, headers);
+        }
+        file.flush();
+        file.close();
       }
-      file.println("");
-
-      for (int i = 0; i < dataLength; i++) {
-        JSONObject row = data.getJSONObject(i);
-        writeRow(file, row, headers);
-      }
-      file.flush();
-      file.close();
+      saved = true;
+    } catch (RuntimeException e) {
+      log("Error trying to save: " + e.getMessage());
+      return false;
     }
-    saved = true;
+    
+    return true;
   }
 
   void writeRow(PrintWriter file, JSONObject row, String[] headers) {

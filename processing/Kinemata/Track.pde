@@ -82,6 +82,18 @@ class Track {
   Textlabel labelTime;
 
 
+  // images for non custom buttons
+  PImage refreshImage = loadImage("data/refresh.png");
+  PImage refreshImageHover = loadImage("data/refresh_hover.png");
+
+  PImage recordImage = loadImage("data/record.png");
+  PImage recordImageHover = loadImage("data/record_hover.png");
+  PImage recordImageDisabled = loadImage("data/record_disabled.png");
+
+  PImage recordStopImage = loadImage("data/stop.png");
+  PImage recordStopImageHover = loadImage("data/stop_hover.png");
+
+
   int buttonInactive = color(200);
 
   /* Bluetooth connection */
@@ -175,15 +187,25 @@ class Track {
       d.setFloat("accel_y", accel[1]);
       d.setFloat("accel_z", accel[2]);
 
-      graph.addData(d);
-
-      graph.showGraphsFor(checkboxes);
-
-      log("" + vibration);
-      log("" + d.getFloat("vibration"));
+      // update the graph with current data only when
+      // - we're recording
+      // - we've recorded and not cleared / saved the data yet
+      if (isRecording || (!isRecording && recording.getSize() == 0)) {
+        graph.addData(d);
+        graph.showGraphsFor(checkboxes);
+      }
 
       if (isRecording) {
         recording.addData(d);
+      } else {
+        // there is a bluetooth connection and we are 
+        // not currently recording: check if the record button 
+        // should be disabled or active
+        if (inputFilename.getText().length() > 0 && recording.getSize() == 0) {
+          enableRecordButton();
+        } else {
+          disableRecordButton();
+        }
       }
     }
   }
@@ -212,7 +234,6 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           delegator.call("showOverlayBluetooth", that);
-          log("now trying to connect");
           tryToConnect = true;
         }
       }
@@ -232,6 +253,7 @@ class Track {
           connection.stop();
           connection = null;
           setButtonsDisconnected();
+          clearRecording();
         }
       }
     }
@@ -260,8 +282,6 @@ class Track {
     }
     );
 
-    PImage refreshImage = loadImage("data/refresh.png");
-    PImage refreshImageHover = loadImage("data/refresh_hover.png");
     buttonRefreshBluetooth = cp5.addButton("refreshBluetooth")
       .setPosition(180, 0)
       .setSize(20, 20)
@@ -323,9 +343,6 @@ class Track {
       .hideBar()
       .setPosition(guiX5, y);
 
-    PImage recordImage = loadImage("data/record.png");
-    PImage recordImageHover = loadImage("data/record_hover.png");
-    PImage recordImageDisabled = loadImage("data/record_disabled.png");
     buttonRecord = cp5.addButton("recordButton")
       .setPosition(0, 0)
       .setSize(50, 50)
@@ -341,8 +358,6 @@ class Track {
     }
     );
 
-    PImage recordStopImage = loadImage("data/stop.png");
-    PImage recordStopImageHover = loadImage("data/stop_hover.png");
     buttonStopRecord = cp5.addButton("stopRecordButton")
       .setPosition(0, 0)
       .setSize(50, 50)
@@ -398,6 +413,16 @@ class Track {
       .setFocus(true)
       .setGroup(uiFile)
       .setLabel("File name:");
+    // unfortunately the callback from the textfield is very crude
+    // and does not fire when text changes?!
+    // so we can't react to text input directly like this:    
+    //.addCallback(new CallbackListener() {
+    //public void controlEvent(CallbackEvent theEvent) {
+    //  //println(theEvent.getAction());
+    //  //println("textfield filename", inputFilename.getText());
+    //}
+    //}
+    //);
 
     labelTime = cp5.addTextlabel("labelTime")
       .setPosition(0, 60)
@@ -472,12 +497,13 @@ class Track {
       // faster than the string is fully transmitted
       char c = ';';
       connection.bufferUntil(byte(c));
-      print("Bluetooth connected to " + port);
       isConnected = true;
       setButtonsConnected();
 
       labelBluetooth.setText("Connected to " + port);
       delegator.call("hideOverlay", that);
+
+      log("Bluetooth connected to " + port);
 
       lastTransmission = millis();
     } 
@@ -493,6 +519,11 @@ class Track {
     cube.applyColor(cFront, cSide, cTop);
   }
 
+
+
+  /**
+   * UI HELPERS 
+   */
 
   // TODO maybe separate these to ui helpers
   void lockButton(Button button) {
@@ -534,9 +565,12 @@ class Track {
     labelBluetooth.hide();
 
     hideButton(buttonCloseBluetooth);
-    unlockButton(buttonSave);
-    unlockButton(buttonClear);
+    lockButton(buttonSave);
+    lockButton(buttonClear);
     lockButton(buttonRecord);
+    buttonRecord.setImage(recordImageDisabled);
+
+    inputFilename.setText("");
   }
 
   void enableRecordingUI() {
@@ -546,18 +580,20 @@ class Track {
     inputFilename.unlock();
     inputFilename.show();
 
+    disableRecordButton();
+
     if (isConnected) {
       setButtonsConnected();
     } else {
       setButtonsDisconnected();
     }
 
+    lockButton(buttonClear);
     if (recording.getSize() > 0) {
       unlockButton(buttonSave);
-      unlockButton(buttonClear);
+      lockButton(buttonRecord);
     } else {
       lockButton(buttonSave);
-      lockButton(buttonClear);
     }
   }
 
@@ -567,8 +603,22 @@ class Track {
     hideButton(buttonRecord);
     inputFilename.lock();
     inputFilename.hide();
+    disableRecordButton();
   }
 
+  void enableRecordButton() {
+    buttonRecord.setImages(recordImage, recordImageHover, recordImage, recordImage);
+    unlockButton(buttonRecord);
+  }
+  void disableRecordButton() {
+    buttonRecord.setImages(recordImageDisabled, recordImageDisabled, recordImageDisabled, recordImageDisabled);
+    lockButton(buttonRecord);
+  }
+
+
+  /**
+   * RECORDING HELPERS
+   */
 
   void startRecording() {
     if (isConnected) {
@@ -581,29 +631,35 @@ class Track {
     }
   }
 
-  void stopRecording() {
-    log("recording size " + recording.getSize());
-    isRecording = false;
-    if (recording.getSize() > 0) {
-      unlockButton(buttonSave);
-      unlockButton(buttonClear);
-      buttonSave.setColorBackground(color(200, 50, 20));
-    }
+  boolean stopRecording() {
+    if (isRecording) {
+      log("Recorded " + recording.getSize() + " frames");
+      isRecording = false;
+      if (recording.getSize() > 0) {
+        unlockButton(buttonSave);
+        unlockButton(buttonClear);
+        buttonSave.setColorBackground(color(200, 50, 20));
+      }
 
-    showButton(buttonRecord);
-    unlockButton(buttonRecord);
-    hideButton(buttonStopRecord);
+      showButton(buttonRecord);
+      lockButton(buttonRecord);
+      hideButton(buttonStopRecord);
+
+      return true;
+    } else {
+      return false;
+    }
   }
 
   void clearRecording() {
     labelTime.hide();
     recording.clear();
     lockButton(buttonSave);
+    disableRecordButton();
   }
 
 
-  void saveData(String filename) {
-
+  boolean saveData(String filename) {
     String[] headers = {
       "id", 
 
@@ -620,13 +676,13 @@ class Track {
       "gyro_z"
     };
 
-    recording.saveData(filename, headers);
-    buttonSave.setColorBackground(controlP5.ControlP5Constants.THEME_CP5BLUE.getBackground());
+    //buttonSave.setColorBackground(controlP5.ControlP5Constants.THEME_CP5BLUE.getBackground());
+    //enableRecordButton();
+    return recording.saveData(filename, headers);
   }
 
   void checkboxEvent() {
-    float[] a = checkboxGraph.getArrayValue();        
-    int col = 0;
+    float[] a = checkboxGraph.getArrayValue();
     checkboxes = new ArrayList<String>();
     for (int i=0; i<a.length; i++) {
       int n = (int)a[i];
@@ -645,7 +701,7 @@ class Track {
 
   // helper to dump a list of available serial ports into the passed in DropdownList
   void getBluetoothDeviceList(DropdownList list) {
-    log("Fetching available bluetooth device");
+    log("Listing available bluetooth devices");
     String[] ports = Serial.list();
     list.clear();  
     list.addItem("---", 0);

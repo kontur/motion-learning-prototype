@@ -51,12 +51,12 @@ Track track2;
  */
 void setup() {
   // setup the main UI and rendering
-  size(1280, 600, OPENGL);
+  size(1280, 640, OPENGL);
   setupUI();
-  
+
   // setup tracks and method delegation (clumsy)
   delegator = new Delegator(this);
-  
+
   track1 = new Track(this, delegator, 10, 150, "First device");
   track2 = new Track(this, delegator, 10, 400, "Second device");
 
@@ -173,15 +173,14 @@ void serialEvent(Serial connection) {
  */
 void radioMode(int mode) {
   if (mode == 0) {
-    log("disable second track recording");
+    log("Disable separate track recording");
     track1.enableRecordingUI();
     track2.disableRecordingUI();
   } else {
-    log("enable second track recording");
+    log("Enable separate track recording");
     track1.enableRecordingUI();
     track2.enableRecordingUI();
   }
-
   recordingMode = mode;
 }
 
@@ -193,8 +192,7 @@ void startRecording() {
     track1.startRecording();
     track2.startRecording();
   } else {
-  // TODO split by mode
-    
+    delegator.getCaller().clearRecording();
   }
 }
 
@@ -204,8 +202,7 @@ void stopRecording() {
     track1.stopRecording();
     track2.stopRecording();
   } else {
-  // TODO split by mode
-  
+    delegator.getCaller().clearRecording();
   }
 }
 
@@ -214,11 +211,29 @@ void saveRecording() {
   if (recordingMode == 0) {
     String filename = track1.getFilename();
 
-    track1.saveData(filename + "-track-1");
-    track2.saveData(filename + "-track-2");
+    if (track1.recording.getSize() > 0 && 
+      track1.saveData(filename + "-track-1")) {
+      log("Track 1 saved");
+      track1.clearRecording();
+    } else {
+      log("Track 1 could not be saved! Try save again or manually clear the recording.");
+    }
+
+    if (track2.recording.getSize() > 0 && 
+      track2.saveData(filename + "-track-2")) {
+      log("Track 2 saved");
+      track2.clearRecording();
+    } else {
+      log("Track 2 could not be saved! Try save again or manually clear the recording.");
+    }
   } else {
-    // TODO save which
-    
+    if (delegator.getCaller().recording.getSize() > 0 && 
+      delegator.getCaller().saveData(delegator.getCaller().getFilename())) {
+      log("Track saved");
+      delegator.getCaller().clearRecording();
+    } else {
+      log("Track could not be saved! Try save again or manually clear the recording.");
+    }
   }
 }
 
@@ -228,8 +243,7 @@ void clearRecording() {
     track1.clearRecording();
     track2.clearRecording();
   } else {
-    // TODO save which
-    
+    delegator.getCaller().clearRecording();
   }
 }
 
@@ -238,7 +252,7 @@ void clearRecording() {
  * Helper to log messages on screen
  */
 void log(String msg) {
-  msg = msg + "\n\n" + debugText.getText();
+  msg = msg + "\n" + debugText.getText();
   debugText.setText(msg);
 }
 
@@ -253,9 +267,9 @@ void showOverlayBluetooth() {
   cp5s.add(cp5);
   cp5s.add(track1.cp5);
   cp5s.add(track2.cp5);
-  
+
   overlay = new Overlay(this, cp5s, "Connecting bluetooth to device " + delegator.getCaller().port);
-  
+
   // immediately draw the overlay, before anything can timeout (i.e. BT connect)
   overlay.draw();
   redraw();
