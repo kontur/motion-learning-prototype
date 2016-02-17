@@ -137,7 +137,7 @@ class Track {
     graph = new Grapher(guiX4, 0, guiW * 2, guiH);
     graph.setConfiguration(graphConfig);
 
-    cube = new ColorCube(100.0, 50.0, 10.0, 125, 125, 125);
+    cube = new ColorCube(100.0, 50.0, 10.0, color(255, 100, 100), color(100, 255, 100), color(100, 100, 255));
     cube.setPosition(350.0, 80.0, 50.0);
 
     createUI(parent);
