@@ -22,6 +22,8 @@ import java.lang.reflect.Method;
 class Track {
 
   PApplet parent;
+  Delegator delegator;
+  Track that;
 
   ColorCube cube;
   Grapher graph;
@@ -89,7 +91,7 @@ class Track {
   Serial connection;
   int lastTransmission = 0;  
   float transmissionSpeed = 0;
-
+  String port = "";
 
 
   /*
@@ -97,11 +99,13 @@ class Track {
    	 * @param int _y: Position offset on y axis
    	 * @param String label: TODO Text label
    	 */
-  Track(PApplet window, int _x, int _y, String _label) {
+  Track(PApplet window, Delegator _delegator, int _x, int _y, String _label) {
     x = _x;
     y = _y;
     label = _label;
     parent = window;
+    delegator = _delegator;
+    that = this;
 
     recording = new Recording();
 
@@ -134,11 +138,11 @@ class Track {
   void draw() {
     pushMatrix();
     translate(x, y);
-    
+
     if (tryToConnect) {
       connectBluetooth();
     }
-    
+
     // move cube background to colorcube class
     fill(225);
     if (isRecording == true) {
@@ -174,7 +178,7 @@ class Track {
       graph.addData(d);
 
       graph.showGraphsFor(checkboxes);
-      
+
       log("" + vibration);
       log("" + d.getFloat("vibration"));
 
@@ -207,9 +211,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          parent.method("showOverlayBluetooth");
-          log("now pausing before trying connect");
-          delay(1000);
+          delegator.call("showOverlayBluetooth", that);
           log("now trying to connect");
           tryToConnect = true;
         }
@@ -273,7 +275,7 @@ class Track {
       }
     }
     );
-    
+
     bluetoothFPS = cp5.addTextlabel("bluetoothFPS")
       .setPosition(0, 180)
       .setSize(140, 20)
@@ -305,7 +307,7 @@ class Track {
         .setPosition(0, i * 15)
         .setSize(150, 10)
         .setGroup(uiSliders);
-        
+
       if (item != "vibration") {
         s.setRange(sliderMin, sliderMax);
       } else {
@@ -333,7 +335,7 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           log("record!");
-          parent.method("startRecording");
+          delegator.call("startRecording", that);
         }
       }
     }
@@ -352,7 +354,7 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           log("stop recording!");
-          parent.method("stopRecording");
+          delegator.call("stopRecording", that);
         }
       }
     }
@@ -368,7 +370,7 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           log("save!");
-          parent.method("saveRecording");
+          delegator.call("saveRecording", that);
         }
       }
     }
@@ -384,7 +386,7 @@ class Track {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
           log("clear!");
-          parent.method("clearRecording");
+          delegator.call("clearRecording", that);
         }
       }
     }
@@ -408,16 +410,16 @@ class Track {
   void process(JSONObject obj) {
     int transmissionElapsed = millis() - lastTransmission;
     float factor = 0.75;
-    
+
     if (transmissionSpeed == 0) {
       transmissionSpeed = transmissionElapsed;
     } else {
       transmissionSpeed = transmissionSpeed * factor + transmissionElapsed * (1 - factor);
     }
     bluetoothFPS.setText("Connection: "  + (round(transmissionSpeed / 10) * 100) + " fps / " + (round(transmissionSpeed)) + " ms)");
-    
+
     lastTransmission = millis();
-    
+
 
     roll = obj.getFloat("r");
     pitch = obj.getFloat("p");
@@ -453,9 +455,9 @@ class Track {
 
   void connectBluetooth() {
     tryToConnect = false;
-    
+
     String[] ports = Serial.list();
-    String port = "";
+    port = "";
 
     if (bluetoothDeviceList.getValue() != 0) {
       port = ports[int(bluetoothDeviceList.getValue()) - 1];
@@ -475,13 +477,13 @@ class Track {
       setButtonsConnected();
 
       labelBluetooth.setText("Connected to " + port);
-      parent.method("hideOverlay");
-      
+      delegator.call("hideOverlay", that);
+
       lastTransmission = millis();
     } 
     catch (RuntimeException e) {
       log("Error opening serial port " + port + ": \n" + e.getMessage());
-      parent.method("hideOverlay");
+      delegator.call("hideOverlay", that);
     }
   }
 
@@ -603,11 +605,11 @@ class Track {
   void saveData(String filename) {
 
     String[] headers = {
-      "id",
-      
+      "id", 
+
       "roll", 
-      "pitch",
-      "vibration",
+      "pitch", 
+      "vibration", 
 
       "accel_x", 
       "accel_y", 
@@ -639,8 +641,8 @@ class Track {
     String filename = inputFilename.getText();
     return filename;
   }
-  
-  
+
+
   // helper to dump a list of available serial ports into the passed in DropdownList
   void getBluetoothDeviceList(DropdownList list) {
     log("Fetching available bluetooth device");
@@ -657,5 +659,4 @@ class Track {
       }
     }
   }
-
 }
