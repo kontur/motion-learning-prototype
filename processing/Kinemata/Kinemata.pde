@@ -10,17 +10,6 @@ import javax.swing.*;
 // null Overlay; when instantiated rendered on top
 Overlay overlay;
 
-// A single instance object (static, hello) through which 
-// any instances can route calls to this main sketch code
-// the delegator has a function to return this last caller
-// and thus makes it possible to identify the caller from
-// the code here in the main sketch function
-// NOTE: This is to workaround the fact that you cannot 
-// call this main sketch class because it extends
-// PApplet under the hood, but doesn't provide a class for
-// it to pass to other objects
-Delegator delegator;
-
 // wait for uiReady before processing any kind of UI events
 // otherwise there will be ControlP5-mayhem
 boolean uiReady = false;
@@ -54,11 +43,8 @@ void setup() {
   size(1280, 640, OPENGL);
   setupUI();
 
-  // setup tracks and method delegation (clumsy)
-  delegator = new Delegator(this);
-
-  track1 = new Track(this, delegator, 10, 150, "First device");
-  track2 = new Track(this, delegator, 10, 400, "Second device");
+  track1 = new Track(this, 10, 150, "First device");
+  track2 = new Track(this, 10, 400, "Second device");
 
   // set to single recording by default
   radioMode(0);
@@ -186,64 +172,70 @@ void radioMode(int mode) {
 
 
 
-void startRecording() {
+void mainStartRecording(Track track) {
   log("Kinemata.startRecording()");
   if (recordingMode == 0) {
     track1.startRecording();
     track2.startRecording();
   } else {
-    delegator.getCaller().clearRecording();
+    track.clearRecording();
   }
 }
 
-void stopRecording() {
+void mainStopRecording(Track track) {
   log("Kinemata.stopRecording()");
   if (recordingMode == 0) {
     track1.stopRecording();
     track2.stopRecording();
   } else {
-    delegator.getCaller().clearRecording();
+    track.clearRecording();
   }
 }
 
-void saveRecording() {
+void mainSaveRecording(Track track) {
   log("Kinemata.saveRecording()");
   if (recordingMode == 0) {
     String filename = track1.getFilename();
 
-    if (track1.recording.getSize() > 0 && 
-      track1.saveData(filename + "-track-1")) {
-      log("Track 1 saved");
-      track1.clearRecording();
+    if (track1.recording.getSize() > 0) {
+      if (track1.saveData(filename + "-track-1")) {
+        log("Track 1 saved");
+        track1.clearRecording();
+      } else {
+        log("Track 1 could not be saved! Try save again or manually clear the recording.");
+      }
     } else {
-      log("Track 1 could not be saved! Try save again or manually clear the recording.");
+      log("Track 1 empty, nothing to save");
     }
 
-    if (track2.recording.getSize() > 0 && 
-      track2.saveData(filename + "-track-2")) {
-      log("Track 2 saved");
-      track2.clearRecording();
+    if (track2.recording.getSize() > 0) {
+      if (track2.saveData(filename + "-track-2")) {
+        log("Track 2 saved");
+        track2.clearRecording();
+      } else {
+        log("Track 2 could not be saved! Try save again or manually clear the recording.");
+      }
     } else {
-      log("Track 2 could not be saved! Try save again or manually clear the recording.");
+      log("Track 2 empty, nothing to save");
     }
   } else {
-    if (delegator.getCaller().recording.getSize() > 0 && 
-      delegator.getCaller().saveData(delegator.getCaller().getFilename())) {
+    if (track.recording.getSize() > 0 && 
+      track.saveData(track.getFilename())) {
       log("Track saved");
-      delegator.getCaller().clearRecording();
+      track.clearRecording();
     } else {
       log("Track could not be saved! Try save again or manually clear the recording.");
     }
   }
 }
 
-void clearRecording() {
+void mainClearRecording(Track track) {
   log("Kinemata.clearRecording()");
   if (recordingMode == 0) {
     track1.clearRecording();
     track2.clearRecording();
   } else {
-    delegator.getCaller().clearRecording();
+    track.clearRecording();
   }
 }
 
@@ -260,7 +252,7 @@ void log(String msg) {
 /**
  * Showing and hiding UI overlays that cover the whole app
  */
-void showOverlayBluetooth() {
+void showOverlayBluetooth(Track track) {
   // gather all ControlP5 instances into an ArrayList, so that Overlay can
   // controll (i.e. hide) them
   ArrayList<ControlP5> cp5s = new ArrayList<ControlP5>();
@@ -268,7 +260,7 @@ void showOverlayBluetooth() {
   cp5s.add(track1.cp5);
   cp5s.add(track2.cp5);
 
-  overlay = new Overlay(this, cp5s, "Connecting bluetooth to device " + delegator.getCaller().port);
+  overlay = new Overlay(this, cp5s, "Connecting bluetooth to device " + track.port);
 
   // immediately draw the overlay, before anything can timeout (i.e. BT connect)
   overlay.draw();
@@ -324,6 +316,11 @@ void setupUI() {
 void checkboxGraph(float[] a) {
   track1.checkboxEvent();
   track2.checkboxEvent();
+}
+
+
+float framesToSeconds(int frames) {
+  return round(frames / frameRate * 100) / 100;  
 }
 
 

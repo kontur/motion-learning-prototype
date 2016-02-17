@@ -22,7 +22,6 @@ import java.lang.reflect.Method;
 class Track {
 
   PApplet parent;
-  Delegator delegator;
   Track that;
 
   ColorCube cube;
@@ -111,12 +110,11 @@ class Track {
    	 * @param int _y: Position offset on y axis
    	 * @param String label: TODO Text label
    	 */
-  Track(PApplet window, Delegator _delegator, int _x, int _y, String _label) {
+  Track(PApplet window, int _x, int _y, String _label) {
     x = _x;
     y = _y;
     label = _label;
     parent = window;
-    delegator = _delegator;
     that = this;
 
     recording = new Recording();
@@ -161,7 +159,7 @@ class Track {
       stroke(205, 50, 20);
       graph.setRecording(color(205, 50, 20));
       labelTime.show();
-      labelTime.setText("" + recording.getDuration());
+      labelTime.setText("" + (float)recording.getDuration() / 1000 + " s");
     } else {
       stroke(190);
       graph.setNotRecording();
@@ -201,6 +199,7 @@ class Track {
         // there is a bluetooth connection and we are 
         // not currently recording: check if the record button 
         // should be disabled or active
+        
         if (inputFilename.getText().length() > 0 && recording.getSize() == 0) {
           enableRecordButton();
         } else {
@@ -233,7 +232,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          delegator.call("showOverlayBluetooth", that);
+          showOverlayBluetooth(that);
           tryToConnect = true;
         }
       }
@@ -351,8 +350,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          log("record!");
-          delegator.call("startRecording", that);
+          mainStartRecording(that);
         }
       }
     }
@@ -368,8 +366,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          log("stop recording!");
-          delegator.call("stopRecording", that);
+          mainStopRecording(that);
         }
       }
     }
@@ -384,8 +381,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          log("save!");
-          delegator.call("saveRecording", that);
+          mainSaveRecording(that);
         }
       }
     }
@@ -400,8 +396,7 @@ class Track {
       .addCallback(new CallbackListener() {
       public void controlEvent(CallbackEvent theEvent) {
         if (theEvent.getAction() == ControlP5.ACTION_RELEASE) {
-          log("clear!");
-          delegator.call("clearRecording", that);
+          mainClearRecording(that);
         }
       }
     }
@@ -458,10 +453,6 @@ class Track {
     gyro[1] = obj.getFloat("gY");
     gyro[2] = obj.getFloat("gZ");
 
-    //          String rgb = obj.getString("rgb");
-    //          String colorComponents[] = rgb.split(",");
-    //deviceRGB = new Color(int(colorComponents[0]), int(colorComponents[1]), int(colorComponents[2]));
-
     cp5.getController("roll").setValue(roll);
     cp5.getController("pitch").setValue(pitch);
     cp5.getController("vibration").setValue(vibration);
@@ -501,7 +492,7 @@ class Track {
       setButtonsConnected();
 
       labelBluetooth.setText("Connected to " + port);
-      delegator.call("hideOverlay", that);
+      hideOverlay();
 
       log("Bluetooth connected to " + port);
 
@@ -509,7 +500,7 @@ class Track {
     } 
     catch (RuntimeException e) {
       log("Error opening serial port " + port + ": \n" + e.getMessage());
-      delegator.call("hideOverlay", that);
+      hideOverlay();
     }
   }
 
@@ -527,11 +518,15 @@ class Track {
 
   // TODO maybe separate these to ui helpers
   void lockButton(Button button) {
-    button.lock().setColorBackground(buttonInactive);
+    if (!button.isLock()) {
+      button.lock().setColorBackground(buttonInactive);
+    }
   }
 
   void unlockButton(Button button) {
-    button.unlock().setColorBackground(controlP5.ControlP5Constants.THEME_CP5BLUE.getBackground());
+    if (button.isLock()) {
+      button.unlock().setColorBackground(controlP5.ControlP5Constants.THEME_CP5BLUE.getBackground());
+    }
   }
 
   void showButton(Button button) {
@@ -609,6 +604,7 @@ class Track {
   void enableRecordButton() {
     buttonRecord.setImages(recordImage, recordImageHover, recordImage, recordImage);
     unlockButton(buttonRecord);
+    buttonRecord.bringToFront();
   }
   void disableRecordButton() {
     buttonRecord.setImages(recordImageDisabled, recordImageDisabled, recordImageDisabled, recordImageDisabled);
@@ -633,7 +629,7 @@ class Track {
 
   boolean stopRecording() {
     if (isRecording) {
-      log("Recorded " + recording.getSize() + " frames");
+      log("Recorded " + recording.getSize() + " frames (" + framesToSeconds(recording.getSize()) + " seconds)");
       isRecording = false;
       if (recording.getSize() > 0) {
         unlockButton(buttonSave);
@@ -647,6 +643,7 @@ class Track {
 
       return true;
     } else {
+      isRecording = false;
       return false;
     }
   }
@@ -655,7 +652,9 @@ class Track {
     labelTime.hide();
     recording.clear();
     lockButton(buttonSave);
-    disableRecordButton();
+    lockButton(buttonClear);
+    enableRecordButton();
+    inputFilename.unlock();
   }
 
 
