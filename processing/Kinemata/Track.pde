@@ -123,13 +123,14 @@ class Track {
       "\"resolutionX\": 1.00, \"resolutionY\": 200.00, " +
       "\"roll\": { \"color\": " + color(255, 0, 0) + "}, " + 
       "\"pitch\": { \"color\": " + color(0, 0, 255) + "}, " +
-      "\"vibration\": { \"color\": " + color(255, 255, 100) + "}, " +
+      "\"heading\": { \"color\": " + color(0, 0, 0) + "}, " +
+      "\"vibration\": { \"color\": " + color(0, 255, 0) + "}, " +
 
-      "\"gyro_x\": { \"color\": " + color(100, 250, 0) + "}, " +
-      "\"gyro_y\": { \"color\": " + color(250, 250, 0) + "}, " +
-      "\"gyro_z\": { \"color\": " + color(100, 0, 0) + "}, " +
+      "\"gyro_x\": { \"color\": " + color(100, 150, 0) + "}, " +
+      "\"gyro_y\": { \"color\": " + color(0, 250, 150) + "}, " +
+      "\"gyro_z\": { \"color\": " + color(100, 150, 255) + "}, " +
 
-      "\"accel_x\": { \"color\": " + color(255, 255, 0) + "}, " +
+      "\"accel_x\": { \"color\": " + color(255, 50, 0) + "}, " +
       "\"accel_y\": { \"color\": " + color(255, 0, 255) + "}, " +
       "\"accel_z\": { \"color\": " + color(255, 150, 0) + "}, "
       + "}");
@@ -189,8 +190,11 @@ class Track {
       // - we're recording
       // - we've recorded and not cleared / saved the data yet
       if (isRecording || (!isRecording && recording.getSize() == 0)) {
-        graph.addData(d);
-        graph.showGraphsFor(checkboxes);
+        
+        if (frameCount % 5 == 0) {
+          graph.addData(d);
+          graph.showGraphsFor(checkboxes);
+        }
       }
 
       if (isRecording) {
@@ -332,6 +336,11 @@ class Track {
       } else {
         s.setRange(0, 255);
       }
+      
+      if (graphConfig.hasKey(sliders[i])) {
+        s.setColorValueLabel((int)graphConfig.getJSONObject(sliders[i]).getInt("color"));        
+      }
+      
       checkboxGraph.addItem(item + "Checkbox", i).toggle(i).hideLabels();
       checkboxes.add(sliders[i]);
     }
@@ -436,7 +445,7 @@ class Track {
     } else {
       transmissionSpeed = transmissionSpeed * factor + transmissionElapsed * (1 - factor);
     }
-    bluetoothFPS.setText("Connection: "  + (round(transmissionSpeed / 10) * 100) + " fps / " + (round(transmissionSpeed)) + " ms)");
+    bluetoothFPS.setText("Connection: "  + ((float)round(transmissionSpeed / 1000 * 10) / 10)+ " fps / " + (round(transmissionSpeed)) + " ms)");
 
     lastTransmission = millis();
 
