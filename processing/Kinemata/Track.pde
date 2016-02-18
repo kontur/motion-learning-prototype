@@ -154,21 +154,25 @@ class Track {
       connectBluetooth();
     }
 
-    // move cube background to colorcube class
-    fill(225);
-    if (isRecording == true) {
-      stroke(205, 50, 20);
-      graph.setRecording(color(205, 50, 20));
-      labelTime.show();
-      labelTime.setText("" + (float)recording.getDuration() / 1000 + " s");
-    } else {
-      stroke(190);
-      graph.setNotRecording();
-    }     
-    rect(guiX2, 0, guiW, guiH);
+    if (overlay != null) {
 
-    graph.plot();
-    cube.render();
+      // TODO move cube background to colorcube class
+      fill(225);
+      if (isRecording == true) {
+        stroke(205, 50, 20);
+        graph.setRecording(color(205, 50, 20));
+        labelTime.show();
+        labelTime.setText("" + (float)recording.getDuration() / 1000 + " s");
+      } else {
+        stroke(190);
+        graph.setNotRecording();
+      }     
+      rect(guiX2, 0, guiW, guiH);
+
+      graph.plot();
+      cube.render();
+    }
+
 
     popMatrix();
 
@@ -190,7 +194,7 @@ class Track {
       // - we're recording
       // - we've recorded and not cleared / saved the data yet
       if (isRecording || (!isRecording && recording.getSize() == 0)) {
-        
+
         if (frameCount % 5 == 0) {
           graph.addData(d);
           graph.showGraphsFor(checkboxes);
@@ -203,7 +207,7 @@ class Track {
         // there is a bluetooth connection and we are 
         // not currently recording: check if the record button 
         // should be disabled or active
-        
+
         if (inputFilename.getText().length() > 0 && recording.getSize() == 0) {
           enableRecordButton();
         } else {
@@ -336,11 +340,11 @@ class Track {
       } else {
         s.setRange(0, 255);
       }
-      
+
       if (graphConfig.hasKey(sliders[i])) {
-        s.setColorValueLabel((int)graphConfig.getJSONObject(sliders[i]).getInt("color"));        
+        s.setColorValueLabel((int)graphConfig.getJSONObject(sliders[i]).getInt("color"));
       }
-      
+
       checkboxGraph.addItem(item + "Checkbox", i).toggle(i).hideLabels();
       checkboxes.add(sliders[i]);
     }
@@ -479,6 +483,9 @@ class Track {
 
 
   void connectBluetooth() {
+    if (overlay != null) {
+      overlay.draw();
+    }
     tryToConnect = false;
 
     String[] ports = Serial.list();

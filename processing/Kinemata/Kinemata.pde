@@ -73,12 +73,12 @@ void draw() {
   //checkClicks();
   //executeDelayedCommand();
 
-  // update each track in turn
   track1.draw();
   track2.draw();
 
   // if there is a overlay, render it
   if (overlay != null) {
+    println("draw overlay");
     overlay.draw();
   }
 }
@@ -260,7 +260,7 @@ void showOverlayBluetooth(Track track) {
   cp5s.add(track1.cp5);
   cp5s.add(track2.cp5);
 
-  overlay = new Overlay(this, cp5s, "Connecting bluetooth to device " + track.port);
+  overlay = new Overlay(this, cp5s, "Connecting to bluetooth " + track.port + " ...");
 
   // immediately draw the overlay, before anything can timeout (i.e. BT connect)
   overlay.draw();
@@ -320,7 +320,7 @@ void checkboxGraph(float[] a) {
 
 
 float framesToSeconds(int frames) {
-  return round(frames / frameRate * 100) / 100;  
+  return round(frames / frameRate * 100) / 100;
 }
 
 

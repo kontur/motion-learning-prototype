@@ -19,9 +19,9 @@ class Overlay {
     }
     fill(0, 200);
     rect(0, 0, parent.width, parent.height);
-    color(255);
-    textAlign(CENTER);
-    text(message, parent.width, parent.height);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text(message, 300, 100, parent.width - 600, parent.height - 200);
   }  
   
   void hide() {
