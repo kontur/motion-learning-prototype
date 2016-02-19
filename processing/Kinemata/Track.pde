@@ -148,16 +148,14 @@ class Track {
 
   void draw() {
 
-    if (tryToConnect || overlay != null) {
-      println("try to connect");
+    if (tryToConnect) {
       overlay.draw();
-      println("hasRendered?", overlay.hasRendered());
       if (overlay.hasRendered()) {
         connectBluetooth();
       }
-    } else {
-      println("not trying to connect");
-
+    } 
+    
+    if (!tryToConnect && overlay == null) {
 
       pushMatrix();
       translate(x, y);
@@ -173,10 +171,8 @@ class Track {
         stroke(190);
         graph.setNotRecording();
       }     
-      println("rect");
       rect(guiX2, 0, guiW, guiH);
 
-      println("graph.plot, cube.render");
       graph.plot();
       cube.render();
 
@@ -187,7 +183,6 @@ class Track {
 
 
     if (isConnected) {
-      exit();
 
       JSONObject d = new JSONObject();
       d.setFloat("pitch", pitch);
