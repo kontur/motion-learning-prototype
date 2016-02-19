@@ -75,6 +75,14 @@ void draw() {
 
   track1.draw();
   track2.draw();
+  
+  if (recordingMode == 0) {
+    track2.cp5.getGroup("uiFile").hide();    
+  } else {
+   if (!track2.cp5.getGroup("uiFile").isVisible()) {
+      track2.cp5.getGroup("uiFile").show(); 
+   }
+  }
 
   //// if there is a overlay, render it
   if (overlay != null) {
@@ -177,7 +185,7 @@ void mainStartRecording(Track track) {
     track1.startRecording();
     track2.startRecording();
   } else {
-    track.clearRecording();
+    track.startRecording();
   }
 }
 
@@ -187,7 +195,7 @@ void mainStopRecording(Track track) {
     track1.stopRecording();
     track2.stopRecording();
   } else {
-    track.clearRecording();
+    track.stopRecording();
   }
 }
 

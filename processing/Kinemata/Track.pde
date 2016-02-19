@@ -154,7 +154,7 @@ class Track {
         connectBluetooth();
       }
     } 
-    
+
     if (!tryToConnect && overlay == null) {
 
       pushMatrix();
@@ -612,6 +612,16 @@ class Track {
       lockButton(buttonRecord);
     } else {
       lockButton(buttonSave);
+    }
+
+    if (inputFilename.getText().length() > 0 && recording.getSize() == 0) {
+      if (buttonRecord.isLock()) {
+        enableRecordButton();
+      }
+    } else {
+      if (!buttonRecord.isLock()) {
+        disableRecordButton();
+      }
     }
   }
 
