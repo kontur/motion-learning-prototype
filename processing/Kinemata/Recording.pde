@@ -125,9 +125,6 @@ class Recording {
   }
 
   boolean saveData(String fileName, String[] headers) {
-
-    print("saveData", data);
-
     try {
       int dataLength = data.size();
       if (dataLength > 0) {

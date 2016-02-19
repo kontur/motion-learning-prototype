@@ -215,9 +215,13 @@ class Track {
         // should be disabled or active
 
         if (inputFilename.getText().length() > 0 && recording.getSize() == 0) {
-          enableRecordButton();
+          if (buttonRecord.isLock()) {
+            enableRecordButton();
+          }
         } else {
-          disableRecordButton();
+          if (!buttonRecord.isLock()) {
+            disableRecordButton();
+          }
         }
       }
     }
@@ -643,6 +647,7 @@ class Track {
       showButton(buttonStopRecord);
       unlockButton(buttonStopRecord);
       hideButton(buttonRecord);
+      buttonStopRecord.bringToFront();
     }
   }
 
