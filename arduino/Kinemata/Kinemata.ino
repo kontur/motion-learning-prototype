@@ -227,8 +227,8 @@ void readSensors () {
     dof.calcAccel(dof.az),
     &orientation[0]
   );
-  pitch = orientation[0];
-  roll = orientation[1];
+  pitch = orientation[1];
+  roll = orientation[0];
 
   // debug timing
   Serial.print("2 - after sensor calls: ");

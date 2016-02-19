@@ -18,7 +18,6 @@ class Overlay {
   
   
   void draw() {
-    println("overlay.draw()");
     for(ControlP5 cp5: cps){
       cp5.hide();
     }

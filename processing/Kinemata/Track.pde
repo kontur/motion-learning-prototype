@@ -176,7 +176,6 @@ class Track {
       graph.plot();
       cube.render();
 
-
       popMatrix();
     }
 

@@ -78,7 +78,6 @@ void draw() {
 
   //// if there is a overlay, render it
   if (overlay != null) {
-   println("draw overlay");
    overlay.draw();
   }
 }
@@ -134,7 +133,7 @@ void serialEvent(Serial connection) {
         // now that we shaped our comma list into a JSON string, parse it for
         // more convenient handling and access
         JSONObject obj = JSONObject.parse(combined.toString());
-
+                
         // check which track the incoming serialEvent belongs to and 
         // forward the parsed data
         if (connection == track1.connection) {
