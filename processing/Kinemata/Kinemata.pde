@@ -76,10 +76,10 @@ void draw() {
   track1.draw();
   track2.draw();
 
-  // if there is a overlay, render it
+  //// if there is a overlay, render it
   if (overlay != null) {
-    println("draw overlay");
-    overlay.draw();
+   println("draw overlay");
+   overlay.draw();
   }
 }
 
@@ -263,8 +263,8 @@ void showOverlayBluetooth(Track track) {
   overlay = new Overlay(this, cp5s, "Connecting to bluetooth " + track.port + " ...");
 
   // immediately draw the overlay, before anything can timeout (i.e. BT connect)
-  overlay.draw();
-  redraw();
+  //overlay.draw();
+  //redraw();
 }
 
 void hideOverlay() {

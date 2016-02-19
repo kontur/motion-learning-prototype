@@ -147,14 +147,20 @@ class Track {
 
 
   void draw() {
-    pushMatrix();
-    translate(x, y);
 
-    if (tryToConnect) {
-      connectBluetooth();
-    }
+    if (tryToConnect || overlay != null) {
+      println("try to connect");
+      overlay.draw();
+      println("hasRendered?", overlay.hasRendered());
+      if (overlay.hasRendered()) {
+        connectBluetooth();
+      }
+    } else {
+      println("not trying to connect");
 
-    if (overlay != null) {
+
+      pushMatrix();
+      translate(x, y);
 
       // TODO move cube background to colorcube class
       fill(225);
@@ -167,16 +173,22 @@ class Track {
         stroke(190);
         graph.setNotRecording();
       }     
+      println("rect");
       rect(guiX2, 0, guiW, guiH);
 
+      println("graph.plot, cube.render");
       graph.plot();
       cube.render();
+
+
+      popMatrix();
     }
 
 
-    popMatrix();
 
     if (isConnected) {
+      exit();
+
       JSONObject d = new JSONObject();
       d.setFloat("pitch", pitch);
       d.setFloat("roll", roll);
@@ -483,10 +495,6 @@ class Track {
 
 
   void connectBluetooth() {
-    if (overlay != null) {
-      overlay.draw();
-    }
-    tryToConnect = false;
 
     String[] ports = Serial.list();
     port = "";
@@ -518,6 +526,7 @@ class Track {
       log("Error opening serial port " + port + ": \n" + e.getMessage());
       hideOverlay();
     }
+    tryToConnect = false;
   }
 
 
