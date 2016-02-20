@@ -459,7 +459,7 @@ class Track {
     } else {
       transmissionSpeed = transmissionSpeed * factor + transmissionElapsed * (1 - factor);
     }
-    bluetoothFPS.setText("Connection: "  + ((float)round(transmissionSpeed / 1000 * 10) / 10)+ " fps / " + (round(transmissionSpeed)) + " ms)");
+    bluetoothFPS.setText("Connection: "  + ((float)(round(1000 / transmissionSpeed * 10) / 10))+ " fps / " + (round(transmissionSpeed)) + " ms");
 
     lastTransmission = millis();
 
