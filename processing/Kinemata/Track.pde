@@ -201,7 +201,7 @@ class Track {
       // - we've recorded and not cleared / saved the data yet
       if (isRecording || (!isRecording && recording.getSize() == 0)) {
 
-        if (frameCount % 5 == 0) {
+        if (frameCount % 2 == 0) {
           graph.addData(d);
           graph.showGraphsFor(checkboxes);
         }
@@ -271,6 +271,8 @@ class Track {
           connection = null;
           setButtonsDisconnected();
           clearRecording();
+          graph.clear();
+          cube.setRotation(0, 0, 0);
         }
       }
     }
