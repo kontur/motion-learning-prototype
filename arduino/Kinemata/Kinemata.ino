@@ -168,7 +168,7 @@ void setup () {
 
 
 void loop () {
-  Serial.println("---");
+//  Serial.println("---");
 
   now = millis();
 
@@ -212,9 +212,9 @@ void loop () {
 void readSensors () {
 
   // debug timing
-  Serial.print("1 - before sensor calls: ");
-  Serial.println(millis() - now);
-  lastNow = millis();
+//  Serial.print("1 - before sensor calls: ");
+//  Serial.println(millis() - now);
+//  lastNow = millis();
 
 
   getAccel(&accel[0]);
@@ -227,13 +227,13 @@ void readSensors () {
     dof.calcAccel(dof.az),
     &orientation[0]
   );
-  pitch = orientation[1];
-  roll = orientation[0];
+  pitch = orientation[0];
+  roll = orientation[1];
 
   // debug timing
-  Serial.print("2 - after sensor calls: ");
-  Serial.println(millis() - lastNow);
-  lastNow = millis();
+//  Serial.print("2 - after sensor calls: ");
+//  Serial.println(millis() - lastNow);
+//  lastNow = millis();
 
   /*
   // ease the readings for pitch, roll and heading to make them more smooth
@@ -310,13 +310,13 @@ void setVibration() {
   // **************************
 
   // debug timing
-  Serial.print("3 - before vibration: ");
-  Serial.println(millis() - lastNow);
-  lastNow = millis();
+//  Serial.print("3 - before vibration: ");
+//  Serial.println(millis() - lastNow);
+//  lastNow = millis();
 
 
   if (combinedChange > threshold) {
-    vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 80, 254);
+    vibration = map(constrain(combinedChange, 0, 100.0), threshold, 100.0, 100, 254);
 
     /*
     Serial.print("vibration ");
@@ -331,9 +331,9 @@ void setVibration() {
   }
 
   // debug timing
-  Serial.print("4 - after vibration: ");
-  Serial.println(millis() - lastNow);
-  lastNow = millis();
+//  Serial.print("4 - after vibration: ");
+//  Serial.println(millis() - lastNow);
+//  lastNow = millis();
 
 }
 
@@ -383,8 +383,11 @@ void sendJson() {
 
   // The values are decoded one after the other and follow this pattern,
   // ORDER IS CRUCIAL !!!
-  String json = "" + String(pitch) +
-                "," + String(roll) +
+  
+  // NOTE: pitch and roll are reverse to reflect updated hardware with different
+  // sensor orientation, i.e. on processing side roll -> pitch & pitch -> roll
+  String json = "" + String(roll) +
+                "," + String(pitch) +
                 "," + String(vibration) +
                 "," + String(accel[0]) +
                 "," + String(accel[1]) +
@@ -398,9 +401,9 @@ void sendJson() {
   // print to bluetooth connection and debug monitor
 
   // debug timing
-  Serial.print("6 - before BT send: ");
-  Serial.println(millis() - lastNow);
-  lastNow = millis();
+//  Serial.print("6 - before BT send: ");
+//  Serial.println(millis() - lastNow);
+//  lastNow = millis();
 
   // note that I made the observation that if the json wasn't printed to the Serial, it didn't
   // print it to mySerial either... reasons?
@@ -409,12 +412,12 @@ void sendJson() {
   mySerial.println(json);
 
 
-  Serial.print("7 - after BT send: ");
-  Serial.println(millis() - lastNow);
-  lastNow = millis();
-
-  Serial.print("8 - since start: ");
-  Serial.println(millis() - now);
+//  Serial.print("7 - after BT send: ");
+//  Serial.println(millis() - lastNow);
+//  lastNow = millis();
+//
+//  Serial.print("8 - since start: ");
+//  Serial.println(millis() - now);
 
 }
 
